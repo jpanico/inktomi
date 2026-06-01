@@ -2,16 +2,16 @@
 
 import pytest
 
-from roam_pub.roam_network import (
+from inktomi.roam_network import (
     all_children_present,
     all_parents_present,
     has_unique_ids,
     is_acyclic,
 )
-from roam_pub.roam_node import RoamNode
-from roam_pub.roam_primitives import Id, IdObject
-from roam_pub.roam_tree import NodeTree, NodeTreeDFSIterator, is_tree
-from roam_pub.validation import ValidationError
+from inktomi.roam_node import RoamNode
+from inktomi.roam_primitives import Id, IdObject
+from inktomi.roam_tree import NodeTree, NodeTreeDFSIterator, is_tree
+from inktomi.validation import ValidationError
 
 from conftest import STUB_TIME, STUB_USER, article0_node_tree
 

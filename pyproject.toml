@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "roam-pub"
+name = "inktomi"
 version = "0.1.0"
 description = "Markdown utilities for working with Roam Research exports"
 license = "MIT"
@@ -26,8 +26,8 @@ dev = [
 ]
 
 [project.scripts]
-dump-roam-tree = "roam_pub.dump_roam_tree:app"
-export-roam-tree = "roam_pub.export_roam_tree:app"
+dump-roam-tree = "inktomi.dump_roam_tree:app"
+export-roam-tree = "inktomi.export_roam_tree:app"
 
 [tool.hatch.envs.default.scripts]
 check = [

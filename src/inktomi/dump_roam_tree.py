@@ -6,24 +6,24 @@ one or more of the following as a colorized :class:`~rich.tree.Tree` panel
 hierarchy:
 
 - **Vertex tree** (default, ``--vertex-tree`` / ``-v/-V``) — normalized
-  :class:`~roam_pub.graph.VertexTree` produced by
-  :func:`~roam_pub.roam_transcribe.transcribe`.
-- **Node tree** (``--node-tree`` / ``-n/-N``) — raw :class:`~roam_pub.roam_tree.NodeTree`
+  :class:`~inktomi.graph.VertexTree` produced by
+  :func:`~inktomi.roam_transcribe.transcribe`.
+- **Node tree** (``--node-tree`` / ``-n/-N``) — raw :class:`~inktomi.roam_tree.NodeTree`
   as returned by the Roam Local API; each panel body lists selected
-  :class:`~roam_pub.roam_node.RoamNode` fields, configurable via
+  :class:`~inktomi.roam_node.RoamNode` fields, configurable via
   ``--node-props`` (defaults to
-  :data:`~roam_pub.rich_rendering.DEFAULT_NODE_PANEL_PROPS`).
+  :data:`~inktomi.rich_rendering.DEFAULT_NODE_PANEL_PROPS`).
 - **Raw results** (``--raw-results`` / ``-r/-R``) — raw Datalog query results
   as returned by the Roam Local API, before any transcription.
 
 ``TARGET`` is interpreted as a **node UID** if it matches
-:data:`~roam_pub.roam_primitives.UID_PATTERN` (exactly 9 alphanumeric/dash/underscore
+:data:`~inktomi.roam_primitives.UID_PATTERN` (exactly 9 alphanumeric/dash/underscore
 characters, the fixed format used by Roam for all block and page UIDs); otherwise it is
 treated as a **page title**.  A page whose title happens to be exactly 9
 characters from that alphabet would be misidentified — this edge case is
 considered negligible in practice.
 
-Logging is colorized by level via :mod:`roam_pub.logging_config` and
+Logging is colorized by level via :mod:`inktomi.logging_config` and
 configurable via the ``LOG_LEVEL`` environment variable (default: ``INFO``).
 
 Public symbols:
@@ -51,19 +51,19 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree as RichTree
 
-from roam_pub.rich_rendering import (
+from inktomi.rich_rendering import (
     DEFAULT_NODE_PANEL_PROPS,
     build_rich_node_tree,
     build_rich_raw_table,
     build_rich_refs_box,
     build_rich_vertex_tree,
 )
-from roam_pub.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
-from roam_pub.roam_tree_loader import fetch_roam_trees
-from roam_pub.graph import VertexTree
-from roam_pub.roam_local_api import ApiEndpoint
-from roam_pub.logging_config import configure_logging
-from roam_pub.roam_primitives import UID_PATTERN
+from inktomi.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
+from inktomi.roam_tree_loader import fetch_roam_trees
+from inktomi.graph import VertexTree
+from inktomi.roam_local_api import ApiEndpoint
+from inktomi.logging_config import configure_logging
+from inktomi.roam_primitives import UID_PATTERN
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -93,17 +93,17 @@ def _dump_node_tree(fetch_result: NodeFetchResult, node_props: str | None, conso
     """Render and print the node tree from *fetch_result* as a Rich tree.
 
     Logs a warning and returns early when
-    :attr:`~roam_pub.roam_node_fetch_result.NodeFetchResult.anchor_tree` is ``None``.
+    :attr:`~inktomi.roam_node_fetch_result.NodeFetchResult.anchor_tree` is ``None``.
     After the tree, prints a ``refs`` box containing one
-    :func:`~roam_pub.rich_rendering.make_node_panel` panel per node in
-    :attr:`~roam_pub.roam_tree.NodeTree.refs_by_id` (omitted when empty).
+    :func:`~inktomi.rich_rendering.make_node_panel` panel per node in
+    :attr:`~inktomi.roam_tree.NodeTree.refs_by_id` (omitted when empty).
 
     Args:
-        fetch_result: Fetch result whose :attr:`~roam_pub.roam_node_fetch_result.NodeFetchResult.anchor_tree`
+        fetch_result: Fetch result whose :attr:`~inktomi.roam_node_fetch_result.NodeFetchResult.anchor_tree`
             is rendered.
-        node_props: Comma-separated :class:`~roam_pub.roam_node.RoamNode` field names
+        node_props: Comma-separated :class:`~inktomi.roam_node.RoamNode` field names
             to include in each panel body, or ``None`` to use
-            :data:`~roam_pub.rich_rendering.DEFAULT_NODE_PANEL_PROPS`.
+            :data:`~inktomi.rich_rendering.DEFAULT_NODE_PANEL_PROPS`.
         console: Rich :class:`~rich.console.Console` to print to.
     """
     if fetch_result.anchor_tree is None:
@@ -131,7 +131,7 @@ def _dump_vertex_tree(vertex_tree: VertexTree | None, console: Console) -> None:
     Logs a warning and returns early when *vertex_tree* is ``None``.
 
     Args:
-        vertex_tree: Normalized :class:`~roam_pub.graph.VertexTree` to render,
+        vertex_tree: Normalized :class:`~inktomi.graph.VertexTree` to render,
             or ``None`` when vertex tree computation was skipped.
         console: Rich :class:`~rich.console.Console` to print to.
     """
@@ -160,14 +160,14 @@ def dump_trees(
     :func:`_dump_vertex_tree` based on the corresponding flags.
 
     Args:
-        fetch_result: The :class:`~roam_pub.roam_node_fetch_result.NodeFetchResult` returned
+        fetch_result: The :class:`~inktomi.roam_node_fetch_result.NodeFetchResult` returned
             by the fetch pipeline, carrying the raw node tree and Datalog results.
-        vertex_tree: Normalized :class:`~roam_pub.graph.VertexTree` produced
-            by :func:`~roam_pub.roam_transcribe.transcribe`, or ``None`` when
+        vertex_tree: Normalized :class:`~inktomi.graph.VertexTree` produced
+            by :func:`~inktomi.roam_transcribe.transcribe`, or ``None`` when
             vertex tree computation was skipped.
-        node_props: Comma-separated list of :class:`~roam_pub.roam_node.RoamNode`
+        node_props: Comma-separated list of :class:`~inktomi.roam_node.RoamNode`
             field names to include in each node panel body, or ``None`` to use
-            :data:`~roam_pub.rich_rendering.DEFAULT_NODE_PANEL_PROPS`.
+            :data:`~inktomi.rich_rendering.DEFAULT_NODE_PANEL_PROPS`.
         show_raw_results: When ``True``, call :func:`_dump_raw_table`.
         show_node_tree: When ``True``, call :func:`_dump_node_tree`.
         show_vertex_tree: When ``True``, call :func:`_dump_vertex_tree`.
@@ -272,7 +272,7 @@ def main(
     """Dump a Roam Research page or node subtree as a Rich tree to the console.
 
     TARGET is interpreted as a node UID (fetches the subtree rooted there) if
-    it matches :data:`~roam_pub.roam_primitives.UID_PATTERN`, otherwise as a
+    it matches :data:`~inktomi.roam_primitives.UID_PATTERN`, otherwise as a
     page title (fetches all blocks on that page).  Use ``--vertex-tree`` / ``-v/-V``
     and ``--node-tree`` / ``-n/-N`` to control which trees are printed (vertex tree
     is shown by default).  Use ``--raw-results`` / ``-r/-R`` to also print the raw

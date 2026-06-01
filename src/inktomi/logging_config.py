@@ -1,4 +1,4 @@
-"""Colorized logging configuration for roam_pub CLI tools.
+"""Colorized logging configuration for inktomi CLI tools.
 
 Public symbols:
 

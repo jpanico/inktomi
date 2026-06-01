@@ -2,26 +2,26 @@
 """CLI tool for exporting a Roam Research page or node subtree to CommonMark.
 
 Fetches all descendant blocks identified by ``TARGET`` via the Roam Local API,
-transcribes them into a :class:`~roam_pub.graph.VertexTree`, renders
-the tree to a CommonMark document via :func:`~roam_pub.md_rendering.render`,
+transcribes them into a :class:`~inktomi.graph.VertexTree`, renders
+the tree to a CommonMark document via :func:`~inktomi.md_rendering.render`,
 then writes the result in one of two modes controlled by ``--bundle/--no-bundle``:
 
 - **Bundle mode** (default, ``--bundle``) — fetches any Cloud Firestore images
   referenced in the document and writes a self-contained
   ``<output_dir>/<target>.mdbundle/`` directory via
-  :func:`~roam_pub.roam_md_bundle.bundle_md_document`.  Pass ``--cache-dir``
+  :func:`~inktomi.roam_md_bundle.bundle_md_document`.  Pass ``--cache-dir``
   to avoid re-downloading unchanged assets across runs.
 - **Plain mode** (``--no-bundle``) — writes the rendered CommonMark text
   directly to ``<output_dir>/<target>.md`` without fetching any images.
 
 ``TARGET`` is interpreted as a **node UID** if it matches
-:data:`~roam_pub.roam_primitives.UID_PATTERN` (exactly 9 alphanumeric/dash/underscore
+:data:`~inktomi.roam_primitives.UID_PATTERN` (exactly 9 alphanumeric/dash/underscore
 characters, the fixed format used by Roam for all block and page UIDs); otherwise it is
 treated as a **page title**.  A page whose title happens to be exactly 9
 characters from that alphabet would be misidentified — this edge case is
 considered negligible in practice.
 
-Logging is colorized by level via :mod:`roam_pub.logging_config` and
+Logging is colorized by level via :mod:`inktomi.logging_config` and
 configurable via the ``LOG_LEVEL`` environment variable (default: ``INFO``).
 
 Public symbols:
@@ -44,14 +44,14 @@ from typing import Annotated, Final
 
 import typer
 
-from roam_pub.logging_config import configure_logging
-from roam_pub.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
-from roam_pub.roam_tree_loader import fetch_roam_trees
-from roam_pub.graph import VertexTree
-from roam_pub.roam_local_api import ApiEndpoint
-from roam_pub.roam_md_bundle import bundle_md_document
-from roam_pub.roam_primitives import UID_PATTERN
-from roam_pub.md_rendering import render
+from inktomi.logging_config import configure_logging
+from inktomi.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
+from inktomi.roam_tree_loader import fetch_roam_trees
+from inktomi.graph import VertexTree
+from inktomi.roam_local_api import ApiEndpoint
+from inktomi.roam_md_bundle import bundle_md_document
+from inktomi.roam_primitives import UID_PATTERN
+from inktomi.md_rendering import render
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -155,7 +155,7 @@ def main(
     )
 
     trees: Final[tuple[NodeFetchResult, VertexTree | None]] = fetch_roam_trees(
-        NodeFetchSpec(anchor=NodeFetchAnchor(qualifier=target), include_refs=False), True, api_endpoint
+        NodeFetchSpec(anchor=NodeFetchAnchor(qualifier=target), include_refs=True), True, api_endpoint
     )
     vertex_tree: Final[VertexTree | None] = trees[1]
     if vertex_tree is None:

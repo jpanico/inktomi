@@ -5,9 +5,9 @@ from typing import Final
 import pytest
 from pydantic import ValidationError
 
-from roam_pub.roam_network import NodeNetwork
-from roam_pub.roam_node import RoamNode
-from roam_pub.roam_node_fetch_result import (
+from inktomi.roam_network import NodeNetwork
+from inktomi.roam_node import RoamNode
+from inktomi.roam_node_fetch_result import (
     NodeFetchAnchor,
     NodeFetchResult,
     NodeFetchSpec,
@@ -15,7 +15,7 @@ from roam_pub.roam_node_fetch_result import (
     anchor_node,
     anchor_tree,
 )
-from roam_pub.roam_primitives import IdObject
+from inktomi.roam_primitives import IdObject
 
 from conftest import STUB_TIME, STUB_USER
 
@@ -30,12 +30,12 @@ _VALID_UID: Final[str] = "wdMgyBiP9"
 
 
 def _page_node(uid: str = _PAGE_UID, title: str = _PAGE_TITLE) -> RoamNode:
-    """Return a minimal Page :class:`~roam_pub.roam_node.RoamNode` for use in tests."""
+    """Return a minimal Page :class:`~inktomi.roam_node.RoamNode` for use in tests."""
     return RoamNode(uid=uid, id=1, time=STUB_TIME, user=STUB_USER, title=title, children=[])
 
 
 def _block_node(uid: str = _BLOCK_UID, string: str = "block text", page_id: int = 1) -> RoamNode:
-    """Return a minimal Block :class:`~roam_pub.roam_node.RoamNode` for use in tests."""
+    """Return a minimal Block :class:`~inktomi.roam_node.RoamNode` for use in tests."""
     return RoamNode(
         uid=uid,
         id=2,
@@ -54,7 +54,7 @@ def _block_node(uid: str = _BLOCK_UID, string: str = "block text", page_id: int 
 
 
 class TestQueryAnchorKind:
-    """Tests for :class:`~roam_pub.roam_node_fetch_result.QueryAnchorKind`."""
+    """Tests for :class:`~inktomi.roam_node_fetch_result.QueryAnchorKind`."""
 
     def test_of_returns_node_uid_for_valid_uid(self) -> None:
         """Test that a nine-character UID string resolves to NODE_UID."""
@@ -79,7 +79,7 @@ class TestQueryAnchorKind:
 
 
 class TestNodeFetchAnchor:
-    """Tests for :class:`~roam_pub.roam_node_fetch_result.NodeFetchAnchor`."""
+    """Tests for :class:`~inktomi.roam_node_fetch_result.NodeFetchAnchor`."""
 
     def test_kind_is_node_uid_for_uid_target(self) -> None:
         """Test that a UID target produces kind=NODE_UID."""
@@ -119,7 +119,7 @@ class TestNodeFetchAnchor:
 
 
 class TestNodeFetchSpec:
-    """Tests for :class:`~roam_pub.roam_node_fetch_result.NodeFetchSpec`."""
+    """Tests for :class:`~inktomi.roam_node_fetch_result.NodeFetchSpec`."""
 
     def test_anchor_and_include_refs_false_stored(self) -> None:
         """Test that anchor and include_refs=False are stored correctly."""
@@ -156,10 +156,10 @@ class TestNodeFetchSpec:
 
 
 class TestNodeFetchResult:
-    """Tests for :class:`~roam_pub.roam_node_fetch_result.NodeFetchResult`."""
+    """Tests for :class:`~inktomi.roam_node_fetch_result.NodeFetchResult`."""
 
     def _make_result(self) -> NodeFetchResult:
-        """Return a minimal valid :class:`~roam_pub.roam_node_fetch_result.NodeFetchResult`."""
+        """Return a minimal valid :class:`~inktomi.roam_node_fetch_result.NodeFetchResult`."""
         fetch_spec: Final[NodeFetchSpec] = NodeFetchSpec(
             anchor=NodeFetchAnchor(qualifier=_PAGE_TITLE), include_refs=False
         )
@@ -198,7 +198,7 @@ class TestNodeFetchResult:
 
 
 class TestAnchorNode:
-    """Tests for :func:`~roam_pub.roam_node_fetch_result.anchor_node`."""
+    """Tests for :func:`~inktomi.roam_node_fetch_result.anchor_node`."""
 
     def test_finds_node_by_uid(self) -> None:
         """Test that a NODE_UID anchor returns the node with the matching uid."""
@@ -246,7 +246,7 @@ class TestAnchorNode:
 
 
 def _page(uid: str, id_: int, title: str, child_ids: list[int]) -> RoamNode:
-    """Return a Page :class:`~roam_pub.roam_node.RoamNode` with explicit id and child refs."""
+    """Return a Page :class:`~inktomi.roam_node.RoamNode` with explicit id and child refs."""
     return RoamNode(
         uid=uid,
         id=id_,
@@ -258,7 +258,7 @@ def _page(uid: str, id_: int, title: str, child_ids: list[int]) -> RoamNode:
 
 
 def _block(uid: str, id_: int, page_id: int, child_ids: list[int] | None = None) -> RoamNode:
-    """Return a Block :class:`~roam_pub.roam_node.RoamNode` with explicit id and optional child refs."""
+    """Return a Block :class:`~inktomi.roam_node.RoamNode` with explicit id and optional child refs."""
     return RoamNode(
         uid=uid,
         id=id_,
@@ -273,7 +273,7 @@ def _block(uid: str, id_: int, page_id: int, child_ids: list[int] | None = None)
 
 
 class TestAnchorTree:
-    """Tests for :func:`~roam_pub.roam_node_fetch_result.anchor_tree`."""
+    """Tests for :func:`~inktomi.roam_node_fetch_result.anchor_tree`."""
 
     def test_returns_single_node_when_no_children(self) -> None:
         """Test that a page with no children returns only the anchor node."""

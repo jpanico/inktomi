@@ -1,6 +1,6 @@
 # Test Fixtures
 
-This directory contains test data used by the roam_pub test suite.
+This directory contains test data used by the inktomi test suite.
 
 ## Directory Structure
 

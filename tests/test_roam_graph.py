@@ -2,7 +2,7 @@
 
 import pytest
 
-from roam_pub.graph import (
+from inktomi.graph import (
     HeadingVertex,
     PageVertex,
     TextContentVertex,
@@ -10,7 +10,7 @@ from roam_pub.graph import (
     VertexTree,
     VertexTreeDFSIterator,
 )
-from roam_pub.roam_primitives import Uid
+from inktomi.roam_primitives import Uid
 
 from conftest import article0_vertex_tree
 

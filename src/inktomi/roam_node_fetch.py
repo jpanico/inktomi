@@ -14,21 +14,21 @@ from typing import Final, final
 
 from pydantic import BaseModel, ConfigDict, validate_call
 
-from roam_pub.roam_local_api import (
+from inktomi.roam_local_api import (
     ApiEndpoint,
     Request as LocalApiRequest,
     Response as LocalApiResponse,
     invoke_action,
 )
-from roam_pub.roam_network import NodeNetwork
-from roam_pub.roam_node import RoamNode
-from roam_pub.roam_node_fetch_result import (
+from inktomi.roam_network import NodeNetwork
+from inktomi.roam_node import RoamNode
+from inktomi.roam_node_fetch_result import (
     NodeFetchAnchor,
     NodeFetchResult,
     NodeFetchSpec,
     QueryAnchorKind,
 )
-from roam_pub.roam_primitives import Uid
+from inktomi.roam_primitives import Uid
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class FetchRoamNodes:
         Roam extensions such as Augmented Headings (e.g. ``ah-level: h4``).  Block
         properties only appear in the result when they have actually been set on a given
         block; absent block properties are silently omitted, and
-        :attr:`~roam_pub.roam_node.RoamNode.props` will be ``None`` for those nodes.
+        :attr:`~inktomi.roam_node.RoamNode.props` will be ``None`` for those nodes.
 
         **Anchor node**: each query opens with a single data pattern clause that binds a
         variable named ``?anchor`` to the node whose attribute matches the caller-supplied
@@ -270,7 +270,7 @@ class FetchRoamNodes:
                     :attr:`DESCENDANT_RULE` and returns only the page node and its descendants.
 
             Returns:
-                A :class:`~roam_pub.roam_local_api.Request.Payload` with action ``"data.q"``
+                A :class:`~inktomi.roam_local_api.Request.Payload` with action ``"data.q"``
                 and args set according to *include_refs*.
             """
             query, rules = (
@@ -299,7 +299,7 @@ class FetchRoamNodes:
                     :attr:`DESCENDANT_RULE` and returns only the anchor node and its descendants.
 
             Returns:
-                A :class:`~roam_pub.roam_local_api.Request.Payload` with action ``"data.q"``
+                A :class:`~inktomi.roam_local_api.Request.Payload` with action ``"data.q"``
                 and args set according to *include_refs*.
             """
             query, rules = (
@@ -341,10 +341,10 @@ class FetchRoamNodes:
             api_endpoint: The API endpoint (URL + bearer token) for the target Roam graph.
             fetch_spec: The fetch specification driving this request; used both for the
                 "no nodes found" log message and as the argument to
-                :meth:`~roam_pub.roam_node_fetch_result.NodeFetchResult.from_network`.
+                :meth:`~inktomi.roam_node_fetch_result.NodeFetchResult.from_network`.
 
         Returns:
-            A :class:`~roam_pub.roam_node_fetch_result.NodeFetchResult` constructed from
+            A :class:`~inktomi.roam_node_fetch_result.NodeFetchResult` constructed from
             the fetched nodes and *fetch_spec*.
 
         Raises:
@@ -393,24 +393,24 @@ class FetchRoamNodes:
 
         Args:
             fetch_spec: The fetch specification whose
-                :attr:`~roam_pub.roam_node_fetch_result.NodeFetchSpec.anchor` identifies
+                :attr:`~inktomi.roam_node_fetch_result.NodeFetchSpec.anchor` identifies
                 the exact title of the Roam page to fetch, and whose
-                :attr:`~roam_pub.roam_node_fetch_result.NodeFetchSpec.include_refs` controls
+                :attr:`~inktomi.roam_node_fetch_result.NodeFetchSpec.include_refs` controls
                 whether ``:block/refs`` targets are included in the result.
             api_endpoint: The API endpoint (URL + bearer token) for the target Roam graph.
 
         Returns:
-            A :class:`~roam_pub.roam_node_fetch_result.NodeFetchResult` whose
-            :attr:`~roam_pub.roam_node_fetch_result.NodeFetchResult.anchor_tree` is rooted
+            A :class:`~inktomi.roam_node_fetch_result.NodeFetchResult` whose
+            :attr:`~inktomi.roam_node_fetch_result.NodeFetchResult.anchor_tree` is rooted
             at the matching page node and whose
-            :attr:`~roam_pub.roam_node_fetch_result.NodeFetchResult.network` contains the
+            :attr:`~inktomi.roam_node_fetch_result.NodeFetchResult.network` contains the
             page node and all its descendant blocks (plus any ``:block/refs`` targets when
-            :attr:`~roam_pub.roam_node_fetch_result.NodeFetchSpec.include_refs` is ``True``).
+            :attr:`~inktomi.roam_node_fetch_result.NodeFetchSpec.include_refs` is ``True``).
 
         Raises:
             ValidationError: If any parameter is ``None`` or invalid.
             ValueError: If ``fetch_spec.anchor.kind`` is not
-                :attr:`~roam_pub.roam_node_fetch_result.QueryAnchorKind.PAGE_TITLE`, or if
+                :attr:`~inktomi.roam_node_fetch_result.QueryAnchorKind.PAGE_TITLE`, or if
                 no page matching the title exists in the graph.
             requests.exceptions.ConnectionError: If unable to connect to the Local API.
             requests.exceptions.HTTPError: If the Local API returns a non-200 status.
@@ -444,25 +444,25 @@ class FetchRoamNodes:
 
         Args:
             fetch_spec: The fetch specification whose
-                :attr:`~roam_pub.roam_node_fetch_result.NodeFetchSpec.anchor` identifies
+                :attr:`~inktomi.roam_node_fetch_result.NodeFetchSpec.anchor` identifies
                 the nine-character ``:block/uid`` of the root node to fetch, and whose
-                :attr:`~roam_pub.roam_node_fetch_result.NodeFetchSpec.include_refs` controls
+                :attr:`~inktomi.roam_node_fetch_result.NodeFetchSpec.include_refs` controls
                 whether ``:block/refs`` targets are included in the result.
             api_endpoint: The API endpoint (URL + bearer token) for the target Roam graph.
 
         Returns:
-            A :class:`~roam_pub.roam_node_fetch_result.NodeFetchResult` whose
-            :attr:`~roam_pub.roam_node_fetch_result.NodeFetchResult.anchor_tree` is rooted
+            A :class:`~inktomi.roam_node_fetch_result.NodeFetchResult` whose
+            :attr:`~inktomi.roam_node_fetch_result.NodeFetchResult.anchor_tree` is rooted
             at the matched node and whose
-            :attr:`~roam_pub.roam_node_fetch_result.NodeFetchResult.network` contains that
+            :attr:`~inktomi.roam_node_fetch_result.NodeFetchResult.network` contains that
             node and every block reachable through ``:block/children`` at any depth (plus
             any ``:block/refs`` targets when
-            :attr:`~roam_pub.roam_node_fetch_result.NodeFetchSpec.include_refs` is ``True``).
+            :attr:`~inktomi.roam_node_fetch_result.NodeFetchSpec.include_refs` is ``True``).
 
         Raises:
             ValidationError: If any parameter is ``None`` or invalid.
             ValueError: If ``fetch_spec.anchor.kind`` is not
-                :attr:`~roam_pub.roam_node_fetch_result.QueryAnchorKind.NODE_UID`, or if
+                :attr:`~inktomi.roam_node_fetch_result.QueryAnchorKind.NODE_UID`, or if
                 no node with the given UID exists in the graph.
             requests.exceptions.ConnectionError: If unable to connect to the Local API.
             requests.exceptions.HTTPError: If the Local API returns a non-200 status.
@@ -478,7 +478,9 @@ class FetchRoamNodes:
                 f"expected fetch_spec.anchor.kind=QueryAnchorKind.NODE_UID; got {fetch_spec.anchor.kind!r}"
             )
         return FetchRoamNodes._fetch(
-            FetchRoamNodes.Request.payload_by_node_uid(fetch_spec.anchor.qualifier, include_refs=fetch_spec.include_refs),
+            FetchRoamNodes.Request.payload_by_node_uid(
+                fetch_spec.anchor.qualifier, include_refs=fetch_spec.include_refs
+            ),
             api_endpoint,
             fetch_spec,
         )
@@ -490,8 +492,8 @@ class FetchRoamNodes:
         """Fetch Roam nodes by page title or node UID, dispatching on *anchor* kind.
 
         Routes to :meth:`fetch_by_node_uid` when
-        :attr:`~roam_pub.roam_node_fetch_result.NodeFetchAnchor.kind` is
-        :attr:`~roam_pub.roam_node_fetch_result.QueryAnchorKind.NODE_UID`, or to
+        :attr:`~inktomi.roam_node_fetch_result.NodeFetchAnchor.kind` is
+        :attr:`~inktomi.roam_node_fetch_result.QueryAnchorKind.NODE_UID`, or to
         :meth:`fetch_by_page_title` otherwise.
 
         Args:
@@ -499,12 +501,12 @@ class FetchRoamNodes:
             api_endpoint: The API endpoint (URL + bearer token) for the target Roam graph.
             include_refs: Forwarded to the dispatched fetch method; controls whether
                 ``:block/refs`` targets are included in the result.
-            include_node_tree: Forwarded to :class:`~roam_pub.roam_node_fetch_result.NodeFetchSpec`;
-                when ``False``, skips :class:`~roam_pub.roam_node.RoamNode` parsing and returns
+            include_node_tree: Forwarded to :class:`~inktomi.roam_node_fetch_result.NodeFetchSpec`;
+                when ``False``, skips :class:`~inktomi.roam_node.RoamNode` parsing and returns
                 only the raw Datalog result.
 
         Returns:
-            A :class:`~roam_pub.roam_node_fetch_result.NodeFetchResult` from the
+            A :class:`~inktomi.roam_node_fetch_result.NodeFetchResult` from the
             dispatched fetch method.
 
         Raises:

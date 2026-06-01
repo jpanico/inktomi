@@ -1,4 +1,4 @@
-# roam-pub
+# inktomi
 
 Python 3.14 toolkit for bundling Roam Research markdown exports with their Cloud Firestore-hosted images into self-contained `.mdbundle` directories.
 
@@ -13,8 +13,8 @@ Python 3.14 toolkit for bundling Roam Research markdown exports with their Cloud
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/roam-pub.git
-   cd roam-pub
+   git clone https://github.com/yourusername/inktomi.git
+   cd inktomi
    ```
 
 2. **Create and activate a virtual environment:**
@@ -28,7 +28,7 @@ Python 3.14 toolkit for bundling Roam Research markdown exports with their Cloud
    pip install -e ".[dev]"
    ```
 
-   This installs the `roam-pub` package in editable mode (changes to code are immediately reflected),
+   This installs the `inktomi` package in editable mode (changes to code are immediately reflected),
    along with all runtime and development dependencies declared in [`pyproject.toml`](pyproject.toml).
 
 ### Running Tests
@@ -123,14 +123,14 @@ Recommended order: `pydocstringformatter` → `ruff format --preview` → `ruff 
 pyright
 ```
 
-All production code under `src/roam_pub/` must be fully annotated with no `Any` types. Test modules (`tests/`) use `basic` type checking (`# pyright: basic` directive at the top of each test file).
+All production code under `src/inktomi/` must be fully annotated with no `Any` types. Test modules (`tests/`) use `basic` type checking (`# pyright: basic` directive at the top of each test file).
 
 ## Project Structure
 
 ```
-roam-pub/
+inktomi/
 ├── src/
-│   └── roam_pub/                  # Main package
+│   └── inktomi/                  # Main package
 │       ├── __init__.py
 │       ├── dump_roam_tree.py      # CLI: dump a Roam page or node subtree as a Rich tree to the terminal
 │       ├── export_roam_tree.py    # CLI: export a Roam page or node subtree to a .mdbundle or plain .md

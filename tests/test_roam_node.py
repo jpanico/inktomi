@@ -2,12 +2,12 @@
 
 import pytest
 
-from roam_pub.roam_node import (
+from inktomi.roam_node import (
     NodeType,
     RoamNode,
     node_type,
 )
-from roam_pub.roam_primitives import IdObject
+from inktomi.roam_primitives import IdObject
 
 from conftest import STUB_TIME, STUB_USER
 

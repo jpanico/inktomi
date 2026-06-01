@@ -10,11 +10,11 @@ import pytest
 import requests
 import yaml
 from pydantic import ValidationError
-from roam_pub.roam_local_api import ApiEndpoint, Response as LocalApiResponse
-from roam_pub.roam_primitives import IdObject
-from roam_pub.roam_node import RoamNode
-from roam_pub.roam_node_fetch import FetchRoamNodes
-from roam_pub.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
+from inktomi.roam_local_api import ApiEndpoint, Response as LocalApiResponse
+from inktomi.roam_primitives import IdObject
+from inktomi.roam_node import RoamNode
+from inktomi.roam_node_fetch import FetchRoamNodes
+from inktomi.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
 
 from conftest import FIXTURES_YAML_DIR, article0_node_tree
 
@@ -220,7 +220,7 @@ class TestFetchRoamNodesFetchByPageTitle:
         mock_response.status_code = 500
         mock_response.text = "Internal Server Error"
 
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_response):
             with pytest.raises(requests.exceptions.HTTPError):
                 FetchRoamNodes.fetch_by_page_title(
                     fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="My Page"), include_refs=False),
@@ -229,7 +229,7 @@ class TestFetchRoamNodesFetchByPageTitle:
 
     def test_successful_fetch_returns_roam_nodes(self, api_endpoint: ApiEndpoint, mock_200_response: MagicMock) -> None:
         """Test that a successful HTTP 200 response returns a NodeFetchResult with the fetched nodes."""
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_200_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_200_response):
             result: NodeFetchResult = FetchRoamNodes.fetch_by_page_title(
                 fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="My Page"), include_refs=False),
                 api_endpoint=api_endpoint,
@@ -245,7 +245,7 @@ class TestFetchRoamNodesFetchByPageTitle:
         mock_response.status_code = 200
         mock_response.text = json.dumps({"success": True, "result": []})
 
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_response):
             with pytest.raises(ValueError):
                 FetchRoamNodes.fetch_by_page_title(
                     fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="Nonexistent"), include_refs=False),
@@ -254,7 +254,7 @@ class TestFetchRoamNodesFetchByPageTitle:
 
     def test_posts_to_correct_endpoint_url(self, api_endpoint: ApiEndpoint, mock_200_response: MagicMock) -> None:
         """Test that the POST is made to the correct endpoint URL."""
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
             FetchRoamNodes.fetch_by_page_title(
                 fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="My Page"), include_refs=False),
                 api_endpoint=api_endpoint,
@@ -264,7 +264,7 @@ class TestFetchRoamNodesFetchByPageTitle:
 
     def test_posts_data_q_action(self, api_endpoint: ApiEndpoint, mock_200_response: MagicMock) -> None:
         """Test that the POST body contains the data.q action."""
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
             FetchRoamNodes.fetch_by_page_title(
                 fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="My Page"), include_refs=False),
                 api_endpoint=api_endpoint,
@@ -275,7 +275,7 @@ class TestFetchRoamNodesFetchByPageTitle:
 
     def test_posts_page_title_in_args(self, api_endpoint: ApiEndpoint, mock_200_response: MagicMock) -> None:
         """Test that the POST body includes the page title in args."""
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
             FetchRoamNodes.fetch_by_page_title(
                 fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="My Page"), include_refs=False),
                 api_endpoint=api_endpoint,
@@ -292,7 +292,7 @@ class TestFetchRoamNodesFetchByPageTitle:
             bearer_token="my-secret-token",
         )
 
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
             FetchRoamNodes.fetch_by_page_title(
                 fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="My Page"), include_refs=False),
                 api_endpoint=token_endpoint,
@@ -335,7 +335,7 @@ class TestFetchRoamNodesFetchByPageTitle:
             }
         )
 
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_response):
             result: NodeFetchResult = FetchRoamNodes.fetch_by_page_title(
                 fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="Rich Page"), include_refs=False),
                 api_endpoint=api_endpoint,
@@ -400,7 +400,7 @@ class TestFetchRoamNodesFetchByPageTitle:
             }
         )
 
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_response):
             result: NodeFetchResult = FetchRoamNodes.fetch_by_page_title(
                 fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="Heading Page"), include_refs=False),
                 api_endpoint=api_endpoint,
@@ -467,7 +467,7 @@ class TestFetchRoamNodesFetchByNodeUid:
         mock_response.status_code = 200
         mock_response.text = json.dumps({"success": True, "result": []})
 
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_response):
             with pytest.raises(ValueError):
                 FetchRoamNodes.fetch_by_node_uid(
                     fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="wdMgyBiP9"), include_refs=False),
@@ -525,7 +525,7 @@ class TestFetchRoamNodesFetchByNodeUid:
             }
         )
 
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_response):
             result: NodeFetchResult = FetchRoamNodes.fetch_by_node_uid(
                 fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="wdMgyBiP9"), include_refs=False),
                 api_endpoint=api_endpoint,
@@ -541,8 +541,8 @@ class TestFetchTestarticle1WithRefs:
     """Unit tests for FetchRoamNodes._fetch with ``[[Test Article]] 1`` and ``include_refs=True``.
 
     Replays the ``test_article_1_raw_result.yaml`` fixture through :meth:`FetchRoamNodes._fetch`
-    by patching :func:`~roam_pub.roam_local_api.invoke_action` so that no live Roam Desktop
-    connection is required, then asserts the produced :class:`~roam_pub.roam_node_fetch_result.NodeFetchResult`
+    by patching :func:`~inktomi.roam_local_api.invoke_action` so that no live Roam Desktop
+    connection is required, then asserts the produced :class:`~inktomi.roam_node_fetch_result.NodeFetchResult`
     matches the ``test_article_1_anchor_tree.yaml`` and ``test_article_1_nodes_by_uid.yaml`` fixtures.
     """
 
@@ -553,10 +553,10 @@ class TestFetchTestarticle1WithRefs:
         """Invoke ``_fetch`` with a mocked ``invoke_action`` replaying the raw-result fixture.
 
         Loads ``test_article_1_raw_result.yaml``, wraps it in a
-        :class:`~roam_pub.roam_local_api.Response.Payload`, patches
-        :func:`~roam_pub.roam_local_api.invoke_action` to return that payload, then calls
+        :class:`~inktomi.roam_local_api.Response.Payload`, patches
+        :func:`~inktomi.roam_local_api.invoke_action` to return that payload, then calls
         :meth:`FetchRoamNodes._fetch` and returns the resulting
-        :class:`~roam_pub.roam_node_fetch_result.NodeFetchResult`.
+        :class:`~inktomi.roam_node_fetch_result.NodeFetchResult`.
         """
         raw_result: list[list[dict[str, object]]] = yaml.safe_load(
             (FIXTURES_YAML_DIR / "test_article_1_raw_result.yaml").read_text()
@@ -568,7 +568,7 @@ class TestFetchTestarticle1WithRefs:
             include_node_tree=True,
         )
         request_payload = FetchRoamNodes.Request.payload_by_page_title(self._PAGE_TITLE, include_refs=True)
-        with patch("roam_pub.roam_node_fetch.invoke_action", return_value=mock_payload):
+        with patch("inktomi.roam_node_fetch.invoke_action", return_value=mock_payload):
             return FetchRoamNodes._fetch(request_payload, api_endpoint, fetch_spec)  # type: ignore[misc]
 
     def test_anchor_tree_matches_fixture(self, fetch_result: NodeFetchResult) -> None:

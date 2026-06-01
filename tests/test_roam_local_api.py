@@ -10,7 +10,7 @@ import pytest
 import requests
 from pydantic import ValidationError
 
-from roam_pub.roam_local_api import ApiEndpoint, ApiEndpointURL, Request, Response, invoke_action
+from inktomi.roam_local_api import ApiEndpoint, ApiEndpointURL, Request, Response, invoke_action
 
 logger = logging.getLogger(__name__)
 
@@ -323,7 +323,7 @@ class TestMakeRequest:
         self, api_endpoint: ApiEndpoint, file_get_payload: Request.Payload, mock_200_response: MagicMock
     ) -> None:
         """Test that a 200 response is parsed and returned as Response.Payload."""
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_200_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_200_response):
             result: Response.Payload = invoke_action(file_get_payload, api_endpoint)
 
         assert result.success is True
@@ -334,7 +334,7 @@ class TestMakeRequest:
         self, api_endpoint: ApiEndpoint, file_get_payload: Request.Payload, mock_200_response: MagicMock
     ) -> None:
         """Test that the POST is made to the correct endpoint URL."""
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
             invoke_action(file_get_payload, api_endpoint)
 
         assert mock_post.call_args.args[0] == str(api_endpoint.url)
@@ -343,7 +343,7 @@ class TestMakeRequest:
         self, api_endpoint: ApiEndpoint, file_get_payload: Request.Payload, mock_200_response: MagicMock
     ) -> None:
         """Test that the Authorization header contains the bearer token."""
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
             invoke_action(file_get_payload, api_endpoint)
 
         headers: dict[str, str] = mock_post.call_args.kwargs["headers"]
@@ -353,7 +353,7 @@ class TestMakeRequest:
         self, api_endpoint: ApiEndpoint, file_get_payload: Request.Payload, mock_200_response: MagicMock
     ) -> None:
         """Test that the Content-Type header is application/json."""
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
             invoke_action(file_get_payload, api_endpoint)
 
         headers: dict[str, str] = mock_post.call_args.kwargs["headers"]
@@ -363,7 +363,7 @@ class TestMakeRequest:
         self, api_endpoint: ApiEndpoint, file_get_payload: Request.Payload, mock_200_response: MagicMock
     ) -> None:
         """Test that the serialized payload dict is passed as the json kwarg."""
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
             invoke_action(file_get_payload, api_endpoint)
 
         assert mock_post.call_args.kwargs["json"] == file_get_payload.model_dump()
@@ -378,7 +378,7 @@ class TestMakeRequest:
         mock_response.status_code = 403
         mock_response.text = "Forbidden"
 
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_response):
             with pytest.raises(requests.exceptions.HTTPError):
                 invoke_action(file_get_payload, api_endpoint)
 
@@ -388,7 +388,7 @@ class TestMakeRequest:
         mock_response.status_code = 500
         mock_response.text = "Internal Server Error"
 
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_response):
             with pytest.raises(requests.exceptions.HTTPError):
                 invoke_action(file_get_payload, api_endpoint)
 
@@ -400,6 +400,6 @@ class TestMakeRequest:
         mock_response.status_code = 401
         mock_response.text = "Unauthorized"
 
-        with patch("roam_pub.roam_local_api.requests.post", return_value=mock_response):
+        with patch("inktomi.roam_local_api.requests.post", return_value=mock_response):
             with pytest.raises(requests.exceptions.HTTPError, match="401"):
                 invoke_action(file_get_payload, api_endpoint)

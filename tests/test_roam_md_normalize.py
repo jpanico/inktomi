@@ -1,6 +1,6 @@
-"""Unit tests for roam_pub.roam_md_normalize."""
+"""Unit tests for inktomi.roam_md_normalize."""
 
-from roam_pub.roam_md_normalize import normalize, normalize_italics, strip_square_brackets
+from inktomi.roam_md_normalize import normalize, normalize_italics, strip_square_brackets
 
 
 class TestNormalizeItalics:

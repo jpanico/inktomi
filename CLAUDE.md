@@ -31,7 +31,7 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
 ```
 
 ## Project Structure
-- `src/roam_pub/` — main package
+- `src/inktomi/` — main package
   - **CLI entry points**
     - `dump_roam_tree.py` — dumps a Roam page or node subtree as a Rich tree to the terminal; supports `--vertex-tree`/`--node-tree`/`--raw-results` flags (`dump-roam-tree`)
     - `export_roam_tree.py` — exports a Roam page or node subtree to a `.mdbundle` (default) or plain `.md` (`--no-bundle`); target is a page title or node UID (`export-roam-tree`)
@@ -63,7 +63,7 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
 - `tests/fixtures/` — sample markdown, images, JSON, YAML for tests
 
 ## Conventions
-- Src layout: package lives under `src/roam_pub/`
+- Src layout: package lives under `src/inktomi/`
 - Line length: 120 chars (Black + Ruff)
 - Docstrings: PEP 257 format (pydocstringformatter), Google style convention (Ruff)
 - Tests: pytest, files named `test_*.py`

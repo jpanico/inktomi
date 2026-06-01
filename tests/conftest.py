@@ -1,4 +1,4 @@
-"""Shared pytest configuration and test infrastructure for the roam_pub test suite."""
+"""Shared pytest configuration and test infrastructure for the inktomi test suite."""
 
 import os
 import pathlib
@@ -7,11 +7,11 @@ from typing import Final
 import pytest
 import yaml
 
-from roam_pub.graph import VertexTree, vertex_adapter
-from roam_pub.roam_local_api import ApiEndpoint, ApiEndpointURL
-from roam_pub.roam_node import NodeType, RoamNode, node_type
-from roam_pub.roam_tree import NodeTree
-from roam_pub.roam_primitives import IdObject
+from inktomi.graph import VertexTree, vertex_adapter
+from inktomi.roam_local_api import ApiEndpoint, ApiEndpointURL
+from inktomi.roam_node import NodeType, RoamNode, node_type
+from inktomi.roam_tree import NodeTree
+from inktomi.roam_primitives import IdObject
 
 FIXTURES_YAML_DIR: pathlib.Path = pathlib.Path(__file__).parent / "fixtures" / "yaml"
 """Absolute path to the ``tests/fixtures/yaml/`` directory."""
@@ -34,7 +34,7 @@ STUB_USER: IdObject = IdObject(id=1)
 
 @pytest.fixture
 def api_endpoint() -> ApiEndpoint:
-    """Return a minimal :class:`~roam_pub.roam_local_api.ApiEndpoint` for unit tests."""
+    """Return a minimal :class:`~inktomi.roam_local_api.ApiEndpoint` for unit tests."""
     return ApiEndpoint(
         url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
         bearer_token="test-token",
@@ -43,7 +43,7 @@ def api_endpoint() -> ApiEndpoint:
 
 @pytest.fixture
 def live_api_endpoint() -> ApiEndpoint:
-    """Return a live :class:`~roam_pub.roam_local_api.ApiEndpoint` built from env vars.
+    """Return a live :class:`~inktomi.roam_local_api.ApiEndpoint` built from env vars.
 
     Requires ``ROAM_LOCAL_API_PORT``, ``ROAM_GRAPH_NAME``, and ``ROAM_API_TOKEN``
     to be set in the environment.  Intended for use in tests marked ``@pytest.mark.live``.
@@ -56,7 +56,7 @@ def live_api_endpoint() -> ApiEndpoint:
 
 
 def article0_node_tree() -> NodeTree:
-    """Load and return the ``Test Article 0`` :class:`~roam_pub.roam_tree.NodeTree` from its YAML fixture."""
+    """Load and return the ``Test Article 0`` :class:`~inktomi.roam_tree.NodeTree` from its YAML fixture."""
     raw: Final[list[dict[str, object]]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_0_nodes.yaml").read_text())
     network: Final[list[RoamNode]] = [RoamNode.model_validate(r) for r in raw]
     root_node: Final[RoamNode] = next(n for n in network if node_type(n) == NodeType.Page)
@@ -64,6 +64,6 @@ def article0_node_tree() -> NodeTree:
 
 
 def article0_vertex_tree() -> VertexTree:
-    """Load and return the ``Test Article 0`` :class:`~roam_pub.graph.VertexTree` from its YAML fixture."""
+    """Load and return the ``Test Article 0`` :class:`~inktomi.graph.VertexTree` from its YAML fixture."""
     raw: list[dict[str, object]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_0_vertices.yaml").read_text())
     return VertexTree(vertices=[vertex_adapter.validate_python(r) for r in raw])

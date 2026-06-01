@@ -47,7 +47,7 @@ def normalize(roam_string: str) -> str:
 
     Args:
         roam_string: A single Roam block string (the raw ``string`` field from a
-            :class:`~roam_pub.roam_node.RoamNode`).
+            :class:`~inktomi.roam_node.RoamNode`).
 
     Returns:
         The normalized CommonMark string.

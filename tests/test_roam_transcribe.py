@@ -6,7 +6,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from roam_pub.graph import (
+from inktomi.graph import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
@@ -15,8 +15,8 @@ from roam_pub.graph import (
     VertexType,
     vertex_adapter,
 )
-from roam_pub.roam_node import RoamNode
-from roam_pub.roam_transcribe import (
+from inktomi.roam_node import RoamNode
+from inktomi.roam_transcribe import (
     is_image_node,
     to_heading_vertex,
     to_image_vertex,
@@ -26,7 +26,7 @@ from roam_pub.roam_transcribe import (
     transcribe_node,
     vertex_type,
 )
-from roam_pub.roam_primitives import Id, IdObject
+from inktomi.roam_primitives import Id, IdObject
 
 # A real Firestore URL whose path yields a predictable file_name and media_type:
 #   file_name  = "photo.jpeg"

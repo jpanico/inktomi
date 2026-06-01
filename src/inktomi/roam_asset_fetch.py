@@ -12,9 +12,9 @@ from typing import Literal, Self, final
 from pydantic import Base64Bytes, BaseModel, ConfigDict, Field, validate_call
 import logging
 
-from roam_pub.roam_local_api import ApiEndpoint, Request as LocalApiRequest, Response as LocalApiResponse, invoke_action
-from roam_pub.roam_asset import RoamAsset
-from roam_pub.roam_primitives import MediaType, Url
+from inktomi.roam_local_api import ApiEndpoint, Request as LocalApiRequest, Response as LocalApiResponse, invoke_action
+from inktomi.roam_asset import RoamAsset
+from inktomi.roam_primitives import MediaType, Url
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +25,9 @@ class FetchRoamAsset:
 
     Executes a ``file.get`` action via the Local API, which proxies
     ``roamAlphaAPI.file.get`` through the Roam Desktop app's local HTTP server.
-    The decoded asset is returned as a :class:`~roam_pub.roam_asset.RoamAsset`.
+    The decoded asset is returned as a :class:`~inktomi.roam_asset.RoamAsset`.
 
-    Delegates HTTP transport to :func:`~roam_pub.roam_local_api.invoke_action`,
+    Delegates HTTP transport to :func:`~inktomi.roam_local_api.invoke_action`,
     which handles header construction and error raising.
     """
 
@@ -103,7 +103,7 @@ class FetchRoamAsset:
         """Fetch an asset from Cloud Firestore via the Roam Research Local API.
 
         Builds a ``file.get`` request payload and delegates the HTTP call to
-        :func:`~roam_pub.roam_local_api.invoke_action`. The Roam Desktop app must be
+        :func:`~inktomi.roam_local_api.invoke_action`. The Roam Desktop app must be
         running and the user must be logged into the graph at the time this method is
         called.
 
@@ -113,7 +113,7 @@ class FetchRoamAsset:
             api_endpoint: The API endpoint (URL + bearer token) for the target Roam graph.
 
         Returns:
-            An immutable :class:`~roam_pub.roam_asset.RoamAsset` with the decoded
+            An immutable :class:`~inktomi.roam_asset.RoamAsset` with the decoded
             binary contents, file name, media type, and a ``last_modified``
             timestamp of now.
 

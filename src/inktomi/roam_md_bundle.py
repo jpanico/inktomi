@@ -36,10 +36,10 @@ from pathlib import Path
 from typing import overload
 from pydantic import HttpUrl, validate_call
 
-from roam_pub.roam_local_api import ApiEndpoint
-from roam_pub.roam_asset_fetch import FetchRoamAsset
-from roam_pub.roam_asset import RoamAsset
-from roam_pub.roam_primitives import IMAGE_LINK_RE
+from inktomi.roam_local_api import ApiEndpoint
+from inktomi.roam_asset_fetch import FetchRoamAsset
+from inktomi.roam_asset import RoamAsset
+from inktomi.roam_primitives import IMAGE_LINK_RE
 
 logger = logging.getLogger(__name__)
 

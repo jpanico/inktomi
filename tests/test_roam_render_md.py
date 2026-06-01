@@ -1,15 +1,15 @@
-"""Unit tests for roam_pub.md_rendering."""
+"""Unit tests for inktomi.md_rendering."""
 
 from pydantic import HttpUrl
 
-from roam_pub.graph import (
+from inktomi.graph import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
     TextContentVertex,
     VertexTree,
 )
-from roam_pub.md_rendering import render
+from inktomi.md_rendering import render
 
 from conftest import FIXTURES_MD_DIR, article0_vertex_tree
 

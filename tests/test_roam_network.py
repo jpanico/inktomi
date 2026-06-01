@@ -2,7 +2,7 @@
 
 import pytest
 
-from roam_pub.roam_network import (
+from inktomi.roam_network import (
     all_children_present,
     all_descendants,
     all_parents_present,
@@ -11,9 +11,9 @@ from roam_pub.roam_network import (
     is_acyclic,
     refs_ids,
 )
-from roam_pub.roam_node import RoamNode
-from roam_pub.roam_primitives import IdObject
-from roam_pub.validation import ValidationError
+from inktomi.roam_node import RoamNode
+from inktomi.roam_primitives import IdObject
+from inktomi.validation import ValidationError
 
 from conftest import STUB_TIME, STUB_USER, article0_node_tree
 

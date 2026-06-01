@@ -14,7 +14,7 @@ from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from roam_pub.roam_primitives import (
+from inktomi.roam_primitives import (
     HeadingLevel,
     Id,
     IdObject,
@@ -25,7 +25,7 @@ from roam_pub.roam_primitives import (
     RawRefs,
     Uid,
 )
-from roam_pub.roam_schema import RoamAttribute
+from inktomi.roam_schema import RoamAttribute
 
 logger = logging.getLogger(__name__)
 
