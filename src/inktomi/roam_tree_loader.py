@@ -62,9 +62,9 @@ def fetch_roam_trees(
         logger.debug("result=%r", result)
         return result, None
 
-    assert result.anchor_tree is not None, (
-        "anchor_tree is None; fetch_spec has include_node_tree=False, which is unsupported here"
-    )
+    assert (
+        result.anchor_tree is not None
+    ), "anchor_tree is None; fetch_spec has include_node_tree=False, which is unsupported here"
     anchor_tree: Final[NodeTree] = result.anchor_tree
     vertex_tree: Final[VertexTree] = transcribe(anchor_tree)
     logger.debug("node_tree=%r\n\nvertex_tree=%r", anchor_tree, vertex_tree)

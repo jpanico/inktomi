@@ -21,6 +21,7 @@ dev = [
     "black>=23.0",
     "pyright>=1.1",
     "pydocstringformatter>=0.7",
+    "ruff>=0.4",
     "hatch>=1.0",
     "pyyaml>=6.0",
 ]
@@ -29,11 +30,13 @@ dev = [
 dump-roam-tree = "inktomi.dump_roam_tree:app"
 export-roam-tree = "inktomi.export_roam_tree:app"
 
+[tool.hatch.envs.default]
+features = ["dev"]
+
 [tool.hatch.envs.default.scripts]
 check = [
-    "black .",
     "pydocstringformatter --write src/",
-    "ruff format --preview src/",
+    "black .",
     "ruff check --fix src/ tests/",
     "pyright",
     "pytest",

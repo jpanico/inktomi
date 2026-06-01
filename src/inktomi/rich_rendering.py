@@ -295,14 +295,16 @@ def _is_obj_list(val: object) -> TypeGuard[list[object]]:
     return isinstance(val, list)
 
 
-_RAW_RESULTS_EXCLUDED_ATTRS: Final[frozenset[str]] = frozenset({
-    "open",
-    "prevent-clean",
-    "sidebar",
-    "time",
-    "user",
-    "view-type",
-})
+_RAW_RESULTS_EXCLUDED_ATTRS: Final[frozenset[str]] = frozenset(
+    {
+        "open",
+        "prevent-clean",
+        "sidebar",
+        "time",
+        "user",
+        "view-type",
+    }
+)
 """Pull-block attribute keys suppressed from the raw-results Rich table."""
 
 _RAW_RESULTS_COL_ORDER: Final[tuple[str, ...]] = (

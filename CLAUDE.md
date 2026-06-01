@@ -20,9 +20,8 @@ hatch run check
 
 # Individual steps (run in this order):
 pydocstringformatter --write src/ # reflow docstring content (PEP 257)
-ruff format --preview src/        # fix structural formatting around docstrings
-ruff check --fix src/ tests/      # lint + fix docstring style (Google convention)
 black .                           # format code
+ruff check --fix src/ tests/      # lint + fix docstring style (Google convention)
 pyright                           # type check (strict)
 pytest                            # run tests (excludes live tests)
 
