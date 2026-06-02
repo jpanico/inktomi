@@ -39,7 +39,7 @@ Once the development environment is set up, run the full check pipeline (format,
 hatch run check
 ```
 
-This runs, in order: `black`, `pydocstringformatter`, `ruff format --preview`, `ruff check --fix`, `pyright`, and `pytest`.
+This runs, in order: `pydocstringformatter`, `black`, `ruff check --fix`, `pyright`, and `pytest`.
 
 To run only the test suite:
 
@@ -96,15 +96,7 @@ To preview without writing:
 pydocstringformatter src/
 ```
 
-**2. Structural formatting — `ruff format --preview`**
-
-Fixes indentation, trailing whitespace, and blank lines around docstrings.
-
-```bash
-ruff format --preview src/
-```
-
-**3. Google-style lint — `ruff check`**
+**2. Google-style lint — `ruff check`**
 
 Enforces Google docstring convention and auto-fixes violations.
 
@@ -113,7 +105,7 @@ ruff check src/ tests/
 ruff check --fix src/ tests/
 ```
 
-Recommended order: `pydocstringformatter` → `ruff format --preview` → `ruff check --fix`.
+Recommended order: `pydocstringformatter` → `black` → `ruff check --fix`.
 
 ### Type Checking
 
