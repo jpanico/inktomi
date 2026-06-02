@@ -184,9 +184,9 @@ def invoke_action(request_payload: Request.Payload, api_endpoint: ApiEndpoint) -
         requests.exceptions.HTTPError: If the Local API returns a non-200 status.
     """
     logger.debug("payload: %s, api_endpoint: %s", request_payload, api_endpoint)
-    request_headers: Request.Headers = Request.Headers.with_bearer_token(api_endpoint.bearer_token)
+    request_headers: Final[Request.Headers] = Request.Headers.with_bearer_token(api_endpoint.bearer_token)
 
-    response: requests.Response = requests.post(
+    response: Final[requests.Response] = requests.post(
         str(api_endpoint.url),
         json=request_payload.model_dump(mode="json"),
         headers=request_headers.model_dump(by_alias=True),

@@ -23,6 +23,7 @@ Public symbols:
 """
 
 import logging
+from typing import Final
 
 from inktomi.graph import (
     HeadingVertex,
@@ -54,10 +55,10 @@ def render(vertex_tree: VertexTree) -> str:
         A CommonMark document string ending with a single trailing newline.
     """
     logger.debug("vertex_tree=%r", vertex_tree)
-    uid_map: dict[Uid, Vertex] = {v.uid: v for v in vertex_tree.vertices}
-    child_uids: set[Uid] = {uid for v in vertex_tree.vertices if v.children for uid in v.children}
-    root: Vertex = next(v for v in vertex_tree.vertices if v.uid not in child_uids)
-    out: list[str] = []
+    uid_map: Final[dict[Uid, Vertex]] = {v.uid: v for v in vertex_tree.vertices}
+    child_uids: Final[set[Uid]] = {uid for v in vertex_tree.vertices if v.children for uid in v.children}
+    root: Final[Vertex] = next(v for v in vertex_tree.vertices if v.uid not in child_uids)
+    out: Final[list[str]] = []
     _render_vertex(root, uid_map, depth=0, out=out)
     return "\n".join(out).rstrip("\n") + "\n"
 

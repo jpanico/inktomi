@@ -124,16 +124,16 @@ def has_unique_ids(network: NodeNetwork) -> ValidationError | None:
         :class:`~inktomi.validation.ValidationError` listing the sorted
         duplicate ids otherwise.
     """
-    ids: list[Id] = [n.id for n in network]
+    ids: Final[list[Id]] = [n.id for n in network]
     if len(ids) == len(set(ids)):
         return None
-    seen: set[Id] = set()
-    duplicates: set[Id] = set()
+    seen: Final[set[Id]] = set()
+    duplicates: Final[set[Id]] = set()
     for id_ in ids:
         if id_ in seen:
             duplicates.add(id_)
         seen.add(id_)
-    dup_ids = sorted(duplicates)
+    dup_ids: Final[list[Id]] = sorted(duplicates)
     return ValidationError(message=f"expected unique node ids; found duplicates: {dup_ids}", validator=has_unique_ids)
 
 
@@ -159,9 +159,11 @@ def is_acyclic(network: NodeNetwork) -> ValidationError | None:
         :class:`~inktomi.validation.ValidationError` naming the uid of the
         cycle-involved node otherwise.
     """
-    id_to_node: dict[Id, RoamNode] = {n.id: n for n in network}
-    _WHITE, _GREY, _BLACK = 0, 1, 2
-    color: dict[Id, int] = {n.id: _WHITE for n in network}
+    id_to_node: Final[dict[Id, RoamNode]] = {n.id: n for n in network}
+    _WHITE: Final[int] = 0
+    _GREY: Final[int] = 1
+    _BLACK: Final[int] = 2
+    color: Final[dict[Id, int]] = {n.id: _WHITE for n in network}
 
     def _dfs(node_id: Id) -> Uid | None:
         """Return the uid of a cycle-involved node, or ``None`` if no cycle is found."""

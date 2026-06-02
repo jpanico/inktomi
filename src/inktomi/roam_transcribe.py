@@ -22,6 +22,8 @@ Public symbols:
 
 import logging
 import mimetypes
+import re
+from typing import Final
 from urllib.parse import unquote, urlparse
 
 from pydantic import TypeAdapter, validate_call
@@ -67,11 +69,11 @@ def _resolve_children(node: RoamNode, id_map: dict[Id, RoamNode]) -> VertexChild
     """
     if not node.children:
         return None
-    resolved: list[RoamNode] = sorted(
+    resolved: Final[list[RoamNode]] = sorted(
         [id_map[c.id] for c in node.children if c.id in id_map],
         key=lambda n: n.order if n.order is not None else 0,
     )
-    uids: VertexChildren = [n.uid for n in resolved]
+    uids: Final[VertexChildren] = [n.uid for n in resolved]
     return uids if uids else None
 
 
@@ -90,7 +92,7 @@ def _resolve_refs(node: RoamNode, id_map: dict[Id, RoamNode]) -> VertexRefs | No
     """
     if not node.refs:
         return None
-    resolved: VertexRefs = [id_map[r.id].uid for r in node.refs if r.id in id_map]
+    resolved: Final[VertexRefs] = [id_map[r.id].uid for r in node.refs if r.id in id_map]
     return resolved if resolved else None
 
 
@@ -129,7 +131,7 @@ def _extract_firestore_url(string: str) -> str | None:
     Returns:
         The URL string captured from the first Firestore image link, or ``None``.
     """
-    m = IMAGE_LINK_RE.search(string)
+    m: Final[re.Match[str] | None] = IMAGE_LINK_RE.search(string)
     return m.group("url") if m else None
 
 
@@ -146,10 +148,10 @@ def _extract_alt_text(string: str) -> str | None:
     Returns:
         The stripped alt text string, or ``None``.
     """
-    m = IMAGE_LINK_RE.search(string)
+    m: Final[re.Match[str] | None] = IMAGE_LINK_RE.search(string)
     if m is None:
         return None
-    alt = m.group("alt").strip()
+    alt: Final[str] = m.group("alt").strip()
     return alt if alt else None
 
 
@@ -240,7 +242,7 @@ def vertex_type(node: RoamNode) -> VertexType:
     logger.debug("node=%r", node)
     if node.title is not None:
         return VertexType.ROAM_PAGE
-    string = node.string
+    string: Final[str | None] = node.string
     if string is None:
         raise ValueError(f"RoamNode uid={node.uid!r} has neither 'title' nor 'string'")
     if is_image_node(node):
@@ -296,11 +298,11 @@ def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
     logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
     if node.string is None:
         raise ValueError(f"RoamNode uid={node.uid!r} has no 'string'")
-    firestore_url = _extract_firestore_url(node.string)
+    firestore_url: Final[str | None] = _extract_firestore_url(node.string)
     if firestore_url is None:
         raise ValueError(f"RoamNode uid={node.uid!r} 'string' contains no Firestore URL")
-    file_name = _extract_file_name(firestore_url)
-    media_type = _infer_media_type(file_name) if file_name is not None else None
+    file_name: Final[str | None] = _extract_file_name(firestore_url)
+    media_type: Final[str | None] = _infer_media_type(file_name) if file_name is not None else None
     return ImageVertex(
         uid=node.uid,
         source=_url_adapter.validate_python(firestore_url),
@@ -332,7 +334,7 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> HeadingVert
     logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
     if node.string is None:
         raise ValueError(f"RoamNode uid={node.uid!r} has no 'string'")
-    heading = _effective_heading_level(node)
+    heading: Final[HeadingLevel | None] = _effective_heading_level(node)
     if heading is None:
         raise ValueError(f"RoamNode uid={node.uid!r} has no effective heading level")
     return HeadingVertex(
@@ -422,5 +424,5 @@ def transcribe(node_tree: NodeTree) -> VertexTree:
     Raises:
         ValueError: If any node has neither a ``title`` nor a ``string`` field set.
     """
-    id_map: dict[Id, RoamNode] = {n.id: n for n in node_tree.tree_network}
+    id_map: Final[dict[Id, RoamNode]] = {n.id: n for n in node_tree.tree_network}
     return VertexTree(vertices=[transcribe_node(n, id_map) for n in node_tree.tree_network])

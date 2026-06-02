@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+from typing import Final
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture
 def mock_200_response() -> MagicMock:
     """Return a mock requests.Response with status 200 and a minimal schema body."""
-    mock: MagicMock = MagicMock()
+    mock: Final[MagicMock] = MagicMock()
     mock.status_code = 200
     mock.text = json.dumps(
         {

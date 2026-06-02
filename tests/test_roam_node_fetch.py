@@ -33,7 +33,7 @@ def _stable_node_dict(node: RoamNode) -> dict[str, object]:
 @pytest.fixture
 def mock_200_response() -> MagicMock:
     """Return a mock requests.Response with status 200 and a minimal page body."""
-    mock: MagicMock = MagicMock()
+    mock: Final[MagicMock] = MagicMock()
     mock.status_code = 200
     mock.text = json.dumps(
         {

@@ -33,7 +33,7 @@ import unicodedata
 import re
 import logging
 from pathlib import Path
-from typing import overload
+from typing import Final, overload
 from pydantic import HttpUrl, validate_call
 
 from inktomi.roam_local_api import ApiEndpoint
@@ -91,11 +91,11 @@ def create_bundle_directory(markdown_file: Path, output_dir: Path) -> Path:
     Raises:
         ValidationError: If any parameter is None or invalid
     """
-    bundle_dir_stem: str = _normalize_for_posix(markdown_file.stem)
+    bundle_dir_stem: Final[str] = _normalize_for_posix(markdown_file.stem)
     # Create bundle directory: <output_dir>/<markdown_file_stem>.mdbundle/
     # Use stem to remove file extension (e.g., "my_notes.md" -> "my_notes")
-    bundle_dir_name: str = f"{bundle_dir_stem}.mdbundle"
-    bundle_dir: Path = output_dir / bundle_dir_name
+    bundle_dir_name: Final[str] = f"{bundle_dir_stem}.mdbundle"
+    bundle_dir: Final[Path] = output_dir / bundle_dir_name
     bundle_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Created bundle directory: %s", bundle_dir)
 
@@ -116,7 +116,7 @@ def find_markdown_image_links(markdown_text: str) -> list[tuple[str, HttpUrl]]:
     Raises:
         ValidationError: If markdown_text is None or invalid
     """
-    matches: list[tuple[str, HttpUrl]] = []
+    matches: Final[list[tuple[str, HttpUrl]]] = []
     for match in IMAGE_LINK_RE.finditer(markdown_text):
         full_match: str = match.group(0)  # Full ![...](...)
         image_url_str: str = match.group("url")  # Just the URL as string
@@ -161,10 +161,10 @@ def fetch_and_save_image(
     # Check the cache first
     if cache_dir is not None:
         key: str = _cache_key(firebase_url)
-        cached_files: list[Path] = list(cache_dir.glob(f"{key}.*"))
+        cached_files: Final[list[Path]] = list(cache_dir.glob(f"{key}.*"))
         if cached_files:
-            cached_file: Path = cached_files[0]
-            dest: Path = output_dir / cached_file.name
+            cached_file: Final[Path] = cached_files[0]
+            dest: Final[Path] = output_dir / cached_file.name
             shutil.copy2(cached_file, dest)
             logger.info("Cache hit for %s -> %s", firebase_url, cached_file.name)
             return (firebase_url, cached_file.name)
@@ -172,7 +172,7 @@ def fetch_and_save_image(
     logger.info("Fetching image from: %s", firebase_url)
 
     # Fetch the file from Roam
-    roam_asset: RoamAsset = FetchRoamAsset.fetch(api_endpoint=api_endpoint, firebase_url=firebase_url)
+    roam_asset: Final[RoamAsset] = FetchRoamAsset.fetch(api_endpoint=api_endpoint, firebase_url=firebase_url)
 
     # Determine the file name to use in the bundle output directory
     file_name: str = roam_asset.file_name
@@ -180,9 +180,9 @@ def fetch_and_save_image(
     # Save to the cache if a cache directory was provided
     if cache_dir is not None:
         key = _cache_key(firebase_url)
-        ext: str = Path(roam_asset.file_name).suffix  # e.g. ".jpeg"
-        cache_file_name: str = f"{key}{ext}"
-        cache_path: Path = cache_dir / cache_file_name
+        ext: Final[str] = Path(roam_asset.file_name).suffix  # e.g. ".jpeg"
+        cache_file_name: Final[str] = f"{key}{ext}"
+        cache_path: Final[Path] = cache_dir / cache_file_name
         with open(cache_path, "wb") as f:
             f.write(roam_asset.contents)
         logger.info("Cached asset to: %s", cache_path)
@@ -190,7 +190,7 @@ def fetch_and_save_image(
         file_name = cache_file_name
 
     # Save the file to the output directory
-    output_path: Path = output_dir / file_name
+    output_path: Final[Path] = output_dir / file_name
     with open(output_path, "wb") as f:
         f.write(roam_asset.contents)
 
@@ -254,15 +254,15 @@ def normalize_link_text(markdown_text: str) -> str:
     """
     # Pattern to match both image links ![text](url) and regular links [text](url)
     # Captures: optional '!', link text (which may contain newlines), and url
-    pattern = r"(!?\[)((?:[^\]]|\n)+?)(\]\([^\)]+\))"
+    pattern: Final[str] = r"(!?\[)((?:[^\]]|\n)+?)(\]\([^\)]+\))"
 
     def replace_newlines(match: re.Match[str]) -> str:
-        prefix: str = match.group(1)  # '![' or '['
-        link_text: str = match.group(2)  # The link text (may have newlines)
-        suffix: str = match.group(3)  # '](url)'
+        prefix: Final[str] = match.group(1)  # '![' or '['
+        link_text: Final[str] = match.group(2)  # The link text (may have newlines)
+        suffix: Final[str] = match.group(3)  # '](url)'
 
         # Replace newlines in link text with spaces
-        normalized_text: str = re.sub(r"\n+", " ", link_text)
+        normalized_text: Final[str] = re.sub(r"\n+", " ", link_text)
 
         return f"{prefix}{normalized_text}{suffix}"
 
@@ -313,7 +313,7 @@ def fetch_all_images(
     Raises:
         ValidationError: If any parameter is None or invalid
     """
-    url_replacements: list[tuple[HttpUrl, str]] = []
+    url_replacements: Final[list[tuple[HttpUrl, str]]] = []
     for _, firebase_url in image_links:
         try:
             firebase_url_result, local_filename = fetch_and_save_image(
@@ -360,27 +360,29 @@ def bundle_md_file(
     if not markdown_file.exists():
         raise FileNotFoundError(f"Markdown file not found: {markdown_file}")
 
-    bundle_dir: Path = create_bundle_directory(markdown_file, output_dir)
+    bundle_dir: Final[Path] = create_bundle_directory(markdown_file, output_dir)
 
     logger.info("Processing Markdown file: %s", markdown_file)
 
     # Read the Markdown file
-    markdown_text: str = markdown_file.read_text(encoding="utf-8")
+    markdown_text: Final[str] = markdown_file.read_text(encoding="utf-8")
 
     # Find all image links
-    image_links: list[tuple[str, HttpUrl]] = find_markdown_image_links(markdown_text)
+    image_links: Final[list[tuple[str, HttpUrl]]] = find_markdown_image_links(markdown_text)
 
     if not image_links:
         logger.info("No Cloud Firestore image links found in the file")
         return
 
     # Create API endpoint
-    api_endpoint: ApiEndpoint = ApiEndpoint.from_parts(
+    api_endpoint: Final[ApiEndpoint] = ApiEndpoint.from_parts(
         local_api_port=local_api_port, graph_name=graph_name, bearer_token=api_bearer_token
     )
 
     # Fetch and save all images to the bundle directory
-    url_replacements: list[tuple[HttpUrl, str]] = fetch_all_images(image_links, api_endpoint, bundle_dir, cache_dir)
+    url_replacements: Final[list[tuple[HttpUrl, str]]] = fetch_all_images(
+        image_links, api_endpoint, bundle_dir, cache_dir
+    )
 
     # Replace URLs in the Markdown text
     if url_replacements:
@@ -393,7 +395,7 @@ def bundle_md_file(
         updated_text = remove_escaped_double_brackets(updated_text)
 
         # Write the updated Markdown file to the bundle directory
-        output_file: Path = bundle_dir / f"{bundle_dir.stem}.md"
+        output_file: Final[Path] = bundle_dir / f"{bundle_dir.stem}.md"
         output_file.write_text(updated_text, encoding="utf-8")
         logger.info("Wrote updated Markdown to: %s", output_file)
         logger.info("Successfully processed %d images", len(url_replacements))
@@ -428,17 +430,19 @@ def bundle_md_document(
         ValidationError: If any parameter is ``None`` or fails Pydantic validation.
         Exception: If image fetching or writing fails.
     """
-    bundle_dir_stem: str = _normalize_for_posix(document_name)
-    bundle_dir_name: str = f"{bundle_dir_stem}.mdbundle"
-    bundle_dir: Path = output_dir / bundle_dir_name
+    bundle_dir_stem: Final[str] = _normalize_for_posix(document_name)
+    bundle_dir_name: Final[str] = f"{bundle_dir_stem}.mdbundle"
+    bundle_dir: Final[Path] = output_dir / bundle_dir_name
     bundle_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Created bundle directory: %s", bundle_dir)
 
-    image_links: list[tuple[str, HttpUrl]] = find_markdown_image_links(md_text)
+    image_links: Final[list[tuple[str, HttpUrl]]] = find_markdown_image_links(md_text)
 
     md_to_write: str = md_text
     if image_links:
-        url_replacements: list[tuple[HttpUrl, str]] = fetch_all_images(image_links, api_endpoint, bundle_dir, cache_dir)
+        url_replacements: Final[list[tuple[HttpUrl, str]]] = fetch_all_images(
+            image_links, api_endpoint, bundle_dir, cache_dir
+        )
         if url_replacements:
             md_to_write = replace_image_links(md_text, url_replacements)
             logger.info("Successfully processed %d images", len(url_replacements))
@@ -447,6 +451,6 @@ def bundle_md_document(
     else:
         logger.info("No Cloud Firestore image links found in the document")
 
-    output_file: Path = bundle_dir / f"{bundle_dir_stem}.md"
+    output_file: Final[Path] = bundle_dir / f"{bundle_dir_stem}.md"
     output_file.write_text(md_to_write, encoding="utf-8")
     logger.info("Wrote Markdown to: %s", output_file)

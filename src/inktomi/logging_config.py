@@ -9,7 +9,7 @@ Public symbols:
 import logging
 import os
 import re
-from typing import TextIO
+from typing import Final, TextIO
 
 _LEVEL_COLORS: dict[str, str] = {
     "DEBUG": "\033[36m",
@@ -64,7 +64,7 @@ def configure_logging() -> None:
     are no-ops because :func:`logging.basicConfig` only applies when no
     handlers are already installed on the root logger.
     """
-    handler: logging.StreamHandler[TextIO] = logging.StreamHandler()
+    handler: Final[logging.StreamHandler[TextIO]] = logging.StreamHandler()
     handler.setFormatter(
         _ColorLevelFormatter(
             fmt="%(asctime)s %(levelname)s %(location)s %(message)s",

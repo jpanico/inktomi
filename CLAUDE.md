@@ -69,7 +69,7 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
 - **Strong typing**: all Python code must use type annotations throughout; no `Any` types; enforced by pyright in strict mode
 - **Bash tool calls**: never chain multiple commands with `&&` in a single Bash tool call; use separate Bash tool calls instead. Never use heredoc embeds (`$(cat <<'EOF'...EOF)`) in Bash tool calls; use plain `-m "..."` strings with `\n` for newlines instead.
 - **Logging format**: all `logger.*()` calls must use `%`-style format strings (e.g., `logger.info("x=%s", x)`) — never f-strings (e.g., `logger.info(f"x={x}")`); this enables lazy interpolation and better log aggregation in monitoring tools.
-- **Immutable locals**: all local variables must be annotated `Final[T]` by default (e.g., `x: Final[int] = 1`); only omit `Final` when the variable genuinely needs to be reassigned.
+- **Immutable bindings**: all local variables and module-level constants must be annotated `Final[T]` by default (e.g., `x: Final[int] = 1`, `MY_CONST: Final[str] = "value"`); only omit `Final` when the binding genuinely needs to be reassigned. Inside Pydantic models, use `ClassVar[T]` for class-level constants (Pydantic excludes these from model fields).
 
 ## Modern Python Requirements (Python 3.14)
 All code written or modified by Claude MUST follow these conventions — no exceptions:

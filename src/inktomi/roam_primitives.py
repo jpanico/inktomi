@@ -13,16 +13,16 @@ Public symbols are organized into four groups:
 
 import logging
 import re
-from typing import Annotated, Literal
+from typing import Annotated, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 logger = logging.getLogger(__name__)
 
-UID_PATTERN: str = r"^[A-Za-z0-9_-]{9}$"
+UID_PATTERN: Final[str] = r"^[A-Za-z0-9_-]{9}$"
 """Raw regex pattern string for a Roam node UID: exactly 9 alphanumeric/dash/underscore characters."""
 
-UID_RE: re.Pattern[str] = re.compile(UID_PATTERN)
+UID_RE: Final[re.Pattern[str]] = re.compile(UID_PATTERN)
 """Compiled regex for matching a Roam node UID."""
 
 type Uid = Annotated[str, Field(pattern=UID_PATTERN)]
@@ -113,7 +113,7 @@ type RawRefs = list[IdObject]
 Same shape as :data:`RawChildren` — :class:`IdObject` stubs awaiting normalization.
 """
 
-IMAGE_LINK_RE: re.Pattern[str] = re.compile(
+IMAGE_LINK_RE: Final[re.Pattern[str]] = re.compile(
     r"!\[(?P<alt>(?:[^\]]|\n)*?)\]\((?P<url>https://firebasestorage\.googleapis\.com/[^\)]+)\)"
 )
 """Compiled regex matching a Roam markdown image link whose URL is a Cloud Firestore storage URL.

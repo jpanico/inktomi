@@ -42,7 +42,7 @@ from inktomi.roam_primitives import Id, IdObject, IMAGE_LINK_RE, Uid
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_NODE_PANEL_PROPS: list[str] = ["heading", "order", "children", "parents", "page"]
+DEFAULT_NODE_PANEL_PROPS: Final[list[str]] = ["heading", "order", "children", "parents", "page"]
 """Property names rendered in the panel body by :func:`make_node_panel` when no explicit list is given.
 
 ``string``/``title`` and ``id`` are always shown in the panel title and are not
@@ -136,14 +136,14 @@ def make_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS)
         A :class:`~rich.panel.Panel` with a labelled title and metadata body.
     """
     logger.debug("node=%r, props=%r", node, props)
-    text: str = node.string or node.title or f"(uid={node.uid})"
+    text: Final[str] = node.string or node.title or f"(uid={node.uid})"
     if node.string is not None and (m := IMAGE_LINK_RE.search(node.string)):
         title: str = f"[bold #00aa00]IMAGE [{m.group('alt')}](<firestore_url>) ({node.id})[/bold #00aa00]"
     elif node.heading is not None and "heading" in props:
         title = f"[bold #00aa00]H{node.heading}: {text} ({node.id})[/bold #00aa00]"
     else:
         title = f"[bold #00aa00]{text} ({node.id})[/bold #00aa00]"
-    content: str = "  ".join(_format_node_prop(node, p) for p in props if p != "heading")
+    content: Final[str] = "  ".join(_format_node_prop(node, p) for p in props if p != "heading")
     return Panel(Text(content), title=title, expand=False)
 
 
@@ -163,11 +163,11 @@ def build_rich_node_tree(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_P
         A :class:`~rich.tree.Tree` rooted at the single root node of *tree*.
     """
     logger.debug("tree=%r, props=%r", tree, props)
-    child_to_parent: dict[Id, Id] = {c.id: n.id for n in tree.tree_network if n.children for c in n.children}
-    rich_node_map: dict[Id, RichTree] = {}
-    dfs_iter: NodeTreeDFSIterator = tree.dfs()
-    root_node: RoamNode = next(dfs_iter)
-    root_rich: RichTree = RichTree(make_node_panel(root_node, props))
+    child_to_parent: Final[dict[Id, Id]] = {c.id: n.id for n in tree.tree_network if n.children for c in n.children}
+    rich_node_map: Final[dict[Id, RichTree]] = {}
+    dfs_iter: Final[NodeTreeDFSIterator] = tree.dfs()
+    root_node: Final[RoamNode] = next(dfs_iter)
+    root_rich: Final[RichTree] = RichTree(make_node_panel(root_node, props))
     rich_node_map[root_node.id] = root_rich
     for node in dfs_iter:
         parent_rich: RichTree = rich_node_map[child_to_parent[node.id]]
@@ -242,10 +242,10 @@ def make_vertex_panel(vertex: Vertex) -> Panel:
         text = vertex.text
     else:
         text = f"IMAGE [{vertex.alt_text or ''}](<firestore_url>)"
-    title: str = f"[bold #00aa00]{text} ({vertex.uid})[/bold #00aa00]"
-    children_str: str = f"[{', '.join(vertex.children)}]" if vertex.children else "None"
-    refs_str: str = f"[{', '.join(vertex.refs)}]" if vertex.refs else "None"
-    content: str = f"type={vertex.vertex_type.value}  children={children_str}  refs={refs_str}"
+    title: Final[str] = f"[bold #00aa00]{text} ({vertex.uid})[/bold #00aa00]"
+    children_str: Final[str] = f"[{', '.join(vertex.children)}]" if vertex.children else "None"
+    refs_str: Final[str] = f"[{', '.join(vertex.refs)}]" if vertex.refs else "None"
+    content: Final[str] = f"type={vertex.vertex_type.value}  children={children_str}  refs={refs_str}"
     return Panel(Text(content), title=title, expand=False)
 
 
@@ -264,13 +264,13 @@ def build_rich_vertex_tree(vertex_tree: VertexTree) -> RichTree:
         *vertex_tree*.
     """
     logger.debug("vertex_tree=%r", vertex_tree)
-    child_to_parent: dict[Uid, Uid] = {
+    child_to_parent: Final[dict[Uid, Uid]] = {
         child_uid: v.uid for v in vertex_tree.vertices if v.children for child_uid in v.children
     }
-    rich_map: dict[Uid, RichTree] = {}
-    dfs_iter: VertexTreeDFSIterator = vertex_tree.dfs()
-    root: Vertex = next(dfs_iter)
-    root_rich: RichTree = RichTree(make_vertex_panel(root))
+    rich_map: Final[dict[Uid, RichTree]] = {}
+    dfs_iter: Final[VertexTreeDFSIterator] = vertex_tree.dfs()
+    root: Final[Vertex] = next(dfs_iter)
+    root_rich: Final[RichTree] = RichTree(make_vertex_panel(root))
     rich_map[root.uid] = root_rich
     for vertex in dfs_iter:
         parent_rich: RichTree = rich_map[child_to_parent[vertex.uid]]

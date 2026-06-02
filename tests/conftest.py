@@ -65,5 +65,7 @@ def article0_node_tree() -> NodeTree:
 
 def article0_vertex_tree() -> VertexTree:
     """Load and return the ``Test Article 0`` :class:`~inktomi.graph.VertexTree` from its YAML fixture."""
-    raw: list[dict[str, object]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_0_vertices.yaml").read_text())
+    raw: Final[list[dict[str, object]]] = yaml.safe_load(
+        (FIXTURES_YAML_DIR / "test_article_0_vertices.yaml").read_text()
+    )
     return VertexTree(vertices=[vertex_adapter.validate_python(r) for r in raw])
