@@ -23,6 +23,7 @@ class RoamNamespace(StrEnum):
         assert RoamNamespace.BLOCK == "block"
     """
 
+    ANNOTATION = "annotation"
     ATTRS = "attrs"
     BLOCK = "block"
     CHILDREN = "children"
@@ -33,6 +34,7 @@ class RoamNamespace(StrEnum):
     LOG = "log"
     NODE = "node"
     PAGE = "page"
+    PDF = "pdf"
     RESTRICTIONS = "restrictions"
     TOKEN = "token"
     USER = "user"
@@ -54,6 +56,9 @@ class RoamAttribute(Enum):
 
     value: tuple[RoamNamespace, str]  # type: ignore[override]
 
+    # annotation/
+    ANNOTATION_ORIGIN = (RoamNamespace.ANNOTATION, "origin")
+
     # attrs/
     ATTRS_LOOKUP = (RoamNamespace.ATTRS, "lookup")
 
@@ -67,7 +72,6 @@ class RoamAttribute(Enum):
     BLOCK_PROPS = (RoamNamespace.BLOCK, "props")
     BLOCK_REFS = (RoamNamespace.BLOCK, "refs")
     BLOCK_STRING = (RoamNamespace.BLOCK, "string")
-    BLOCK_TEXT_ALIGN = (RoamNamespace.BLOCK, "text-align")
     BLOCK_UID = (RoamNamespace.BLOCK, "uid")
 
     # children/
@@ -96,6 +100,14 @@ class RoamAttribute(Enum):
 
     # page/
     PAGE_SIDEBAR = (RoamNamespace.PAGE, "sidebar")
+    PAGE_EDIT_USER = (RoamNamespace.PAGE, "edit-user")
+    PAGE_EDIT_NONCE = (RoamNamespace.PAGE, "edit-nonce")
+    PAGE_EDIT_TIME = (RoamNamespace.PAGE, "edit-time")
+    PAGE_WORD_COUNT = (RoamNamespace.PAGE, "word-count")
+
+    # pdf/
+    PDF_FINGERPRINTS = (RoamNamespace.PDF, "fingerprints")
+    PDF_URL = (RoamNamespace.PDF, "url")
 
     # restrictions/
     RESTRICTIONS_PREVENT_CLEAN = (RoamNamespace.RESTRICTIONS, "prevent-clean")
@@ -120,6 +132,7 @@ class RoamAttribute(Enum):
 
     # window/
     WINDOW_ID = (RoamNamespace.WINDOW, "id")
+    WINDOW_FILTERS = (RoamNamespace.WINDOW, "filters")
     WINDOW_MENTIONS_STATE = (RoamNamespace.WINDOW, "mentions-state")
 
     def __init__(self, namespace: RoamNamespace, attr_name: str) -> None:

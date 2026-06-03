@@ -1,10 +1,12 @@
 # Roam Schema
 
-Retrieved by [roam_schema_fetch.py](../src/guffin/roam_schema_fetch.py) (Feb. 2026).
+Kept in sync with the `RoamAttribute` enum in `src/guffin/roam_schema.py`.
+Namespaces and attr_names are sorted alphabetically.
 
 | namespace      | attr_name         |
 | -------------- | ----------------- |
-| node           | title             |
+| annotation     | origin            |
+| attrs          | lookup            |
 | block          | children          |
 | block          | heading           |
 | block          | open              |
@@ -14,29 +16,35 @@ Retrieved by [roam_schema_fetch.py](../src/guffin/roam_schema_fetch.py) (Feb. 20
 | block          | props             |
 | block          | refs              |
 | block          | string            |
-| block          | text-align        |
 | block          | uid               |
-| page           | sidebar           |
-| entity         | attrs             |
-| attrs          | lookup            |
+| children       | view-type         |
 | create         | time              |
 | create         | user              |
 | edit           | seen-by           |
 | edit           | time              |
 | edit           | user              |
-| children       | view-type         |
-| version        | id                |
-| version        | nonce             |
-| version        | upgraded-nonce    |
-| restrictions   | prevent-clean     |
-| window         | id                |
-| window         | mentions-state    |
-| vc             | blocks            |
-| token          | description       |
+| entity         | attrs             |
 | graph          | settings          |
 | log            | id                |
+| node           | title             |
+| page           | edit-nonce        |
+| page           | edit-time         |
+| page           | edit-user         |
+| page           | sidebar           |
+| page           | word-count        |
+| pdf            | fingerprints      |
+| pdf            | url               |
+| restrictions   | prevent-clean     |
+| token          | description       |
 | user           | display-name      |
 | user           | display-page      |
 | user           | photo-url         |
 | user           | settings          |
 | user           | uid               |
+| vc             | blocks            |
+| version        | id                |
+| version        | nonce             |
+| version        | upgraded-nonce    |
+| window         | filters           |
+| window         | id                |
+| window         | mentions-state    |
