@@ -1,6 +1,6 @@
 # Roam Schema
 
-Retrieved by [roam_schema_fetch.py](../src/inktomi/roam_schema_fetch.py) (Feb. 2026).
+Retrieved by [roam_schema_fetch.py](../src/guffin/roam_schema_fetch.py) (Feb. 2026).
 
 | namespace      | attr_name         |
 | -------------- | ----------------- |

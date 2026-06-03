@@ -2,7 +2,7 @@
 
 import pytest
 
-from inktomi.roam_network import (
+from guffin.roam_network import (
     all_children_present,
     all_descendants,
     all_parents_present,
@@ -11,9 +11,9 @@ from inktomi.roam_network import (
     is_acyclic,
     refs_ids,
 )
-from inktomi.roam_node import RoamNode
-from inktomi.roam_primitives import IdObject
-from inktomi.validation import ValidationError
+from guffin.roam_node import RoamNode
+from guffin.roam_primitives import IdObject
+from guffin.validation import ValidationError
 
 from conftest import STUB_TIME, STUB_USER, article0_node_tree
 

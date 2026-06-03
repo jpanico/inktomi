@@ -2,38 +2,38 @@
 
 Public symbols:
 
-- :data:`NodeNetwork` — a collection of :class:`~inktomi.roam_node.RoamNode` instances.
-- :func:`all_children_present` — :data:`~inktomi.validation.Validator` requiring all child ids in a
+- :data:`NodeNetwork` — a collection of :class:`~guffin.roam_node.RoamNode` instances.
+- :func:`all_children_present` — :data:`~guffin.validation.Validator` requiring all child ids in a
   :data:`NodeNetwork` to resolve to member nodes.
 - :func:`all_descendants` — collect all nodes reachable from an ancestor via child edges.
 - :func:`all_parents_present` — validator function requiring all non-root parent ids in a
   :data:`NodeNetwork` to resolve to member nodes; accepts a *root_node* argument whose own
   parent ids are exempt from the check.
-- :func:`has_unique_ids` — :data:`~inktomi.validation.Validator` requiring every
-  :attr:`~inktomi.roam_node.RoamNode.id` in a :data:`NodeNetwork` to be unique.
-- :func:`is_acyclic` — :data:`~inktomi.validation.Validator` requiring the child-edge graph of a
+- :func:`has_unique_ids` — :data:`~guffin.validation.Validator` requiring every
+  :attr:`~guffin.roam_node.RoamNode.id` in a :data:`NodeNetwork` to be unique.
+- :func:`is_acyclic` — :data:`~guffin.validation.Validator` requiring the child-edge graph of a
   :data:`NodeNetwork` to be cycle-free.
-- :func:`refs_ids` — return the set of all :attr:`~inktomi.roam_node.RoamNode.refs` ids across every
+- :func:`refs_ids` — return the set of all :attr:`~guffin.roam_node.RoamNode.refs` ids across every
   node in a :data:`NodeNetwork`.
 - :func:`direct_refs_nodes` — return the :data:`NodeNetwork` of nodes in a :data:`NodeNetwork` whose
-  :attr:`~inktomi.roam_node.RoamNode.id` is referenced by any node's
-  :attr:`~inktomi.roam_node.RoamNode.refs` list.
+  :attr:`~guffin.roam_node.RoamNode.id` is referenced by any node's
+  :attr:`~guffin.roam_node.RoamNode.refs` list.
 - :func:`refs_nodes` — return the :data:`NodeNetwork` of all direct-ref target nodes in a
   :data:`NodeNetwork` plus all of their transitive descendants available in that network.
 """
 
 from typing import Final
 
-from inktomi.roam_node import RoamNode
-from inktomi.roam_primitives import Id, Uid
-from inktomi.validation import ValidationError
+from guffin.roam_node import RoamNode
+from guffin.roam_primitives import Id, Uid
+from guffin.validation import ValidationError
 
 type NodeNetwork = list[RoamNode]
-"""A collection of :class:`~inktomi.roam_node.RoamNode` instances.
+"""A collection of :class:`~guffin.roam_node.RoamNode` instances.
 
-Relationships between nodes are encoded via :attr:`~inktomi.roam_node.RoamNode.children`,
-:attr:`~inktomi.roam_node.RoamNode.parents`, and :attr:`~inktomi.roam_node.RoamNode.page` as
-:class:`~inktomi.roam_primitives.IdObject` stubs referencing :attr:`~inktomi.roam_node.RoamNode.id`
+Relationships between nodes are encoded via :attr:`~guffin.roam_node.RoamNode.children`,
+:attr:`~guffin.roam_node.RoamNode.parents`, and :attr:`~guffin.roam_node.RoamNode.page` as
+:class:`~guffin.roam_primitives.IdObject` stubs referencing :attr:`~guffin.roam_node.RoamNode.id`
 values within the collection.
 """
 
@@ -41,9 +41,9 @@ values within the collection.
 def all_children_present(network: NodeNetwork) -> ValidationError | None:
     """Return ``None`` when every child id referenced in *network* resolves to a node in *network*.
 
-    Iterates every node in *network* and checks that each :attr:`~inktomi.roam_node.RoamNode.id`
-    value found in a node's :attr:`~inktomi.roam_node.RoamNode.children` list corresponds to the
-    :attr:`~inktomi.roam_node.RoamNode.id` of at least one node in *network*.
+    Iterates every node in *network* and checks that each :attr:`~guffin.roam_node.RoamNode.id`
+    value found in a node's :attr:`~guffin.roam_node.RoamNode.children` list corresponds to the
+    :attr:`~guffin.roam_node.RoamNode.id` of at least one node in *network*.
 
     A network with no children at all vacuously satisfies this condition and
     returns ``None``.
@@ -53,7 +53,7 @@ def all_children_present(network: NodeNetwork) -> ValidationError | None:
 
     Returns:
         ``None`` if every child id in *network* resolves to a node in *network*;
-        a :class:`~inktomi.validation.ValidationError` listing the sorted
+        a :class:`~guffin.validation.ValidationError` listing the sorted
         absent child ids and the sorted ids of the nodes that referenced them otherwise.
     """
     network_ids: Final[set[Id]] = {n.id for n in network}
@@ -73,10 +73,10 @@ def all_children_present(network: NodeNetwork) -> ValidationError | None:
 def all_parents_present(network: NodeNetwork, root_node: RoamNode) -> ValidationError | None:
     """Return ``None`` when every parent id referenced in *network* resolves to a node in *network*.
 
-    Iterates every node in *network* and checks that each :attr:`~inktomi.roam_node.RoamNode.id`
-    value found in a node's :attr:`~inktomi.roam_node.RoamNode.parents` list corresponds to the
-    :attr:`~inktomi.roam_node.RoamNode.id` of at least one node in *network*.  Parent ids that
-    appear in *root_node*'s :attr:`~inktomi.roam_node.RoamNode.parents` list are exempt from this
+    Iterates every node in *network* and checks that each :attr:`~guffin.roam_node.RoamNode.id`
+    value found in a node's :attr:`~guffin.roam_node.RoamNode.parents` list corresponds to the
+    :attr:`~guffin.roam_node.RoamNode.id` of at least one node in *network*.  Parent ids that
+    appear in *root_node*'s :attr:`~guffin.roam_node.RoamNode.parents` list are exempt from this
     check — they are considered external ancestors that legitimately live outside *network*.
 
     A network with no parents at all vacuously satisfies this condition and returns ``None``.
@@ -88,7 +88,7 @@ def all_parents_present(network: NodeNetwork, root_node: RoamNode) -> Validation
 
     Returns:
         ``None`` if every applicable parent id in *network* resolves to a node in
-        *network*; a :class:`~inktomi.validation.ValidationError` listing the sorted
+        *network*; a :class:`~guffin.validation.ValidationError` listing the sorted
         absent parent ids and the sorted ids of the nodes that referenced them otherwise.
     """
     network_ids: Final[set[Id]] = {n.id for n in network}
@@ -111,9 +111,9 @@ def all_parents_present(network: NodeNetwork, root_node: RoamNode) -> Validation
 
 
 def has_unique_ids(network: NodeNetwork) -> ValidationError | None:
-    """Return ``None`` when every :attr:`~inktomi.roam_node.RoamNode.id` in *network* is unique.
+    """Return ``None`` when every :attr:`~guffin.roam_node.RoamNode.id` in *network* is unique.
 
-    Checks that no two nodes in *network* share the same :attr:`~inktomi.roam_node.RoamNode.id`
+    Checks that no two nodes in *network* share the same :attr:`~guffin.roam_node.RoamNode.id`
     value.  An empty network vacuously satisfies this condition.
 
     Args:
@@ -121,7 +121,7 @@ def has_unique_ids(network: NodeNetwork) -> ValidationError | None:
 
     Returns:
         ``None`` if all node ids in *network* are distinct; a
-        :class:`~inktomi.validation.ValidationError` listing the sorted
+        :class:`~guffin.validation.ValidationError` listing the sorted
         duplicate ids otherwise.
     """
     ids: Final[list[Id]] = [n.id for n in network]
@@ -140,7 +140,7 @@ def has_unique_ids(network: NodeNetwork) -> ValidationError | None:
 def is_acyclic(network: NodeNetwork) -> ValidationError | None:
     """Return ``None`` when the child-edge graph of *network* contains no directed cycles.
 
-    Performs a depth-first search over the :attr:`~inktomi.roam_node.RoamNode.children` edges of
+    Performs a depth-first search over the :attr:`~guffin.roam_node.RoamNode.children` edges of
     *network*, colouring each node white (unvisited), grey (on the current DFS
     path), or black (fully explored).  Encountering a grey node during
     traversal reveals a back-edge and therefore a cycle.
@@ -156,7 +156,7 @@ def is_acyclic(network: NodeNetwork) -> ValidationError | None:
 
     Returns:
         ``None`` if *network* contains no directed cycles; a
-        :class:`~inktomi.validation.ValidationError` naming the uid of the
+        :class:`~guffin.validation.ValidationError` naming the uid of the
         cycle-involved node otherwise.
     """
     id_to_node: Final[dict[Id, RoamNode]] = {n.id: n for n in network}
@@ -198,7 +198,7 @@ def all_descendants(ancestor: RoamNode, network: NodeNetwork) -> NodeNetwork:
     """Collect all descendant nodes of *ancestor* reachable via child edges in *network*.
 
     Performs an iterative depth-first traversal starting from *ancestor*, following each
-    node's :attr:`~inktomi.roam_node.RoamNode.children` links.  The traversal is bounded
+    node's :attr:`~guffin.roam_node.RoamNode.children` links.  The traversal is bounded
     to *network*; any child id that cannot be resolved to a node in *network* raises a
     :class:`ValueError`.
 
@@ -244,10 +244,10 @@ def all_descendants(ancestor: RoamNode, network: NodeNetwork) -> NodeNetwork:
 
 
 def refs_ids(network: NodeNetwork) -> set[Id]:
-    """Return the set of all :attr:`~inktomi.roam_node.RoamNode.refs` ids across every node in *network*.
+    """Return the set of all :attr:`~guffin.roam_node.RoamNode.refs` ids across every node in *network*.
 
-    Collects every :attr:`~inktomi.roam_primitives.IdObject.id` found in the
-    :attr:`~inktomi.roam_node.RoamNode.refs` field of every node in *network*.  Nodes whose
+    Collects every :attr:`~guffin.roam_primitives.IdObject.id` found in the
+    :attr:`~guffin.roam_node.RoamNode.refs` field of every node in *network*.  Nodes whose
     ``refs`` field is ``None`` contribute nothing.  An empty *network* returns an empty set.
 
     Args:
@@ -264,9 +264,9 @@ def direct_refs_nodes(network: NodeNetwork) -> NodeNetwork:
     """Return the nodes in *network* that are referenced by any node's ``refs`` list.
 
     Finds all ids across *network* via :func:`refs_ids`, then returns the subset of nodes
-    in *network* whose :attr:`~inktomi.roam_node.RoamNode.id` appears in that set.  Ref
+    in *network* whose :attr:`~guffin.roam_node.RoamNode.id` appears in that set.  Ref
     targets that resolve to nodes outside *network* are not included; use
-    :attr:`~inktomi.roam_tree.NodeTree.refs_by_id` when the full ref-node pool may be
+    :attr:`~guffin.roam_tree.NodeTree.refs_by_id` when the full ref-node pool may be
     broader than *network* itself.
 
     Args:

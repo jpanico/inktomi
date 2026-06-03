@@ -1,6 +1,6 @@
-"""Unit tests for inktomi.roam_md_normalize."""
+"""Unit tests for guffin.roam_md_normalize."""
 
-from inktomi.roam_md_normalize import normalize, normalize_italics, strip_square_brackets
+from guffin.roam_md_normalize import normalize, normalize_italics, strip_square_brackets
 
 
 class TestNormalizeItalics:

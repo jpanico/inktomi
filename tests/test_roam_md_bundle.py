@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch, mock_open
 from pydantic import HttpUrl, ValidationError
 
-from inktomi.roam_md_bundle import (
+from guffin.roam_md_bundle import (
     find_markdown_image_links,
     fetch_and_save_image,
     replace_image_links,
@@ -17,8 +17,8 @@ from inktomi.roam_md_bundle import (
     bundle_md_file,
     _normalize_for_posix,
 )
-from inktomi.roam_asset import RoamAsset
-from inktomi.roam_local_api import ApiEndpoint, ApiEndpointURL
+from guffin.roam_asset import RoamAsset
+from guffin.roam_local_api import ApiEndpoint, ApiEndpointURL
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -196,7 +196,7 @@ class TestFindMarkdownImageLinks:
 class TestFetchAndSaveImage:
     """Tests for the fetch_and_save_image function."""
 
-    @patch("inktomi.roam_md_bundle.FetchRoamAsset.fetch")
+    @patch("guffin.roam_md_bundle.FetchRoamAsset.fetch")
     @patch("builtins.open", new_callable=mock_open)
     def test_fetches_and_saves_image_successfully(self, mock_file: Mock, mock_fetch: Mock) -> None:
         """Test successful image fetch and save."""
@@ -228,7 +228,7 @@ class TestFetchAndSaveImage:
         mock_fetch.assert_called_once()
         mock_file.assert_called_once_with(output_dir / "test_image.png", "wb")
 
-    @patch("inktomi.roam_md_bundle.FetchRoamAsset.fetch")
+    @patch("guffin.roam_md_bundle.FetchRoamAsset.fetch")
     def test_fetch_failure_raises_exception(self, mock_fetch: Mock) -> None:
         """Test that fetch failure raises an exception."""
         api_endpoint: ApiEndpoint = ApiEndpoint(
@@ -456,7 +456,7 @@ class TestBundleMdFile:
         with pytest.raises(FileNotFoundError, match="Markdown file not found"):
             bundle_md_file(markdown_file, 3333, "test-graph", "test-token", tmp_path)
 
-    @patch("inktomi.roam_md_bundle.find_markdown_image_links")
+    @patch("guffin.roam_md_bundle.find_markdown_image_links")
     def test_no_firebase_links_exits_early(self, mock_find: Mock, tmp_path: Path) -> None:
         """Test that function exits early when no Cloud Firestore links found."""
         # Create separate input and output directories
@@ -478,8 +478,8 @@ class TestBundleMdFile:
         output_file: Path = output_dir / "test.md"
         assert not output_file.exists()
 
-    @patch("inktomi.roam_md_bundle.fetch_and_save_image")
-    @patch("inktomi.roam_md_bundle.find_markdown_image_links")
+    @patch("guffin.roam_md_bundle.fetch_and_save_image")
+    @patch("guffin.roam_md_bundle.find_markdown_image_links")
     def test_processes_file_successfully(self, mock_find: Mock, mock_fetch: Mock, tmp_path: Path) -> None:
         """Test successful file processing."""
         # Create separate input and output directories
@@ -521,8 +521,8 @@ class TestBundleMdFile:
         assert "local_image.png" in output_content
         assert "firebasestorage.googleapis.com" not in output_content
 
-    @patch("inktomi.roam_md_bundle.fetch_and_save_image")
-    @patch("inktomi.roam_md_bundle.find_markdown_image_links")
+    @patch("guffin.roam_md_bundle.fetch_and_save_image")
+    @patch("guffin.roam_md_bundle.find_markdown_image_links")
     def test_continues_on_fetch_error(self, mock_find: Mock, mock_fetch: Mock, tmp_path: Path) -> None:
         """Test that processing continues when one image fetch fails."""
         # Create separate input and output directories

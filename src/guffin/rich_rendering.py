@@ -3,18 +3,18 @@
 Public symbols:
 
 - :data:`DEFAULT_NODE_PANEL_PROPS` — the property names rendered in a panel body by default.
-- :func:`make_node_panel` — render a :class:`~inktomi.roam_node.RoamNode` as a Rich
+- :func:`make_node_panel` — render a :class:`~guffin.roam_node.RoamNode` as a Rich
   :class:`~rich.panel.Panel`.
 - :func:`build_rich_node_tree` — build a Rich :class:`~rich.tree.Tree` from a
-  :class:`~inktomi.roam_tree.NodeTree` using a depth-first traversal.
+  :class:`~guffin.roam_tree.NodeTree` using a depth-first traversal.
 - :func:`build_rich_refs_box` — build a Rich :class:`~rich.panel.Panel` summarising the
-  back-reference nodes in a :class:`~inktomi.roam_tree.NodeTree`.
-- :func:`make_vertex_panel` — render a :data:`~inktomi.graph.Vertex` as a Rich
+  back-reference nodes in a :class:`~guffin.roam_tree.NodeTree`.
+- :func:`make_vertex_panel` — render a :data:`~guffin.graph.Vertex` as a Rich
   :class:`~rich.panel.Panel`.
 - :func:`build_rich_vertex_tree` — build a Rich :class:`~rich.tree.Tree` from a
-  :class:`~inktomi.graph.VertexTree` using a depth-first traversal.
+  :class:`~guffin.graph.VertexTree` using a depth-first traversal.
 - :func:`build_rich_raw_table` — build a Rich :class:`~rich.table.Table` of raw
-  Datalog pull-blocks from a :class:`~inktomi.roam_node_fetch_result.NodeFetchResult`.
+  Datalog pull-blocks from a :class:`~guffin.roam_node_fetch_result.NodeFetchResult`.
 """
 
 import logging
@@ -27,7 +27,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree as RichTree
 
-from inktomi.graph import (
+from guffin.graph import (
     HeadingVertex,
     PageVertex,
     TextContentVertex,
@@ -35,10 +35,10 @@ from inktomi.graph import (
     VertexTree,
     VertexTreeDFSIterator,
 )
-from inktomi.roam_node import RoamNode
-from inktomi.roam_node_fetch_result import NodeFetchResult
-from inktomi.roam_tree import NodeTree, NodeTreeDFSIterator
-from inktomi.roam_primitives import Id, IdObject, IMAGE_LINK_RE, Uid
+from guffin.roam_node import RoamNode
+from guffin.roam_node_fetch_result import NodeFetchResult
+from guffin.roam_tree import NodeTree, NodeTreeDFSIterator
+from guffin.roam_primitives import Id, IdObject, IMAGE_LINK_RE, Uid
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ DEFAULT_NODE_PANEL_PROPS: Final[list[str]] = ["heading", "order", "children", "p
 """Property names rendered in the panel body by :func:`make_node_panel` when no explicit list is given.
 
 ``string``/``title`` and ``id`` are always shown in the panel title and are not
-included here.  All other :class:`~inktomi.roam_node.RoamNode` field names are
+included here.  All other :class:`~guffin.roam_node.RoamNode` field names are
 valid entries.
 """
 
@@ -56,7 +56,7 @@ def _format_node_prop(node: RoamNode, prop: str) -> str:
 
     Args:
         node: The node whose property is to be formatted.
-        prop: A :class:`~inktomi.roam_node.RoamNode` field name.
+        prop: A :class:`~guffin.roam_node.RoamNode` field name.
 
     Returns:
         A ``"name=value"`` string.  Unknown *prop* names produce ``"name=?"``.
@@ -115,7 +115,7 @@ def make_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS)
     ``id`` in parentheses.  The title text is determined as follows:
 
     - If the block string contains a Cloud Firestore image link matching
-      :data:`~inktomi.roam_primitives.IMAGE_LINK_RE`, the title reads
+      :data:`~guffin.roam_primitives.IMAGE_LINK_RE`, the title reads
       ``IMAGE [<alt>](FIRESTORE_URL)``.
     - Otherwise, if ``"heading"`` is in *props* and the node has a heading level,
       an ``H{n}:`` prefix is prepended.
@@ -127,7 +127,7 @@ def make_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS)
 
     Args:
         node: The node to render.
-        props: Ordered list of :class:`~inktomi.roam_node.RoamNode` field names
+        props: Ordered list of :class:`~guffin.roam_node.RoamNode` field names
             to include.  Controls both the ``H{n}:`` title prefix (shown only when
             ``"heading"`` is present) and the body pairs (``heading`` itself is
             never written to the body).  Defaults to :data:`DEFAULT_NODE_PANEL_PROPS`.
@@ -151,12 +151,12 @@ def build_rich_node_tree(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_P
     """Build a Rich tree from *tree* using a depth-first traversal.
 
     Iterates *tree* in pre-order depth-first order via
-    :meth:`~inktomi.roam_tree.NodeTree.dfs`, attaching each node as a Rich
+    :meth:`~guffin.roam_tree.NodeTree.dfs`, attaching each node as a Rich
     panel under its parent in the rendered tree.
 
     Args:
-        tree: The :class:`~inktomi.roam_tree.NodeTree` to render.
-        props: Ordered list of :class:`~inktomi.roam_node.RoamNode` field names
+        tree: The :class:`~guffin.roam_tree.NodeTree` to render.
+        props: Ordered list of :class:`~guffin.roam_node.RoamNode` field names
             to include in each panel body.  Defaults to :data:`DEFAULT_NODE_PANEL_PROPS`.
 
     Returns:
@@ -178,18 +178,18 @@ def build_rich_node_tree(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_P
 def build_rich_refs_box(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PROPS) -> Panel | None:
     """Build a Rich :class:`~rich.panel.Panel` summarising the back-reference nodes in *tree*.
 
-    For each node in :attr:`~inktomi.roam_tree.NodeTree.refs_by_id`, renders a
+    For each node in :attr:`~guffin.roam_tree.NodeTree.refs_by_id`, renders a
     two-column grid row containing a :func:`make_node_panel` on the left and a
     *referenced by* panel listing the ids of tree nodes that cite it on the right.
     All rows are collected into a single ``refs`` panel.
 
-    Returns ``None`` when :attr:`~inktomi.roam_tree.NodeTree.refs_by_id` is empty.
+    Returns ``None`` when :attr:`~guffin.roam_tree.NodeTree.refs_by_id` is empty.
 
     Args:
-        tree: The :class:`~inktomi.roam_tree.NodeTree` whose
-            :attr:`~inktomi.roam_tree.NodeTree.refs_by_id` and
-            :attr:`~inktomi.roam_tree.NodeTree.tree_network` are used.
-        props: Ordered list of :class:`~inktomi.roam_node.RoamNode` field names
+        tree: The :class:`~guffin.roam_tree.NodeTree` whose
+            :attr:`~guffin.roam_tree.NodeTree.refs_by_id` and
+            :attr:`~guffin.roam_tree.NodeTree.tree_network` are used.
+        props: Ordered list of :class:`~guffin.roam_node.RoamNode` field names
             to include in each node panel body.  Defaults to :data:`DEFAULT_NODE_PANEL_PROPS`.
 
     Returns:
@@ -220,15 +220,15 @@ def make_vertex_panel(vertex: Vertex) -> Panel:
     The panel title shows a type-specific summary with the vertex ``uid`` in
     parentheses:
 
-    - :class:`~inktomi.graph.PageVertex` — page title.
-    - :class:`~inktomi.graph.HeadingVertex` — ``H{n}: <text>``.
-    - :class:`~inktomi.graph.TextContentVertex` — block text as-is.
-    - :class:`~inktomi.graph.ImageVertex` — ``IMAGE [<alt>](<firestore_url>)``.
+    - :class:`~guffin.graph.PageVertex` — page title.
+    - :class:`~guffin.graph.HeadingVertex` — ``H{n}: <text>``.
+    - :class:`~guffin.graph.TextContentVertex` — block text as-is.
+    - :class:`~guffin.graph.ImageVertex` — ``IMAGE [<alt>](<firestore_url>)``.
 
     The panel body shows ``type``, ``children``, and ``refs``.
 
     Args:
-        vertex: The :data:`~inktomi.graph.Vertex` to render.
+        vertex: The :data:`~guffin.graph.Vertex` to render.
 
     Returns:
         A :class:`~rich.panel.Panel` with a labelled title and metadata body.
@@ -257,7 +257,7 @@ def build_rich_vertex_tree(vertex_tree: VertexTree) -> RichTree:
     as a Rich panel under its parent in the rendered tree.
 
     Args:
-        vertex_tree: The :class:`~inktomi.graph.VertexTree` to render.
+        vertex_tree: The :class:`~guffin.graph.VertexTree` to render.
 
     Returns:
         A :class:`~rich.tree.Tree` rooted at the single root vertex of
@@ -392,7 +392,7 @@ def build_rich_raw_table(fetch_result: NodeFetchResult) -> Table:
     Rows are sorted by ``id``; columns cover every attribute key present across
     all pull-blocks, excluding those in :data:`_RAW_RESULTS_EXCLUDED_ATTRS`, and
     ordered according to :data:`_RAW_RESULTS_COL_ORDER` (remaining keys follow
-    alphabetically).  :class:`~inktomi.roam_primitives.IdObject` values and
+    alphabetically).  :class:`~guffin.roam_primitives.IdObject` values and
     single-entry ``{"id": …}`` ref dicts are rendered as plain integer ids; lists
     of such refs are rendered as a comma-separated id sequence.  Column headers
     are overridden per :data:`_RAW_RESULTS_COL_HEADERS`; cell values are
@@ -401,7 +401,7 @@ def build_rich_raw_table(fetch_result: NodeFetchResult) -> Table:
     :func:`_truncate_urls_in_cell`.
 
     Args:
-        fetch_result: Fetch result whose :attr:`~inktomi.roam_node_fetch_result.NodeFetchResult.raw_result`
+        fetch_result: Fetch result whose :attr:`~guffin.roam_node_fetch_result.NodeFetchResult.raw_result`
             supplies the pull-block rows.
 
     Returns:

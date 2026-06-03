@@ -2,7 +2,7 @@
 
 import pytest
 
-from inktomi.graph import (
+from guffin.graph import (
     HeadingVertex,
     PageVertex,
     TextContentVertex,
@@ -10,7 +10,7 @@ from inktomi.graph import (
     VertexTree,
     VertexTreeDFSIterator,
 )
-from inktomi.roam_primitives import Uid
+from guffin.roam_primitives import Uid
 
 from conftest import article0_vertex_tree
 

@@ -1,6 +1,6 @@
 # Test Fixtures
 
-This directory contains test data used by the inktomi test suite.
+This directory contains test data used by the guffin test suite.
 
 ## Directory Structure
 

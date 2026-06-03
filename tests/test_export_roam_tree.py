@@ -1,4 +1,4 @@
-"""Unit tests for inktomi.export_roam_tree."""
+"""Unit tests for guffin.export_roam_tree."""
 
 import logging
 import pathlib
@@ -7,8 +7,8 @@ from unittest.mock import patch
 
 from typer.testing import CliRunner
 
-from inktomi.export_roam_tree import app
-from inktomi.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
+from guffin.export_roam_tree import app
+from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
 
 from conftest import FIXTURES_MD_DIR, article0_node_tree
 
@@ -32,7 +32,7 @@ class TestExportRoamTreeNoBundle:
         runner: CliRunner = CliRunner()
 
         with patch(
-            "inktomi.roam_tree_loader.FetchRoamNodes.fetch_roam_nodes",
+            "guffin.roam_tree_loader.FetchRoamNodes.fetch_roam_nodes",
             return_value=mock_result,
         ):
             # configure_logging() runs at import time and installs a StreamHandler

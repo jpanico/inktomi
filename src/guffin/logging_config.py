@@ -1,4 +1,4 @@
-"""Colorized logging configuration for inktomi CLI tools.
+"""Colorized logging configuration for guffin CLI tools.
 
 Public symbols:
 

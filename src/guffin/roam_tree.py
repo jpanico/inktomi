@@ -2,18 +2,18 @@
 
 Public symbols:
 
-- :class:`NodeTree` — a Pydantic-typed wrapper holding a :data:`~inktomi.roam_network.NodeNetwork`;
+- :class:`NodeTree` — a Pydantic-typed wrapper holding a :data:`~guffin.roam_network.NodeNetwork`;
   validates all tree invariants at construction time via :func:`is_tree`; must be created via
   :meth:`NodeTree.build`.
 - :meth:`NodeTree.dfs` — return a :class:`NodeTreeDFSIterator` for pre-order depth-first traversal.
-- :meth:`NodeTree.node_ids` — return the set of all :attr:`~inktomi.roam_node.RoamNode.id` values in this tree.
-- :meth:`NodeTree.node_refs_ids` — return the set of all :attr:`~inktomi.roam_node.RoamNode.refs` ids across this tree.
+- :meth:`NodeTree.node_ids` — return the set of all :attr:`~guffin.roam_node.RoamNode.id` values in this tree.
+- :meth:`NodeTree.node_refs_ids` — return the set of all :attr:`~guffin.roam_node.RoamNode.refs` ids across this tree.
 - :meth:`NodeTree.external_refs_ids` — return the subset of :meth:`NodeTree.node_refs_ids` ids that fall outside
   :meth:`NodeTree.node_ids`.
 - :class:`NodeTreeDFSIterator` — pre-order depth-first iterator over a :class:`NodeTree`.
-- :func:`is_tree` — validate all tree invariants for a :class:`~inktomi.roam_node.RoamNode` root
-  and its :data:`~inktomi.roam_network.NodeNetwork`; returns a
-  :class:`~inktomi.validation.ValidationResult`.
+- :func:`is_tree` — validate all tree invariants for a :class:`~guffin.roam_node.RoamNode` root
+  and its :data:`~guffin.roam_network.NodeNetwork`; returns a
+  :class:`~guffin.validation.ValidationResult`.
 """
 
 import logging
@@ -22,7 +22,7 @@ from typing import ClassVar, Final
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from inktomi.roam_network import (
+from guffin.roam_network import (
     NodeNetwork,
     all_children_present,
     all_descendants,
@@ -31,15 +31,15 @@ from inktomi.roam_network import (
     is_acyclic,
     refs_ids,
 )
-from inktomi.roam_node import RoamNode
-from inktomi.roam_primitives import Id
-from inktomi.validation import ValidationError, ValidationResult, validate_all
+from guffin.roam_node import RoamNode
+from guffin.roam_primitives import Id
+from guffin.validation import ValidationError, ValidationResult, validate_all
 
 logger = logging.getLogger(__name__)
 
 
 class NodeTree(BaseModel):
-    """A Pydantic-typed wrapper holding a :data:`~inktomi.roam_network.NodeNetwork`.
+    """A Pydantic-typed wrapper holding a :data:`~guffin.roam_network.NodeNetwork`.
 
     All tree invariants are validated at construction time via :func:`is_tree`; a
     :exc:`pydantic.ValidationError` is raised if *network* does not satisfy them.
@@ -50,7 +50,7 @@ class NodeTree(BaseModel):
     Attributes:
         root_node: The single root node of this tree.
         tree_network: All constituent nodes of this tree, including *root_node*.
-        refs_by_id: Map of id → :class:`~inktomi.roam_node.RoamNode` for every node in
+        refs_by_id: Map of id → :class:`~guffin.roam_node.RoamNode` for every node in
             the source *super_network* that is either directly referenced via ``:block/refs``
             by a member of :attr:`tree_network`, or is a transitive descendant of such a
             node available in *super_network*; may be empty.
@@ -58,9 +58,9 @@ class NodeTree(BaseModel):
     Methods:
         build: Factory method — the only supported way to create a :class:`NodeTree`.
         dfs: Return a :class:`NodeTreeDFSIterator` for pre-order depth-first traversal.
-        node_ids: Return the set of all :attr:`~inktomi.roam_node.RoamNode.id` values in
+        node_ids: Return the set of all :attr:`~guffin.roam_node.RoamNode.id` values in
             :attr:`tree_network`.
-        node_refs_ids: Return the set of all :attr:`~inktomi.roam_node.RoamNode.refs` ids
+        node_refs_ids: Return the set of all :attr:`~guffin.roam_node.RoamNode.refs` ids
             across :attr:`tree_network`.
         external_refs_ids: Return the subset of :meth:`node_refs_ids` ids that are not members
             of :meth:`node_ids` — i.e. refs that resolve to nodes outside this tree.
@@ -85,7 +85,7 @@ class NodeTree(BaseModel):
     def build(cls, root_node: RoamNode, super_network: NodeNetwork) -> NodeTree:
         """Create a validated :class:`NodeTree` — the only supported construction path.
 
-        Uses :func:`~inktomi.roam_network.all_descendants` to extract the subtree rooted
+        Uses :func:`~guffin.roam_network.all_descendants` to extract the subtree rooted
         at *root_node* from *super_network*, builds :attr:`refs_by_id` from the direct ref
         targets of :attr:`tree_network` plus all their transitive descendants available in
         *super_network*, then delegates to the Pydantic constructor (which runs all
@@ -94,7 +94,7 @@ class NodeTree(BaseModel):
         Args:
             root_node: The single root node of the tree.
             super_network: Source node pool from which the tree's constituent nodes are
-                drawn.  The :class:`~inktomi.roam_node.RoamNode` instances in
+                drawn.  The :class:`~guffin.roam_node.RoamNode` instances in
                 *super_network* are a superset of the nodes that will form
                 :attr:`tree_network`.  Nodes outside :attr:`tree_network` are also
                 searched for :attr:`refs_by_id` — both direct ref targets and their
@@ -187,7 +187,7 @@ class NodeTree(BaseModel):
 
         Raises:
             ValueError: If *network* violates any tree invariant; the message lists every
-                :class:`~inktomi.validation.ValidationError` found.
+                :class:`~guffin.validation.ValidationError` found.
         """
         result: Final[ValidationResult] = is_tree(self.root_node, self.tree_network)
         if not result.is_valid:
@@ -203,18 +203,18 @@ class NodeTree(BaseModel):
         return NodeTreeDFSIterator(self)
 
     def node_ids(self) -> set[Id]:
-        """Return the set of all :attr:`~inktomi.roam_node.RoamNode.id` values in this tree's network.
+        """Return the set of all :attr:`~guffin.roam_node.RoamNode.id` values in this tree's network.
 
         Returns:
-            A ``set[Id]`` containing the :attr:`~inktomi.roam_node.RoamNode.id` of every node
+            A ``set[Id]`` containing the :attr:`~guffin.roam_node.RoamNode.id` of every node
             in :attr:`tree_network`.
         """
         return {n.id for n in self.tree_network}
 
     def node_refs_ids(self) -> set[Id]:
-        """Return the set of all :attr:`~inktomi.roam_node.RoamNode.refs` ids across this tree's network.
+        """Return the set of all :attr:`~guffin.roam_node.RoamNode.refs` ids across this tree's network.
 
-        Delegates to :func:`~inktomi.roam_network.refs_ids` over :attr:`tree_network`.
+        Delegates to :func:`~guffin.roam_network.refs_ids` over :attr:`tree_network`.
 
         Returns:
             A ``set[Id]`` containing every id found in any node's ``refs`` list; empty if no node
@@ -239,7 +239,7 @@ class NodeTreeDFSIterator(Iterator[RoamNode]):
     """Pre-order depth-first iterator over a :class:`NodeTree`.
 
     Yields nodes starting from the single root, then recursively yields each
-    child subtree in ascending :attr:`~inktomi.roam_node.RoamNode.order` order.  The traversal
+    child subtree in ascending :attr:`~guffin.roam_node.RoamNode.order` order.  The traversal
     is non-recursive internally (stack-based), so deep trees do not risk
     hitting Python's recursion limit.
 
@@ -249,7 +249,7 @@ class NodeTreeDFSIterator(Iterator[RoamNode]):
             ...
 
     Attributes:
-        _id_map: Mapping from :attr:`~inktomi.roam_node.RoamNode.id` to :class:`~inktomi.roam_node.RoamNode`,
+        _id_map: Mapping from :attr:`~guffin.roam_node.RoamNode.id` to :class:`~guffin.roam_node.RoamNode`,
             built once at construction time.
         _stack: LIFO stack of nodes yet to be visited; initialized with the
             root node.
@@ -290,13 +290,13 @@ class NodeTreeDFSIterator(Iterator[RoamNode]):
 
 
 def is_tree(root_node: RoamNode, network: NodeNetwork) -> ValidationResult:
-    """Return a :class:`~inktomi.validation.ValidationResult` for all tree invariants on *network*.
+    """Return a :class:`~guffin.validation.ValidationResult` for all tree invariants on *network*.
 
-    Runs every tree-invariant validator — :func:`~inktomi.roam_network.has_unique_ids`,
-    :func:`~inktomi.roam_network.all_children_present`,
-    :func:`~inktomi.roam_network.all_parents_present`, and
-    :func:`~inktomi.roam_network.is_acyclic` — via
-    :func:`~inktomi.validation.validate_all`.  All validators run regardless of prior failures;
+    Runs every tree-invariant validator — :func:`~guffin.roam_network.has_unique_ids`,
+    :func:`~guffin.roam_network.all_children_present`,
+    :func:`~guffin.roam_network.all_parents_present`, and
+    :func:`~guffin.roam_network.is_acyclic` — via
+    :func:`~guffin.validation.validate_all`.  All validators run regardless of prior failures;
     the result accumulates every error found.
 
     Args:
@@ -304,8 +304,8 @@ def is_tree(root_node: RoamNode, network: NodeNetwork) -> ValidationResult:
         network: The collection of nodes to validate.
 
     Returns:
-        A :class:`~inktomi.validation.ValidationResult` that is valid when *network* satisfies
-        every tree invariant, or contains one :class:`~inktomi.validation.ValidationError` per
+        A :class:`~guffin.validation.ValidationResult` that is valid when *network* satisfies
+        every tree invariant, or contains one :class:`~guffin.validation.ValidationError` per
         failed validator otherwise.
     """
     logger.debug("root_node=%r, network=%r", root_node, network)

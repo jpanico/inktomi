@@ -2,9 +2,9 @@
 
 Public symbols:
 
-- :func:`fetch_roam_trees` — fetch nodes for a :class:`~inktomi.roam_node_fetch_result.NodeFetchSpec`
-  and return a :class:`~inktomi.roam_node_fetch_result.NodeFetchResult` paired with an optional
-  :class:`~inktomi.graph.VertexTree`, ready for rendering or further processing.
+- :func:`fetch_roam_trees` — fetch nodes for a :class:`~guffin.roam_node_fetch_result.NodeFetchSpec`
+  and return a :class:`~guffin.roam_node_fetch_result.NodeFetchResult` paired with an optional
+  :class:`~guffin.graph.VertexTree`, ready for rendering or further processing.
 """
 
 import logging
@@ -12,12 +12,12 @@ from typing import Final
 
 import typer
 
-from inktomi.graph import VertexTree
-from inktomi.roam_local_api import ApiEndpoint
-from inktomi.roam_node_fetch import FetchRoamNodes
-from inktomi.roam_node_fetch_result import NodeFetchResult, NodeFetchSpec
-from inktomi.roam_tree import NodeTree
-from inktomi.roam_transcribe import transcribe
+from guffin.graph import VertexTree
+from guffin.roam_local_api import ApiEndpoint
+from guffin.roam_node_fetch import FetchRoamNodes
+from guffin.roam_node_fetch_result import NodeFetchResult, NodeFetchSpec
+from guffin.roam_tree import NodeTree
+from guffin.roam_transcribe import transcribe
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +29,9 @@ def fetch_roam_trees(
 ) -> tuple[NodeFetchResult, VertexTree | None]:
     """Fetch Roam nodes for *fetch_spec* and build a validated node tree and vertex tree.
 
-    Fetches :class:`~inktomi.roam_node.RoamNode` records for *fetch_spec* via
-    *api_endpoint*, constructs a :class:`~inktomi.roam_tree.NodeTree`, and optionally
-    transcribes it to a :class:`~inktomi.graph.VertexTree`.
+    Fetches :class:`~guffin.roam_node.RoamNode` records for *fetch_spec* via
+    *api_endpoint*, constructs a :class:`~guffin.roam_tree.NodeTree`, and optionally
+    transcribes it to a :class:`~guffin.graph.VertexTree`.
 
     Exits the CLI with code 1 when the fetch raises an exception or when no nodes are found.
 
@@ -39,7 +39,7 @@ def fetch_roam_trees(
         fetch_spec: The fetch specification carrying the anchor, include_refs flag, and
             include_node_tree flag.
         include_vertex_tree: When ``True``, transcribes the node tree to a
-            :class:`~inktomi.graph.VertexTree` and returns it as the second element of
+            :class:`~guffin.graph.VertexTree` and returns it as the second element of
             the pair.  When ``False``, skips transcription and returns ``None`` instead.
         api_endpoint: Configured API endpoint used to fetch nodes.
 

@@ -4,7 +4,7 @@ For an _encrypted_ Roam graph, programmatically fetching (or exporting) content 
 
 ## HTTP Requests
 
-Roam Local API calls follow the JSON over HTTP paradigm. HTTP Request/Response handling is implemented in [roam_local_api.py](../src/inktomi/roam_local_api.py).
+Roam Local API calls follow the JSON over HTTP paradigm. HTTP Request/Response handling is implemented in [roam_local_api.py](../src/guffin/roam_local_api.py).
 
 
 ### Endpoint
@@ -45,7 +45,7 @@ and the value for the "args" key is a list of JSON elements, the shapes of which
 
 ### `data.q`
 
-Query the graph using datomic flavored Datalog. A primer on Roam Datalog is given in: [Querying Roam Research](./roam-querying.md). Querying a Roam graph for `Nodes` is implemented in [roam_node_fetch.py](../src/inktomi/roam_node_fetch.py).
+Query the graph using datomic flavored Datalog. A primer on Roam Datalog is given in: [Querying Roam Research](./roam-querying.md). Querying a Roam graph for `Nodes` is implemented in [roam_node_fetch.py](../src/guffin/roam_node_fetch.py).
 
 - `"action": "data.q"` -> `window.roamAlphaAPI.data.q`
 
@@ -60,7 +60,7 @@ Query the graph using datomic flavored Datalog. A primer on Roam Datalog is give
 
 ### `file.get`
 
-Fetch a file hosted on Roam. Implemented in [roam_asset_fetch.py](../src/inktomi/roam_asset_fetch.py).
+Fetch a file hosted on Roam. Implemented in [roam_asset_fetch.py](../src/guffin/roam_asset_fetch.py).
 
 - `"action": "file.get"` -> `window.roamAlphaAPI.file.get`
 

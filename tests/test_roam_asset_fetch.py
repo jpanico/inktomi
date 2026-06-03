@@ -8,9 +8,9 @@ import pytest
 import base64
 from datetime import datetime
 
-from inktomi.roam_asset_fetch import FetchRoamAsset
-from inktomi.roam_asset import RoamAsset
-from inktomi.roam_local_api import ApiEndpoint, ApiEndpointURL
+from guffin.roam_asset_fetch import FetchRoamAsset
+from guffin.roam_asset import RoamAsset
+from guffin.roam_local_api import ApiEndpoint, ApiEndpointURL
 
 from conftest import FIXTURES_IMAGES_DIR
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class TestRoamAsset:
-    """Tests for the RoamAsset Pydantic model (defined in inktomi.roam_asset)."""
+    """Tests for the RoamAsset Pydantic model (defined in guffin.roam_asset)."""
 
     def test_valid_initialization(self) -> None:
         """Test creating RoamAsset with valid parameters."""

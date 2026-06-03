@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "inktomi"
+name = "guffin"
 version = "0.1.0"
 description = "Markdown utilities for working with Roam Research exports"
 license = "MIT"
@@ -27,8 +27,8 @@ dev = [
 ]
 
 [project.scripts]
-dump-roam-tree = "inktomi.dump_roam_tree:app"
-export-roam-tree = "inktomi.export_roam_tree:app"
+dump-roam-tree = "guffin.dump_roam_tree:app"
+export-roam-tree = "guffin.export_roam_tree:app"
 
 [tool.hatch.envs.default]
 features = ["dev"]

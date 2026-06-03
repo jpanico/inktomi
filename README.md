@@ -1,4 +1,4 @@
-# inktomi
+# guffin
 
 Python 3.14 toolkit for bundling Roam Research markdown exports with their Cloud Firestore-hosted images into self-contained `.mdbundle` directories.
 
@@ -13,8 +13,8 @@ Python 3.14 toolkit for bundling Roam Research markdown exports with their Cloud
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/inktomi.git
-   cd inktomi
+   git clone https://github.com/yourusername/guffin.git
+   cd guffin
    ```
 
 2. **Create and activate a virtual environment:**
@@ -28,7 +28,7 @@ Python 3.14 toolkit for bundling Roam Research markdown exports with their Cloud
    pip install -e ".[dev]"
    ```
 
-   This installs the `inktomi` package in editable mode (changes to code are immediately reflected),
+   This installs the `guffin` package in editable mode (changes to code are immediately reflected),
    along with all runtime and development dependencies declared in [`pyproject.toml`](pyproject.toml).
 
 ### Running Tests
@@ -115,14 +115,14 @@ Recommended order: `pydocstringformatter` → `black` → `ruff check --fix`.
 pyright
 ```
 
-All production code under `src/inktomi/` must be fully annotated with no `Any` types. Test modules (`tests/`) use `basic` type checking (`# pyright: basic` directive at the top of each test file).
+All production code under `src/guffin/` must be fully annotated with no `Any` types. Test modules (`tests/`) use `basic` type checking (`# pyright: basic` directive at the top of each test file).
 
 ## Project Structure
 
 ```
-inktomi/
+guffin/
 ├── src/
-│   └── inktomi/                  # Main package
+│   └── guffin/                  # Main package
 │       ├── __init__.py
 │       ├── dump_roam_tree.py      # CLI: dump a Roam page or node subtree as a Rich tree to the terminal
 │       ├── export_roam_tree.py    # CLI: export a Roam page or node subtree to a .mdbundle or plain .md

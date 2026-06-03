@@ -1,33 +1,33 @@
 """Roam Research normalized graph vertex model.
 
 A :data:`Vertex` is the normalized (transcribed) form of a single
-:class:`~inktomi.roam_node.RoamNode`.  A :class:`VertexTree` is the normalized
-form of a :class:`~inktomi.roam_tree.NodeTree`.
+:class:`~guffin.roam_node.RoamNode`.  A :class:`VertexTree` is the normalized
+form of a :class:`~guffin.roam_tree.NodeTree`.
 
 Normalization (transcription) means:
 
-- Datomic-internal numeric entity ids (:attr:`~inktomi.roam_node.RoamNode.id`) are
+- Datomic-internal numeric entity ids (:attr:`~guffin.roam_node.RoamNode.id`) are
   eliminated.
-- Raw :class:`~inktomi.roam_primitives.IdObject` stubs in ``children`` and ``refs`` are
+- Raw :class:`~guffin.roam_primitives.IdObject` stubs in ``children`` and ``refs`` are
   resolved to stable ``:block/uid`` strings.
 - The raw ``string`` / ``title`` field distinction is collapsed into a single ``text``
   field.
 - Each node is classified into a :class:`VertexType`.
 - The result is self-contained and portable — no Datomic dependencies remain.
 
-Normalization is performed by :func:`~inktomi.roam_transcribe.transcribe` (for a full
-:class:`~inktomi.roam_tree.NodeTree`) or
-:func:`~inktomi.roam_transcribe.transcribe_node` (for a single
-:class:`~inktomi.roam_node.RoamNode`).
+Normalization is performed by :func:`~guffin.roam_transcribe.transcribe` (for a full
+:class:`~guffin.roam_tree.NodeTree`) or
+:func:`~guffin.roam_transcribe.transcribe_node` (for a single
+:class:`~guffin.roam_node.RoamNode`).
 
 Public symbols:
 
 - :data:`VertexChildren` — normalized form of
-  :attr:`~inktomi.roam_node.RoamNode.children`: ordered child UIDs.
-- :data:`VertexRefs` — normalized form of :attr:`~inktomi.roam_node.RoamNode.refs`:
+  :attr:`~guffin.roam_node.RoamNode.children`: ordered child UIDs.
+- :data:`VertexRefs` — normalized form of :attr:`~guffin.roam_node.RoamNode.refs`:
   referenced UIDs.
 - :class:`VertexType` — string enum classifying each vertex by the shape of its source
-  :class:`~inktomi.roam_node.RoamNode`.
+  :class:`~guffin.roam_node.RoamNode`.
 - :class:`PageVertex` — normalized (transcribed) form of a Roam Page node.
 - :class:`HeadingVertex` — normalized (transcribed) form of a Roam Heading block node.
 - :class:`TextContentVertex` — normalized (transcribed) form of a plain-text Roam Block
@@ -38,7 +38,7 @@ Public symbols:
 - :data:`vertex_adapter` — Pydantic :class:`~pydantic.TypeAdapter` for validating a
   :data:`Vertex` from a raw dict.
 - :class:`VertexTree` — normalized (transcribed) form of a
-  :class:`~inktomi.roam_tree.NodeTree`; a portable tree of :data:`Vertex` instances.
+  :class:`~guffin.roam_tree.NodeTree`; a portable tree of :data:`Vertex` instances.
 - :meth:`VertexTree.dfs` — return a :class:`VertexTreeDFSIterator` for pre-order
   depth-first traversal.
 - :class:`VertexTreeDFSIterator` — pre-order depth-first iterator over a
@@ -51,19 +51,19 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
-from inktomi.roam_primitives import HeadingLevel, MediaType, Uid, Url
+from guffin.roam_primitives import HeadingLevel, MediaType, Uid, Url
 
 type VertexChildren = list[Uid]
-"""Normalized form of :attr:`~inktomi.roam_node.RoamNode.children`.
+"""Normalized form of :attr:`~guffin.roam_node.RoamNode.children`.
 
-Raw :class:`~inktomi.roam_primitives.IdObject` stubs are resolved to stable ``:block/uid``
+Raw :class:`~guffin.roam_primitives.IdObject` stubs are resolved to stable ``:block/uid``
 strings and sorted by ``:block/order`` during transcription.
 """
 
 type VertexRefs = list[Uid]
-"""Normalized form of :attr:`~inktomi.roam_node.RoamNode.refs`.
+"""Normalized form of :attr:`~guffin.roam_node.RoamNode.refs`.
 
-Raw :class:`~inktomi.roam_primitives.IdObject` stubs are resolved to stable ``:block/uid``
+Raw :class:`~guffin.roam_primitives.IdObject` stubs are resolved to stable ``:block/uid``
 strings during transcription.
 """
 
@@ -71,7 +71,7 @@ strings during transcription.
 class VertexType(StrEnum):
     """Classification assigned to each vertex during transcription.
 
-    Every :class:`~inktomi.roam_node.RoamNode` is classified into exactly one
+    Every :class:`~guffin.roam_node.RoamNode` is classified into exactly one
     ``VertexType`` based on the shape of its raw fields.  The values are
     string-valued so they serialize cleanly to/from JSON without extra conversion.
 
@@ -102,10 +102,10 @@ class _BaseVertex(BaseModel):
     Attributes:
         uid: Nine-character stable ``:block/uid`` identifier. Required.
         children: Ordered child UIDs resolved from raw
-            :class:`~inktomi.roam_primitives.IdObject` stubs. ``None`` when the
+            :class:`~guffin.roam_primitives.IdObject` stubs. ``None`` when the
             source node has no children.
         refs: Referenced UIDs resolved from raw
-            :class:`~inktomi.roam_primitives.IdObject` stubs. ``None`` when the
+            :class:`~guffin.roam_primitives.IdObject` stubs. ``None`` when the
             source node has no refs.
     """
 
@@ -121,7 +121,7 @@ class _BaseVertex(BaseModel):
 class PageVertex(_BaseVertex):
     """Normalized (transcribed) form of a Roam Page node.
 
-    Produced when the source :class:`~inktomi.roam_node.RoamNode` has
+    Produced when the source :class:`~guffin.roam_node.RoamNode` has
     ``:node/title`` set (i.e. ``node.title is not None``).  The ``title`` field
     is collapsed into :attr:`text`.
 
@@ -142,7 +142,7 @@ class PageVertex(_BaseVertex):
 class HeadingVertex(_BaseVertex):
     """Normalized (transcribed) form of a Roam Heading block node.
 
-    Produced when the source :class:`~inktomi.roam_node.RoamNode` has an
+    Produced when the source :class:`~guffin.roam_node.RoamNode` has an
     effective heading level — either a native ``heading`` value (1–3) or an
     Augmented Headings ``props['ah-level']`` value (h4–h6).
 
@@ -165,7 +165,7 @@ class HeadingVertex(_BaseVertex):
 class TextContentVertex(_BaseVertex):
     """Normalized (transcribed) form of a plain-text Roam Block node.
 
-    Produced when the source :class:`~inktomi.roam_node.RoamNode` has
+    Produced when the source :class:`~guffin.roam_node.RoamNode` has
     ``:block/string`` set with no heading property and no embedded Firestore URL.
 
     Attributes:
@@ -185,7 +185,7 @@ class TextContentVertex(_BaseVertex):
 class ImageVertex(_BaseVertex):
     """Normalized (transcribed) form of a Roam Cloud Firestore image block node.
 
-    Produced when the source :class:`~inktomi.roam_node.RoamNode` has a
+    Produced when the source :class:`~guffin.roam_node.RoamNode` has a
     ``:block/string`` that embeds a Cloud Firestore storage URL.
 
     Attributes:
@@ -250,18 +250,18 @@ Example::
 
 
 class VertexTree(BaseModel):
-    """Normalized (transcribed) form of a :class:`~inktomi.roam_tree.NodeTree`.
+    """Normalized (transcribed) form of a :class:`~guffin.roam_tree.NodeTree`.
 
-    Produced by :func:`~inktomi.roam_transcribe.transcribe`, which applies
-    :func:`~inktomi.roam_transcribe.transcribe_node` to every node in the source
-    :class:`~inktomi.roam_tree.NodeTree` and collects the results here in the
+    Produced by :func:`~guffin.roam_transcribe.transcribe`, which applies
+    :func:`~guffin.roam_transcribe.transcribe_node` to every node in the source
+    :class:`~guffin.roam_tree.NodeTree` and collects the results here in the
     same insertion order.  The resulting collection is guaranteed to have exactly
-    one :data:`Vertex` per source :class:`~inktomi.roam_node.RoamNode` and
+    one :data:`Vertex` per source :class:`~guffin.roam_node.RoamNode` and
     inherits the acyclic-tree structure of its origin.
 
     Attributes:
         vertices: Transcribed vertices, one per source
-            :class:`~inktomi.roam_node.RoamNode`, in insertion order.
+            :class:`~guffin.roam_node.RoamNode`, in insertion order.
     """
 
     model_config = ConfigDict(frozen=True, populate_by_name=True)
@@ -288,7 +288,7 @@ class VertexTreeDFSIterator(Iterator[Vertex]):
     Yields vertices starting from the single root, then recursively yields each
     child subtree in the order recorded in each vertex's
     :attr:`~_BaseVertex.children` list (which preserves the original
-    :attr:`~inktomi.roam_node.RoamNode.order` sort applied during transcription).
+    :attr:`~guffin.roam_node.RoamNode.order` sort applied during transcription).
     The traversal is non-recursive internally (stack-based), so deep trees do not
     risk hitting Python's recursion limit.
 

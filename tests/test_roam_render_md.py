@@ -1,15 +1,15 @@
-"""Unit tests for inktomi.md_rendering."""
+"""Unit tests for guffin.md_rendering."""
 
 from pydantic import HttpUrl
 
-from inktomi.graph import (
+from guffin.graph import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
     TextContentVertex,
     VertexTree,
 )
-from inktomi.md_rendering import render
+from guffin.md_rendering import render
 
 from conftest import FIXTURES_MD_DIR, article0_vertex_tree
 

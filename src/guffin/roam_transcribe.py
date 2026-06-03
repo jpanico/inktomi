@@ -4,20 +4,20 @@ Public symbols:
 
 - :func:`is_image_node` — return ``True`` when a node's string is exactly one
   Markdown image link and nothing else.
-- :func:`vertex_type` — classify a :class:`~inktomi.roam_node.RoamNode` into a
-  :class:`~inktomi.graph.VertexType`.
-- :func:`to_page_vertex` — build a :class:`~inktomi.graph.PageVertex` from a
+- :func:`vertex_type` — classify a :class:`~guffin.roam_node.RoamNode` into a
+  :class:`~guffin.graph.VertexType`.
+- :func:`to_page_vertex` — build a :class:`~guffin.graph.PageVertex` from a
   page node.
-- :func:`to_image_vertex` — build an :class:`~inktomi.graph.ImageVertex` from a
+- :func:`to_image_vertex` — build an :class:`~guffin.graph.ImageVertex` from a
   Firestore image block node.
-- :func:`to_heading_vertex` — build a :class:`~inktomi.graph.HeadingVertex` from
+- :func:`to_heading_vertex` — build a :class:`~guffin.graph.HeadingVertex` from
   a heading block node.
 - :func:`to_text_content_vertex` — build a
-  :class:`~inktomi.graph.TextContentVertex` from a plain text block node.
-- :func:`transcribe_node` — transcribe a :class:`~inktomi.roam_node.RoamNode` into
-  the appropriate :data:`~inktomi.graph.Vertex` subtype.
-- :func:`transcribe` — transcribe all nodes in a :class:`~inktomi.roam_tree.NodeTree`
-  into a :class:`~inktomi.graph.VertexTree`.
+  :class:`~guffin.graph.TextContentVertex` from a plain text block node.
+- :func:`transcribe_node` — transcribe a :class:`~guffin.roam_node.RoamNode` into
+  the appropriate :data:`~guffin.graph.Vertex` subtype.
+- :func:`transcribe` — transcribe all nodes in a :class:`~guffin.roam_tree.NodeTree`
+  into a :class:`~guffin.graph.VertexTree`.
 """
 
 import logging
@@ -28,7 +28,7 @@ from urllib.parse import unquote, urlparse
 
 from pydantic import TypeAdapter, validate_call
 
-from inktomi.graph import (
+from guffin.graph import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
@@ -39,29 +39,29 @@ from inktomi.graph import (
     VertexTree,
     VertexType,
 )
-from inktomi.roam_md_normalize import normalize
-from inktomi.roam_node import RoamNode
-from inktomi.roam_tree import NodeTree
-from inktomi.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, Url
+from guffin.roam_md_normalize import normalize
+from guffin.roam_node import RoamNode
+from guffin.roam_tree import NodeTree
+from guffin.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, Url
 
 logger = logging.getLogger(__name__)
 
 _url_adapter: TypeAdapter[Url] = TypeAdapter(Url)
 """Pydantic :class:`~pydantic.TypeAdapter` for validating and coercing URL strings to.
 
-:data:`~inktomi.roam_primitives.Url`.
+:data:`~guffin.roam_primitives.Url`.
 """
 
 
 def _resolve_children(node: RoamNode, id_map: dict[Id, RoamNode]) -> VertexChildren | None:
     """Return an ordered list of child UIDs for *node*, or ``None`` if childless.
 
-    Children are sorted by :attr:`~inktomi.roam_node.RoamNode.order`.  Stubs
+    Children are sorted by :attr:`~guffin.roam_node.RoamNode.order`.  Stubs
     whose id is absent from *id_map* are silently dropped.
 
     Args:
         node: The node whose children are to be resolved.
-        id_map: Mapping from Datomic entity id to :class:`~inktomi.roam_node.RoamNode`.
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam_node.RoamNode`.
 
     Returns:
         Sorted list of child UIDs, or ``None`` when *node* has no children or
@@ -84,7 +84,7 @@ def _resolve_refs(node: RoamNode, id_map: dict[Id, RoamNode]) -> VertexRefs | No
 
     Args:
         node: The node whose refs are to be resolved.
-        id_map: Mapping from Datomic entity id to :class:`~inktomi.roam_node.RoamNode`.
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam_node.RoamNode`.
 
     Returns:
         List of referenced UIDs, or ``None`` when *node* has no refs or all ref
@@ -217,23 +217,23 @@ def is_image_node(node: RoamNode) -> bool:
 
 @validate_call
 def vertex_type(node: RoamNode) -> VertexType:
-    r"""Classify *node* into a :class:`~inktomi.graph.VertexType`.
+    r"""Classify *node* into a :class:`~guffin.graph.VertexType`.
 
     Handles both native Roam headings (levels 1–3 via ``node.heading``) and Augmented
     Headings extension levels (4–6 via ``node.props['ah-level']``).
 
     Classification order:
 
-    1. ``node.title`` is set → :attr:`~inktomi.graph.VertexType.ROAM_PAGE`
-    2. ``node.string`` contains a Firestore URL → :attr:`~inktomi.graph.VertexType.ROAM_IMAGE`
-    3. Effective heading level is non-\ ``None`` → :attr:`~inktomi.graph.VertexType.ROAM_HEADING`
-    4. Otherwise → :attr:`~inktomi.graph.VertexType.ROAM_TEXT_CONTENT`
+    1. ``node.title`` is set → :attr:`~guffin.graph.VertexType.ROAM_PAGE`
+    2. ``node.string`` contains a Firestore URL → :attr:`~guffin.graph.VertexType.ROAM_IMAGE`
+    3. Effective heading level is non-\ ``None`` → :attr:`~guffin.graph.VertexType.ROAM_HEADING`
+    4. Otherwise → :attr:`~guffin.graph.VertexType.ROAM_TEXT_CONTENT`
 
     Args:
         node: The raw Roam node to classify.
 
     Returns:
-        The :class:`~inktomi.graph.VertexType` for *node*.
+        The :class:`~guffin.graph.VertexType` for *node*.
 
     Raises:
         ValidationError: If *node* is ``None`` or invalid.
@@ -254,15 +254,15 @@ def vertex_type(node: RoamNode) -> VertexType:
 
 @validate_call
 def to_page_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> PageVertex:
-    """Build a :class:`~inktomi.graph.PageVertex` from *node*.
+    """Build a :class:`~guffin.graph.PageVertex` from *node*.
 
     Args:
         node: A page node with ``node.title`` set.
-        id_map: Mapping from Datomic entity id to :class:`~inktomi.roam_node.RoamNode`,
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam_node.RoamNode`,
             used to resolve child and ref stubs to UIDs.
 
     Returns:
-        A :class:`~inktomi.graph.PageVertex`.
+        A :class:`~guffin.graph.PageVertex`.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -281,15 +281,15 @@ def to_page_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> PageVertex:
 
 @validate_call
 def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
-    """Build an :class:`~inktomi.graph.ImageVertex` from *node*.
+    """Build an :class:`~guffin.graph.ImageVertex` from *node*.
 
     Args:
         node: A block node whose ``node.string`` embeds a Firestore image URL.
-        id_map: Mapping from Datomic entity id to :class:`~inktomi.roam_node.RoamNode`,
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam_node.RoamNode`,
             used to resolve child and ref stubs to UIDs.
 
     Returns:
-        An :class:`~inktomi.graph.ImageVertex`.
+        An :class:`~guffin.graph.ImageVertex`.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -316,16 +316,16 @@ def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
 
 @validate_call
 def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> HeadingVertex:
-    """Build a :class:`~inktomi.graph.HeadingVertex` from *node*.
+    """Build a :class:`~guffin.graph.HeadingVertex` from *node*.
 
     Args:
         node: A block node with an effective heading level (native ``node.heading``
             or ``node.props['ah-level']``).
-        id_map: Mapping from Datomic entity id to :class:`~inktomi.roam_node.RoamNode`,
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam_node.RoamNode`,
             used to resolve child and ref stubs to UIDs.
 
     Returns:
-        A :class:`~inktomi.graph.HeadingVertex`.
+        A :class:`~guffin.graph.HeadingVertex`.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -348,15 +348,15 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> HeadingVert
 
 @validate_call
 def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextContentVertex:
-    """Build a :class:`~inktomi.graph.TextContentVertex` from *node*.
+    """Build a :class:`~guffin.graph.TextContentVertex` from *node*.
 
     Args:
         node: A plain text block node with ``node.string`` set.
-        id_map: Mapping from Datomic entity id to :class:`~inktomi.roam_node.RoamNode`,
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam_node.RoamNode`,
             used to resolve child and ref stubs to UIDs.
 
     Returns:
-        A :class:`~inktomi.graph.TextContentVertex`.
+        A :class:`~guffin.graph.TextContentVertex`.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -375,22 +375,22 @@ def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextCo
 
 @validate_call
 def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode]) -> Vertex:
-    r"""Transcribe *node* into a normalized :class:`~inktomi.graph.Vertex`.
+    r"""Transcribe *node* into a normalized :class:`~guffin.graph.Vertex`.
 
-    Determines the :class:`~inktomi.graph.VertexType` via :func:`vertex_type`,
-    resolves raw :class:`~inktomi.roam_primitives.IdObject` stubs in children and refs to
+    Determines the :class:`~guffin.graph.VertexType` via :func:`vertex_type`,
+    resolves raw :class:`~guffin.roam_primitives.IdObject` stubs in children and refs to
     stable UIDs via *id_map*, and handles both native Roam headings (levels 1–3 via
     ``node.heading``) and Augmented Headings extension levels (4–6 via
     ``node.props['ah-level']``).
 
     Args:
         node: The raw Roam node to transcribe.
-        id_map: Mapping from Datomic entity id to :class:`~inktomi.roam_node.RoamNode`,
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam_node.RoamNode`,
             used to resolve child and ref stubs to UIDs.  Stubs whose id is absent
             from *id_map* are silently dropped.
 
     Returns:
-        A :class:`~inktomi.graph.Vertex` representing the normalized node.
+        A :class:`~guffin.graph.Vertex` representing the normalized node.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -409,7 +409,7 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode]) -> Vertex:
 
 
 def transcribe(node_tree: NodeTree) -> VertexTree:
-    """Transcribe every node in *node_tree* into a :class:`~inktomi.graph.VertexTree`.
+    """Transcribe every node in *node_tree* into a :class:`~guffin.graph.VertexTree`.
 
     Builds an id-map from *node_tree.tree_network*, then applies :func:`transcribe_node`
     to each node in insertion order.
@@ -418,8 +418,8 @@ def transcribe(node_tree: NodeTree) -> VertexTree:
         node_tree: A validated tree of raw Roam nodes.
 
     Returns:
-        A :class:`~inktomi.graph.VertexTree` containing one
-        :class:`~inktomi.graph.Vertex` per node in *node_tree.tree_network*.
+        A :class:`~guffin.graph.VertexTree` containing one
+        :class:`~guffin.graph.Vertex` per node in *node_tree.tree_network*.
 
     Raises:
         ValueError: If any node has neither a ``title`` nor a ``string`` field set.
