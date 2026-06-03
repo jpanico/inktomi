@@ -24,6 +24,7 @@
       "Bash(pip *)",
       "Bash(pytest *)",
       "Bash(hatch *)",
+      "Bash(pyright *)",
       "Bash(ROAM_LIVE_TESTS=1 *pytest*)",
       "Bash(black *)",
       "Bash(mypy *)",
@@ -43,7 +44,10 @@
       "Bash(mdimport *)",
       "Bash(~/Applications/OpenMDBundle.app/Contents/MacOS/open-mdbundle *)",
       "Bash(_TYPER_STANDARD_TRACEBACK=1 *)",
-      "Bash(lsof *)"
+      "Bash(lsof *)",
+      "Bash(code --version)",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
     ]
   }
 }
