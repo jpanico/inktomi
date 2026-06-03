@@ -1,6 +1,9 @@
 # guffin
 
-Python 3.14 toolkit for bundling Roam Research markdown exports with their Cloud Firestore-hosted images into self-contained `.mdbundle` directories.
+Python 3.14 toolkit for exporting Roam Research pages to self-contained documents. Supports two output formats:
+
+- **Markdown** — renders to CommonMark and optionally bundles Cloud Firestore-hosted images into a self-contained `.mdbundle` directory.
+- **PDF** — builds a Pandoc object model directly from the normalized vertex tree via [Panflute](https://github.com/sergiocorreia/panflute), fetches and embeds Cloud Firestore images, and produces a PDF via [Pandoc](https://pandoc.org) + [Typst](https://typst.app).
 
 ## Development Setup
 
@@ -8,6 +11,8 @@ Python 3.14 toolkit for bundling Roam Research markdown exports with their Cloud
 
 - Python 3.14 or higher
 - Git
+- [Pandoc](https://pandoc.org/installing.html) — required for PDF export (`brew install pandoc`)
+- [Typst](https://typst.app) — PDF engine used by Pandoc (`brew install typst`)
 
 ### Initial Setup
 
@@ -62,8 +67,7 @@ pytest tests/test_roam_asset_fetch.py
 Some tests require the Roam Desktop app to be running locally. These are marked with `@pytest.mark.live` and are skipped by default. To enable them:
 
 ```bash
-export ROAM_LIVE_TESTS=1
-pytest -m live
+ROAM_LIVE_TESTS=1 ROAM_LOCAL_API_PORT=3333 ROAM_GRAPH_NAME=<graph> ROAM_API_TOKEN=<token> pytest -m live -v
 ```
 
 ### Code Formatting
@@ -125,12 +129,13 @@ guffin/
 │   └── guffin/                  # Main package
 │       ├── __init__.py
 │       ├── dump_roam_tree.py      # CLI: dump a Roam page or node subtree as a Rich tree to the terminal
-│       ├── export_roam_tree.py    # CLI: export a Roam page or node subtree to a .mdbundle or plain .md
+│       ├── export_roam_tree.py    # CLI: export a Roam page or node subtree (--format markdown|pdf)
 │       ├── roam_tree_loader.py    # Shared tree-loading pipeline; fetch_roam_trees resolves a target, fetches nodes, returns (NodeTree, VertexTree)
-│       ├── roam_md_bundle.py      # Core bundling logic
+│       ├── roam_md_bundle.py      # Core Markdown bundling logic
 │       ├── roam_md_normalize.py   # Normalize Roam-flavored Markdown to CommonMark
 │       ├── roam_transcribe.py     # Transcribe NodeTree → VertexTree (applies normalize())
 │       ├── md_rendering.py        # Render VertexTree → CommonMark document string
+│       ├── pdf_rendering.py       # Render VertexTree → PDF via Panflute + Pandoc + Typst
 │       ├── rich_rendering.py      # Rich panel/tree rendering for NodeTree and VertexTree
 │       ├── validation.py          # Generic accumulator-pipeline validation framework
 │       ├── roam_primitives.py     # Foundational type aliases, UID_PATTERN/UID_RE, IMAGE_LINK_RE (dep root)
@@ -147,7 +152,24 @@ guffin/
 │       ├── roam_asset_fetch.py    # Fetch Firestore assets via Local API
 │       └── logging_config.py      # Colorized logging; reads LOG_LEVEL env var
 ├── tests/                         # pytest test suite
-│   ├── fixtures/                  # Sample markdown, images, JSON, YAML
+│   ├── conftest.py                # Shared fixtures and helpers (api_endpoint, article0_node_tree, …)
+│   ├── fixtures/
+│   │   ├── images/
+│   │   │   ├── flower.jpeg                      # JPEG used in live asset-fetch tests
+│   │   │   ├── test_article_0.png               # Screenshot of Test Article 0 in Roam
+│   │   │   └── test_article_1.png               # Screenshot of Test Article 1 in Roam
+│   │   ├── json/
+│   │   │   └── image_node.json                  # Raw pull-block payload for a Firestore image block
+│   │   ├── markdown/
+│   │   │   ├── descendant_rule.md               # CSS descendant-rule reference snippet
+│   │   │   ├── flower.jpeg                      # Image asset bundled alongside test_article_0_expected.md
+│   │   │   └── test_article_0_expected.md       # Expected CommonMark output for Test Article 0
+│   │   └── yaml/
+│   │       ├── test_article_0_nodes.yaml        # Serialized NodeNetwork for Test Article 0
+│   │       ├── test_article_0_vertices.yaml     # Serialized VertexTree for Test Article 0
+│   │       ├── test_article_1_anchor_tree.yaml  # Serialized NodeTree for Test Article 1 (anchor subtree)
+│   │       ├── test_article_1_nodes_by_uid.yaml # Serialized NodesByUid for Test Article 1
+│   │       └── test_article_1_raw_result.yaml   # Raw Datalog result for Test Article 1
 │   ├── test_export_roam_tree.py
 │   ├── test_roam_asset_fetch.py
 │   ├── test_roam_graph.py
@@ -158,22 +180,24 @@ guffin/
 │   ├── test_roam_node.py
 │   ├── test_roam_node_fetch.py
 │   ├── test_roam_node_fetch_result.py
-│   ├── test_roam_render_md.py
+│   ├── test_md_rendering.py
+│   ├── test_pdf_rendering.py
 │   ├── test_roam_schema_fetch.py
 │   ├── test_roam_transcribe.py
 │   └── test_roam_tree.py
 ├── scripts/
-│   ├── dump-roam-tree.sh           # Shell wrapper for dump-roam-tree
-│   ├── export-roam-tree.sh         # Shell wrapper for export-roam-tree
-│   ├── setup-mdbundle-handler.sh   # Setup .mdbundle auto-open in Typora
-│   └── refresh-mdbundle-folders.sh # Refresh existing .mdbundle folders
+│   ├── dump-roam-tree.sh              # Shell wrapper for dump-roam-tree
+│   ├── export-roam-tree.sh            # Shell wrapper for export-roam-tree
+│   ├── regen_article0_fixtures.py     # Regenerate all test fixtures derived from "Test Article 0"
+│   ├── setup-mdbundle-handler.sh      # Setup .mdbundle auto-open in Typora (macOS)
+│   └── refresh-mdbundle-folders.sh    # Refresh existing .mdbundle folders (macOS)
 ├── docs/
 │   ├── MDBUNDLE_SETUP.md           # macOS .mdbundle integration guide
 │   ├── processing_pipeline.md      # High-level overview of the core data processing pipeline
 │   ├── roam-local-api.md           # Roam Local API (JSON over HTTP) reference
 │   ├── roam-md.md                  # Roam-flavored Markdown vs. CommonMark differences
-│   ├── roam-querying.md            # Datalog query language and query reference
-│   ├── roam-schema.md              # Full Roam attribute schema from a live graph
+│   ├── roam-querying.md            # Datalog query language, query structure, and all queries used in this project
+│   ├── roam-schema.md              # Full Roam attribute schema (kept in sync with RoamAttribute enum)
 │   └── roam_database.png           # Datomic/DataScript datom model diagram
 ├── pyproject.toml                  # Project configuration
 └── README.md
@@ -183,35 +207,45 @@ guffin/
 
 The package provides two command-line utilities.
 
-### `export-roam-tree` — Export a Roam page or node subtree to CommonMark
+### `export-roam-tree` — Export a Roam page or node subtree
 
-Fetches a Roam page or node subtree via the Local API, normalizes it, and writes the result to the output directory. The positional argument is interpreted as a **node UID** if it matches `^[A-Za-z0-9_-]{9}$` (exactly 9 alphanumeric/dash/underscore characters); otherwise it is treated as a **page title**.
-
-By default it creates a `.mdbundle` directory containing the CommonMark document and any downloaded Cloud Firestore images. Pass `--no-bundle` to write a plain `.md` file instead.
+Fetches a Roam page or node subtree via the Local API, normalizes it, and writes the result in one of two formats controlled by `--format`. The positional argument is interpreted as a **node UID** if it matches `^[A-Za-z0-9_-]{9}$` (exactly 9 alphanumeric/dash/underscore characters); otherwise it is treated as a **page title**.
 
 ```bash
-export-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> -o <output_dir> [--bundle|--no-bundle] [--cache-dir <dir>]
+export-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> -o <output_dir> \
+  [--format markdown|pdf] [--bundle|--no-bundle] [--cache-dir <dir>]
 ```
 
-Example — export by page title (bundled, default):
+#### Markdown output (default)
+
+By default (`--format markdown`) it creates a `.mdbundle` directory containing the CommonMark document and any downloaded Cloud Firestore images. Pass `--no-bundle` to write a plain `.md` file instead.
+
 ```bash
+# Bundled (default) — creates ~/docs/Test Article.mdbundle/
 export-roam-tree "Test Article" -p 3333 -g SCFH -t your-bearer-token -o ~/docs
-# → creates ~/docs/Test Article.mdbundle/
-```
 
-Example — export by node UID:
-```bash
-export-roam-tree wdMgyBiP9 -p 3333 -g SCFH -t your-bearer-token -o ~/docs
-# → creates ~/docs/wdMgyBiP9.mdbundle/
-```
-
-Example — plain `.md` output:
-```bash
+# Plain .md — creates ~/docs/Test Article.md
 export-roam-tree "Test Article" -p 3333 -g SCFH -t your-bearer-token -o ~/docs --no-bundle
-# → creates ~/docs/Test Article.md
+
+# Export by node UID
+export-roam-tree wdMgyBiP9 -p 3333 -g SCFH -t your-bearer-token -o ~/docs
 ```
 
-Supported environment variables:
+#### PDF output
+
+`--format pdf` builds a Pandoc object model directly from the vertex tree via Panflute, fetches and embeds Cloud Firestore images, and produces a PDF via Pandoc + Typst. Requires `pandoc` and `typst` on `PATH`.
+
+```bash
+# Creates ~/docs/Test Article.pdf
+export-roam-tree "Test Article" -p 3333 -g SCFH -t your-bearer-token -o ~/docs --format pdf
+```
+
+The `--bundle/--no-bundle` flags are ignored with `--format pdf`. The `--cache-dir` option works with both formats.
+
+#### Environment variables
+
+All options can be supplied via environment variables:
+
 ```bash
 export ROAM_LOCAL_API_PORT=3333
 export ROAM_GRAPH_NAME=SCFH
@@ -219,7 +253,8 @@ export ROAM_API_TOKEN=your-bearer-token
 export ROAM_EXPORT_DIR=~/docs
 export ROAM_CACHE_DIR=~/.cache/roam   # optional: skip re-downloading unchanged images
 
-export-roam-tree "Test Article"
+export-roam-tree "Test Article"                      # Markdown bundle (default)
+export-roam-tree "Test Article" --format pdf         # PDF
 ```
 
 ### `dump-roam-tree` — Inspect a Roam page or node subtree as a Rich tree
@@ -227,7 +262,8 @@ export-roam-tree "Test Article"
 Fetches a Roam page or node subtree and renders it as a colorized tree in the terminal. Useful for inspecting the raw node structure or the normalized vertex structure. The positional argument follows the same page-title-vs-node-UID inference as `export-roam-tree`.
 
 ```bash
-dump-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> [--vertex-tree|-v] [--node-tree|-n] [--raw-results|-r] [--include-refs|-i] [--node-props <props>]
+dump-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> \
+  [--vertex-tree|-v] [--node-tree|-n] [--raw-results|-r] [--include-refs|-i] [--node-props <props>]
 ```
 
 Flags (all are boolean toggles with a `--no-*` / uppercase-letter inverse):
@@ -276,17 +312,6 @@ To configure macOS to automatically open `.mdbundle` folders in Typora when doub
 
 3. **Done!** Double-clicking any `.mdbundle` folder will now open the markdown file in Typora
 
-**How it works:**
-- Double-clicking a `.mdbundle` folder launches `OpenMDBundle.app`
-- The app uses AppleScript to properly handle the "open" event from macOS
-- It extracts the markdown filename and opens it in Typora
-
-**Troubleshooting:**
-- If double-clicking doesn't work, try logging out and back in
-- Right-click a `.mdbundle` folder → Get Info to verify "OpenMDBundle" appears under "Open with:"
-- If it doesn't appear, run `mdimport <folder>` to force macOS to recognize it
-- Test from command line: `open ~/path/to/your.mdbundle` should open in Typora
-
 See [docs/MDBUNDLE_SETUP.md](docs/MDBUNDLE_SETUP.md) for detailed instructions and troubleshooting.
 
 ## Documentation
@@ -295,7 +320,7 @@ See [docs/MDBUNDLE_SETUP.md](docs/MDBUNDLE_SETUP.md) for detailed instructions a
 - [docs/roam-local-api.md](docs/roam-local-api.md) — Roam Local API reference (JSON over HTTP)
 - [docs/roam-md.md](docs/roam-md.md) — Roam-flavored Markdown vs. CommonMark differences
 - [docs/roam-querying.md](docs/roam-querying.md) — Datalog query language, query structure, and all queries used in this project
-- [docs/roam-schema.md](docs/roam-schema.md) — Full Roam attribute schema retrieved from a live graph
+- [docs/roam-schema.md](docs/roam-schema.md) — Full Roam attribute schema (kept in sync with `RoamAttribute` enum)
 - [docs/MDBUNDLE_SETUP.md](docs/MDBUNDLE_SETUP.md) — macOS `.mdbundle` integration guide
 
 ## License

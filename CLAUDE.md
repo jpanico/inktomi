@@ -1,8 +1,14 @@
 # CLAUDE.md
 
 ## Project Overview
-Python 3.14 toolkit for bundling Roam Research markdown exports with their
-Cloud Firestore-hosted images into self-contained `.mdbundle` directories.
+Python 3.14 toolkit for exporting Roam Research pages to self-contained
+documents.  Supports two output formats:
+
+- **Markdown** — renders to CommonMark and optionally bundles Cloud
+  Firestore-hosted images into a self-contained `.mdbundle` directory.
+- **PDF** — builds a Pandoc object model directly from the `VertexTree`
+  via Panflute, fetches and embeds Cloud Firestore images, and produces a
+  PDF via Pandoc + Typst.
 
 ## Setup
 ```bash
@@ -13,7 +19,9 @@ pip install -e ".[dev]"
 ## Key Commands
 ```bash
 dump-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> [-v/-V] [-n/-N] [-r/-R] [--node-props <props>]
-export-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> -o <output_dir> [--bundle|--no-bundle] [--cache-dir <dir>]
+export-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> -o <output_dir> [--format markdown|pdf] [--bundle|--no-bundle] [--cache-dir <dir>]
+# --format markdown (default): writes <target>.mdbundle/ (--bundle) or <target>.md (--no-bundle)
+# --format pdf: writes <target>.pdf via Pandoc + Typst; requires typst on PATH
 
 # Run the full check pipeline (format + lint + type check + tests) in one shot:
 hatch run check
@@ -33,13 +41,14 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
 - `src/guffin/` — main package
   - **CLI entry points**
     - `dump_roam_tree.py` — dumps a Roam page or node subtree as a Rich tree to the terminal; supports `--vertex-tree`/`--node-tree`/`--raw-results` flags (`dump-roam-tree`)
-    - `export_roam_tree.py` — exports a Roam page or node subtree to a `.mdbundle` (default) or plain `.md` (`--no-bundle`); target is a page title or node UID (`export-roam-tree`)
+    - `export_roam_tree.py` — exports a Roam page or node subtree; `--format markdown` (default) writes a `.mdbundle` or plain `.md`; `--format pdf` writes a PDF via Panflute + Pandoc + Typst; target is a page title or node UID (`export-roam-tree`)
     - `roam_tree_loader.py` — shared tree-loading pipeline; `fetch_roam_trees` resolves a target, fetches nodes, and returns a `(NodeFetchResult, VertexTree | None)` pair
   - **Core logic**
     - `roam_md_bundle.py` — core bundling logic
     - `roam_md_normalize.py` — normalizes Roam-flavored Markdown strings to CommonMark
     - `roam_transcribe.py` — transcribes `NodeTree` → `VertexTree`; applies `normalize()` to all text fields
     - `md_rendering.py` — renders a `VertexTree` to a CommonMark document string
+    - `pdf_rendering.py` — renders a `VertexTree` to PDF: fetches image assets via `FetchRoamAsset`, builds a Panflute `Doc`, exports via Pandoc + Typst
     - `rich_rendering.py` — Rich panel/tree rendering for `NodeTree` and `VertexTree`
     - `validation.py` — generic accumulator-pipeline validation framework
   - **Model layer**
@@ -58,7 +67,7 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `roam_asset_fetch.py` — fetches Firestore assets via Local API
   - **Infrastructure**
     - `logging_config.py` — colorized logging (`configure_logging()`); reads `LOG_LEVEL` env var
-- `scripts/` — shell wrapper scripts (`dump-roam-tree.sh`, `export-roam-tree.sh`)
+- `scripts/` — shell wrapper scripts (`dump-roam-tree.sh`, `export-roam-tree.sh`) and maintenance scripts (`regen_article0_fixtures.py` — regenerates all test fixtures derived from "Test Article 0" from the live graph)
 - `tests/fixtures/` — sample markdown, images, JSON, YAML for tests
 
 ## Conventions
@@ -81,6 +90,10 @@ All code written or modified by Claude MUST follow these conventions — no exce
 - **No string-quoted forward references**: never `"ClassName"` in annotations; if a forward reference is needed, reorder definitions so the referenced name is declared first
 - **No `cast()`**: never use `typing.cast()`; fix the type properly instead
 - **No `Any`**: never use `typing.Any`; use a precise type or a type variable
+- **Enum mixin subclasses**: always use the dedicated single-inheritance mixin — never mix a built-in type with `Enum`/`Flag` directly (Ruff `UP042`):
+  - `class Foo(str, Enum)` → `class Foo(enum.StrEnum)`
+  - `class Foo(int, Enum)` → `class Foo(enum.IntEnum)`
+  - `class Foo(int, Flag)` → `class Foo(enum.IntFlag)`
 
 ## Reference Docs
 - `docs/roam-md.md` — Roam flavored Markdown vs. CommonMark differences (relevant to normalization work)

@@ -384,9 +384,7 @@ class FetchRoamNodes:
                     raw_node: dict[str, object] = raw_result[loc[1]][loc[2]]
                     bad_nodes.append(f"  loc={loc!r} raw_node={raw_node!r}")
             if bad_nodes:
-                raise ValueError(
-                    "RoamNode validation failed; offending node(s):\n" + "\n".join(bad_nodes)
-                ) from exc
+                raise ValueError("RoamNode validation failed; offending node(s):\n" + "\n".join(bad_nodes)) from exc
             raise
         logger.debug("response_payload: %s", response_payload)
 

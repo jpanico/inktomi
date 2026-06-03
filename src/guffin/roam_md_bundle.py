@@ -97,7 +97,7 @@ def create_bundle_directory(markdown_file: Path, output_dir: Path) -> Path:
     bundle_dir_name: Final[str] = f"{bundle_dir_stem}.mdbundle"
     bundle_dir: Final[Path] = output_dir / bundle_dir_name
     bundle_dir.mkdir(parents=True, exist_ok=True)
-    logger.info("Created bundle directory: %s", bundle_dir)
+    logger.debug("Created bundle directory: %s", bundle_dir)
 
     return bundle_dir
 
@@ -123,7 +123,7 @@ def find_markdown_image_links(markdown_text: str) -> list[tuple[str, HttpUrl]]:
         image_url: HttpUrl = HttpUrl(image_url_str)  # Convert to HttpUrl
         matches.append((full_match, image_url))
 
-    logger.info("Found %d Cloud Firestore image links", len(matches))
+    logger.debug("Found %d Cloud Firestore image links", len(matches))
     return matches
 
 
@@ -169,7 +169,7 @@ def fetch_and_save_image(
             logger.info("Cache hit for %s -> %s", firebase_url, cached_file.name)
             return (firebase_url, cached_file.name)
 
-    logger.info("Fetching image from: %s", firebase_url)
+    logger.debug("Fetching image from: %s", firebase_url)
 
     # Fetch the file from Roam
     roam_asset: Final[RoamAsset] = FetchRoamAsset.fetch(api_endpoint=api_endpoint, firebase_url=firebase_url)
@@ -194,7 +194,7 @@ def fetch_and_save_image(
     with open(output_path, "wb") as f:
         f.write(roam_asset.contents)
 
-    logger.info("Saved image to: %s", output_path)
+    logger.debug("Saved image to: %s", output_path)
 
     return (firebase_url, file_name)
 
@@ -230,7 +230,7 @@ def replace_image_links(markdown_text: str | None, url_replacements: list[tuple[
     for firebase_url, local_filename in url_replacements:
         # Replace the Cloud Firestore URL with the local filename (convert HttpUrl to string for replacement)
         updated_text = updated_text.replace(str(firebase_url), local_filename)
-        logger.info("Replaced %s with %s", firebase_url, local_filename)
+        logger.debug("Replaced %s with %s", firebase_url, local_filename)
 
     return updated_text
 
@@ -362,7 +362,7 @@ def bundle_md_file(
 
     bundle_dir: Final[Path] = create_bundle_directory(markdown_file, output_dir)
 
-    logger.info("Processing Markdown file: %s", markdown_file)
+    logger.debug("Processing Markdown file: %s", markdown_file)
 
     # Read the Markdown file
     markdown_text: Final[str] = markdown_file.read_text(encoding="utf-8")
@@ -371,7 +371,7 @@ def bundle_md_file(
     image_links: Final[list[tuple[str, HttpUrl]]] = find_markdown_image_links(markdown_text)
 
     if not image_links:
-        logger.info("No Cloud Firestore image links found in the file")
+        logger.debug("No Cloud Firestore image links found in the file")
         return
 
     # Create API endpoint
@@ -397,8 +397,8 @@ def bundle_md_file(
         # Write the updated Markdown file to the bundle directory
         output_file: Final[Path] = bundle_dir / f"{bundle_dir.stem}.md"
         output_file.write_text(updated_text, encoding="utf-8")
-        logger.info("Wrote updated Markdown to: %s", output_file)
-        logger.info("Successfully processed %d images", len(url_replacements))
+        logger.debug("Wrote updated Markdown to: %s", output_file)
+        logger.debug("Successfully processed %d images", len(url_replacements))
     else:
         logger.warning("No images were successfully fetched")
 

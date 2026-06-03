@@ -251,7 +251,7 @@ class TestFetchRoamAssetFetch:
             "https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F-9owRBegJ8.jpeg.enc?alt=media&token=9b673aae-8089-4a91-84df-9dac152a7f94"
         )
         roam_asset: RoamAsset = FetchRoamAsset.fetch(api_endpoint=live_api_endpoint, firebase_url=url)
-        logger.info(f"roam_asset: {roam_asset}")
+        logger.debug(f"roam_asset: {roam_asset}")
 
         # Read the expected JPEG file
         with open(FIXTURES_IMAGES_DIR / "flower.jpeg", "rb") as f:

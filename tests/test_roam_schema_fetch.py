@@ -215,6 +215,6 @@ class TestFetchRoamSchemaFetch:
         assert isinstance(schema, list)
         assert len(schema) > 0
         assert all(isinstance(a, RoamAttribute) for a in schema)
-        logger.info(f"Fetched {len(schema)} schema entries")
+        logger.debug(f"Fetched {len(schema)} schema entries")
         for attr in schema[:5]:
-            logger.info(f"  {attr.namespace}: {attr.attr_name}")
+            logger.debug(f"  {attr.namespace}: {attr.attr_name}")
