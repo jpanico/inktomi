@@ -608,7 +608,7 @@ class TestNodeTreeDFSIterator:
           3331  — Section 1.1       (order=0, child of 3328)
           3334  — illustration 1.1  (order=0, child of 3331)
           3336  — image block       (order=0, child of 3334)
-          4029  — AI assistant text (order=1, child of 3328)
+          4758  — AI assistant text (order=1, child of 3328)
           3329  — Section 2         (order=1, child of root)
           3332  — Section 2.1       (order=0, child of 3329)
           4025  — Section 2.1.1     (order=0, child of 3332)
@@ -618,5 +618,5 @@ class TestNodeTreeDFSIterator:
           3333  — Section 3.1       (order=0, child of 3330)
         """
         tree = article0_node_tree()
-        expected_ids: list[Id] = [3327, 3328, 3331, 3334, 3336, 4029, 3329, 3332, 4025, 4028, 4026, 3330, 3333]
+        expected_ids: list[Id] = [3327, 3328, 3331, 3334, 3336, 4758, 3329, 3332, 4025, 4028, 4026, 3330, 3333]
         assert [n.id for n in NodeTreeDFSIterator(tree)] == expected_ids

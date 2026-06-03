@@ -12,7 +12,7 @@ import enum
 import logging
 from typing import Final
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from guffin.roam_primitives import (
     HeadingLevel,
@@ -145,6 +145,12 @@ class RoamNode(BaseModel):
     seen_by: list[IdObject] | None = Field(
         default=None, description=f"{RoamAttribute.EDIT_SEEN_BY} — users who have seen this block (purpose unclear)"
     )
+
+    @field_validator("heading", mode="before")
+    @classmethod
+    def _coerce_zero_heading(cls, v: object) -> object:
+        # Roam API returns heading=0 for non-heading blocks instead of omitting the field.
+        return None if v == 0 else v
 
     @model_validator(mode="after")
     def _validate_entity_type(self) -> RoamNode:

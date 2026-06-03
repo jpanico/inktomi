@@ -12,7 +12,7 @@ import logging
 import textwrap
 from typing import Final, final
 
-from pydantic import BaseModel, ConfigDict, validate_call
+from pydantic import BaseModel, ConfigDict, ValidationError, validate_call
 
 from guffin.roam_local_api import (
     ApiEndpoint,
@@ -372,9 +372,22 @@ class FetchRoamNodes:
             logger.debug("include_node_tree=False; returning raw result without RoamNode parsing")
             return NodeFetchResult.from_raw_result(fetch_spec, raw_result)
 
-        response_payload: Final[FetchRoamNodes.Response.Payload] = FetchRoamNodes.Response.Payload.model_validate(
-            local_api_response_payload.model_dump(mode="json")
-        )
+        try:
+            response_payload: Final[FetchRoamNodes.Response.Payload] = FetchRoamNodes.Response.Payload.model_validate(
+                local_api_response_payload.model_dump(mode="json")
+            )
+        except ValidationError as exc:
+            bad_nodes: Final[list[str]] = []
+            for err in exc.errors():
+                loc: tuple[int | str, ...] = err["loc"]
+                if len(loc) >= 3 and loc[0] == "result" and isinstance(loc[1], int) and isinstance(loc[2], int):
+                    raw_node: dict[str, object] = raw_result[loc[1]][loc[2]]
+                    bad_nodes.append(f"  loc={loc!r} raw_node={raw_node!r}")
+            if bad_nodes:
+                raise ValueError(
+                    "RoamNode validation failed; offending node(s):\n" + "\n".join(bad_nodes)
+                ) from exc
+            raise
         logger.debug("response_payload: %s", response_payload)
 
         # Datalog :find returns an array-of-arrays; (pull ...) value is at row[0]

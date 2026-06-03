@@ -145,7 +145,7 @@ class TestVertexTreeDFSIterator:
           3BX-iWc-p  — Section 1.1       (children[0] of Section 1)
           TaN67WqnA  — illustration 1.1  (children[0] of Section 1.1)
           mPCzedeKx  — image block       (children[0] of illustration 1.1)
-          FL32hVyCv  — AI assistant      (children[1] of Section 1)
+          Ma5KGUH9O  — AI assistant      (children[1] of Section 1)
           wdMgyBiP9  — Section 2         (children[1] of root)
           drtANJYTg  — Section 2.1       (children[0] of Section 2)
           yFUau9Cpg  — Section 2.1.1     (children[0] of Section 2.1)
@@ -161,7 +161,7 @@ class TestVertexTreeDFSIterator:
             "3BX-iWc-p",
             "TaN67WqnA",
             "mPCzedeKx",
-            "FL32hVyCv",
+            "Ma5KGUH9O",
             "wdMgyBiP9",
             "drtANJYTg",
             "yFUau9Cpg",
