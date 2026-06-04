@@ -11,7 +11,7 @@ result in one of two output formats controlled by ``--format``:
 
   - **Bundle mode** (default, ``--bundle``) — fetches Cloud Firestore images
     and writes a self-contained ``<output_dir>/<target>.mdbundle/`` directory
-    via :func:`~guffin.roam_md_bundle.bundle_md_document`.  Pass
+    via :func:`~guffin.md_rendering.bundle_md_document`.  Pass
     ``--cache-dir`` to avoid re-downloading unchanged assets across runs.
   - **Plain mode** (``--no-bundle``) — writes the CommonMark text directly
     to ``<output_dir>/<target>.md``.
@@ -58,10 +58,9 @@ import typer
 
 from guffin.graph import VertexTree
 from guffin.logging_config import configure_logging
-from guffin.md_rendering import render as render_md
+from guffin.md_rendering import bundle_md_document, render as render_md
 from guffin.pdf_rendering import render as render_pdf
 from guffin.roam_local_api import ApiEndpoint
-from guffin.roam_md_bundle import bundle_md_document
 from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
 from guffin.roam_primitives import UID_PATTERN
 from guffin.roam_tree_loader import fetch_roam_trees

@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 @final
 class FetchRoamAsset:
-    """Stateless utility class for fetching Roam assets from the Roam Research Local API.
+    """Stateless utility class for fetching Roam assets through the Roam Research Local API.
 
     Executes a ``file.get`` action via the Local API, which proxies
     ``roamAlphaAPI.file.get`` through the Roam Desktop app's local HTTP server.
@@ -123,7 +123,7 @@ class FetchRoamAsset:
             timestamp of now.
 
         Raises:
-            ValidationError: If any parameter is ``None`` or invalid.
+            ValidationError: If ``firebase_url`` or ``api_endpoint`` is ``None`` or invalid.
             requests.exceptions.ConnectionError: If the Local API is unreachable.
             requests.exceptions.HTTPError: If the Local API returns a non-200 status.
         """
@@ -174,7 +174,7 @@ def fetch_and_cache_asset(
         ``last_modified`` timestamp of now.
 
     Raises:
-        ValidationError: If any parameter is ``None`` or invalid.
+        ValidationError: If ``firebase_url`` or ``api_endpoint`` is ``None`` or invalid.
         requests.exceptions.ConnectionError: If the Local API is unreachable.
         requests.exceptions.HTTPError: If the Local API returns a non-200 status.
     """
@@ -182,6 +182,8 @@ def fetch_and_cache_asset(
 
     if cache_dir is not None:
         cached_files: Final[list[Path]] = list(cache_dir.glob(f"{cache_key}.*"))
+        if len(cached_files) > 1:
+            raise ValueError(f"Multiple cache files found for key {cache_key!r}: {cached_files}")
         if cached_files:
             cached_path: Final[Path] = cached_files[0]
             cached_media_type: Final[MediaType | None] = MediaType.from_file_name(cached_path.name)

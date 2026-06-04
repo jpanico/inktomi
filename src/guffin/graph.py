@@ -43,6 +43,11 @@ Public symbols:
   depth-first traversal.
 - :class:`VertexTreeDFSIterator` — pre-order depth-first iterator over a
   :class:`VertexTree`.
+- :func:`page_vertices` — return all :class:`PageVertex` instances in a :class:`VertexTree`.
+- :func:`heading_vertices` — return all :class:`HeadingVertex` instances in a :class:`VertexTree`.
+- :func:`text_content_vertices` — return all :class:`TextContentVertex` instances in a :class:`VertexTree`.
+- :func:`image_vertices` — return all :class:`ImageVertex` instances in a :class:`VertexTree`.
+- :func:`image_urls` — return all Cloud Firestore image URLs from a :class:`VertexTree`.
 """
 
 from collections.abc import Iterator
@@ -93,13 +98,19 @@ class VertexType(StrEnum):
     ROAM_IMAGE = "roam/image"
 
 
-class _BaseVertex(BaseModel):
+class _BaseVertex[VT: VertexType](BaseModel):
     """Shared fields inherited by all four concrete vertex types.
 
     Not instantiated directly — use :class:`PageVertex`, :class:`HeadingVertex`,
     :class:`TextContentVertex`, or :class:`ImageVertex`.
 
+    Type Parameters:
+        VT: The :class:`VertexType` literal for the concrete subtype (e.g.
+            ``Literal[VertexType.ROAM_PAGE]``).
+
     Attributes:
+        vertex_type: Discriminator field identifying the concrete subtype.
+            Narrowed to a :class:`~typing.Literal` in each subclass.
         uid: Nine-character stable ``:block/uid`` identifier. Required.
         children: Ordered child UIDs resolved from raw
             :class:`~guffin.roam_primitives.IdObject` stubs. ``None`` when the
@@ -111,6 +122,7 @@ class _BaseVertex(BaseModel):
 
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
+    vertex_type: VT
     uid: Uid = Field(..., description="Nine-character stable block/page identifier.")
     children: VertexChildren | None = Field(
         default=None, description="Ordered child UIDs resolved from raw IdObject stubs."
@@ -118,7 +130,7 @@ class _BaseVertex(BaseModel):
     refs: VertexRefs | None = Field(default=None, description="Referenced UIDs resolved from raw IdObject stubs.")
 
 
-class PageVertex(_BaseVertex):
+class PageVertex(_BaseVertex[Literal[VertexType.ROAM_PAGE]]):
     """Normalized (transcribed) form of a Roam Page node.
 
     Produced when the source :class:`~guffin.roam_node.RoamNode` has
@@ -139,7 +151,7 @@ class PageVertex(_BaseVertex):
     title: str = Field(..., description="Page title from the source node's title field.")
 
 
-class HeadingVertex(_BaseVertex):
+class HeadingVertex(_BaseVertex[Literal[VertexType.ROAM_HEADING]]):
     """Normalized (transcribed) form of a Roam Heading block node.
 
     Produced when the source :class:`~guffin.roam_node.RoamNode` has an
@@ -162,7 +174,7 @@ class HeadingVertex(_BaseVertex):
     heading: HeadingLevel = Field(..., description="Effective heading level (1–6).")
 
 
-class TextContentVertex(_BaseVertex):
+class TextContentVertex(_BaseVertex[Literal[VertexType.ROAM_TEXT_CONTENT]]):
     """Normalized (transcribed) form of a plain-text Roam Block node.
 
     Produced when the source :class:`~guffin.roam_node.RoamNode` has
@@ -182,7 +194,7 @@ class TextContentVertex(_BaseVertex):
     text: str = Field(..., description="Block string from the source node's string field.")
 
 
-class ImageVertex(_BaseVertex):
+class ImageVertex(_BaseVertex[Literal[VertexType.ROAM_IMAGE]]):
     """Normalized (transcribed) form of a Roam Cloud Firestore image block node.
 
     Produced when the source :class:`~guffin.roam_node.RoamNode` has a
@@ -229,15 +241,15 @@ Use :data:`vertex_adapter` to validate a raw dict into the appropriate concrete
 subtype.  Use :class:`VertexTree` to hold a validated collection of vertices.
 """
 
-vertex_adapter: TypeAdapter[PageVertex | HeadingVertex | TextContentVertex | ImageVertex] = TypeAdapter(
-    Annotated[
-        PageVertex | HeadingVertex | TextContentVertex | ImageVertex,
-        Field(discriminator="vertex_type"),
-    ]
-)
-"""Pydantic :class:`~pydantic.TypeAdapter` for validating a raw dict into the correct.
+type _AnnotatedVertex = Annotated[Vertex, Field(discriminator="vertex_type")]
+"""Internal alias: :data:`Vertex` union with ``vertex_type`` discriminator attached.
 
-:data:`Vertex` subtype.
+Shared by :data:`vertex_adapter` and :class:`VertexTree` to avoid repeating the
+full union + discriminator annotation in both places.
+"""
+
+vertex_adapter: TypeAdapter[Vertex] = TypeAdapter(_AnnotatedVertex)
+"""Pydantic :class:`~pydantic.TypeAdapter` for validating a raw dict into the correct :data:`Vertex` subtype.
 
 Uses ``vertex_type`` as the discriminator field to select among :class:`PageVertex`,
 :class:`HeadingVertex`, :class:`TextContentVertex`, and :class:`ImageVertex`.
@@ -266,12 +278,7 @@ class VertexTree(BaseModel):
 
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
-    vertices: list[
-        Annotated[
-            PageVertex | HeadingVertex | TextContentVertex | ImageVertex,
-            Field(discriminator="vertex_type"),
-        ]
-    ] = Field(..., description="Transcribed vertices, one per source RoamNode.")
+    vertices: list[_AnnotatedVertex] = Field(..., description="Transcribed vertices, one per source RoamNode.")
 
     def dfs(self) -> VertexTreeDFSIterator:
         """Return a pre-order depth-first iterator over this tree.
@@ -336,3 +343,28 @@ class VertexTreeDFSIterator(Iterator[Vertex]):
             children: list[Vertex] = [self._uid_map[uid] for uid in vertex.children if uid in self._uid_map]
             self._stack.extend(reversed(children))
         return vertex
+
+
+def page_vertices(tree: VertexTree) -> list[PageVertex]:
+    """Return all :class:`PageVertex` instances in *tree*, in insertion order."""
+    return [v for v in tree.vertices if isinstance(v, PageVertex)]
+
+
+def heading_vertices(tree: VertexTree) -> list[HeadingVertex]:
+    """Return all :class:`HeadingVertex` instances in *tree*, in insertion order."""
+    return [v for v in tree.vertices if isinstance(v, HeadingVertex)]
+
+
+def text_content_vertices(tree: VertexTree) -> list[TextContentVertex]:
+    """Return all :class:`TextContentVertex` instances in *tree*, in insertion order."""
+    return [v for v in tree.vertices if isinstance(v, TextContentVertex)]
+
+
+def image_vertices(tree: VertexTree) -> list[ImageVertex]:
+    """Return all :class:`ImageVertex` instances in *tree*, in insertion order."""
+    return [v for v in tree.vertices if isinstance(v, ImageVertex)]
+
+
+def image_urls(tree: VertexTree) -> list[Url]:
+    """Return the Cloud Firestore URL of every :class:`ImageVertex` in *tree*, in insertion order."""
+    return [v.source for v in image_vertices(tree)]
