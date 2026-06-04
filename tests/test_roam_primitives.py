@@ -3,6 +3,26 @@
 from guffin.roam_primitives import MediaType
 
 
+class TestMediaTypeFromFileName:
+    """Tests for MediaType.from_file_name classmethod."""
+
+    def test_jpeg_extension_variant(self) -> None:
+        """.jpeg resolves to JPEG even though the canonical extension is .jpg."""
+        assert MediaType.from_file_name("photo.jpeg") == MediaType.JPEG
+
+    def test_jpg_extension(self) -> None:
+        """.jpg resolves to JPEG."""
+        assert MediaType.from_file_name("photo.jpg") == MediaType.JPEG
+
+    def test_png(self) -> None:
+        """.png resolves to PNG."""
+        assert MediaType.from_file_name("image.png") == MediaType.PNG
+
+    def test_unknown_extension_returns_none(self) -> None:
+        """An unrecognized extension returns None."""
+        assert MediaType.from_file_name("file.xyz") is None
+
+
 class TestMediaTypeExtension:
     """Tests for MediaType.extension property and MediaType.from_extension classmethod."""
 

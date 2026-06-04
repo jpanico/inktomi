@@ -1,15 +1,18 @@
 """Tests for the roam_asset_fetch module."""
 
+import base64
+import hashlib
 import json
 import logging
 import os
-from pydantic import HttpUrl, ValidationError
-import pytest
-import base64
 from datetime import datetime
+from pathlib import Path
 
-from guffin.roam_asset_fetch import FetchRoamAsset
+import pytest
+from pydantic import HttpUrl, ValidationError
+
 from guffin.roam_asset import RoamAsset
+from guffin.roam_asset_fetch import FetchRoamAsset, fetch_and_cache_asset
 from guffin.roam_local_api import ApiEndpoint, ApiEndpointURL
 from guffin.roam_primitives import MediaType
 
@@ -265,3 +268,33 @@ class TestFetchRoamAssetFetch:
         assert roam_asset.contents == expected_contents
         assert roam_asset.media_type == "image/jpeg"
         assert isinstance(roam_asset.last_modified, datetime)
+
+
+class TestFetchAndCacheAsset:
+    """Tests for fetch_and_cache_asset()."""
+
+    def test_cache_hit_with_jpeg_extension_variant(self, tmp_path: Path) -> None:
+        """Cache files with .jpeg extension are served correctly.
+
+        Regression test: an older version of the code wrote cache files with the
+        platform-dependent extension returned by mimetypes.guess_extension (e.g.
+        '.jpeg' on macOS). fetch_and_cache_asset must handle these via
+        MediaType.from_file_name, which resolves extension variants through
+        mimetypes.guess_type, rather than MediaType.from_extension, which only
+        knows the canonical '.jpg'.
+        """
+        firebase_url: HttpUrl = HttpUrl("https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/photo.jpeg")
+        cache_key: str = hashlib.sha256(str(firebase_url).encode()).hexdigest()
+        cached_file: Path = tmp_path / f"{cache_key}.jpeg"
+        cached_file.write_bytes(b"\xff\xd8\xff\xe0")
+
+        endpoint: ApiEndpoint = ApiEndpoint(
+            url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
+            bearer_token="test-token",
+        )
+
+        asset: RoamAsset = fetch_and_cache_asset(firebase_url, endpoint, cache_dir=tmp_path)
+
+        assert asset.media_type == MediaType.JPEG
+        assert asset.contents == b"\xff\xd8\xff\xe0"
+        assert asset.file_name == cached_file.name
