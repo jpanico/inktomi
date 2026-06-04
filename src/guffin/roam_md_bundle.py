@@ -27,8 +27,6 @@ Public symbols:
   Cloud Firestore images, and write a ``.mdbundle`` directory.
 """
 
-import hashlib
-import shutil
 import unicodedata
 import re
 import logging
@@ -37,8 +35,7 @@ from typing import Final, overload
 from pydantic import HttpUrl, validate_call
 
 from guffin.roam_local_api import ApiEndpoint
-from guffin.roam_asset_fetch import FetchRoamAsset
-from guffin.roam_asset import RoamAsset
+from guffin.roam_asset_fetch import fetch_and_cache_asset
 from guffin.roam_primitives import IMAGE_LINK_RE
 
 logger = logging.getLogger(__name__)
@@ -127,11 +124,6 @@ def find_markdown_image_links(markdown_text: str) -> list[tuple[str, HttpUrl]]:
     return matches
 
 
-def _cache_key(firebase_url: HttpUrl) -> str:
-    """Compute a SHA-256 hex digest of the Cloud Firestore URL for use as a cache key."""
-    return hashlib.sha256(str(firebase_url).encode()).hexdigest()
-
-
 @validate_call
 def fetch_and_save_image(
     api_endpoint: ApiEndpoint,
@@ -139,64 +131,33 @@ def fetch_and_save_image(
     output_dir: Path,
     cache_dir: Path | None = None,
 ) -> tuple[HttpUrl, str]:
-    """Fetch an image from Roam and save it locally, using a cache if provided.
+    """Fetch an image from Roam, write it to *output_dir*, and return its local filename.
 
-    When cache_dir is set, the asset is looked up by a SHA-256 hash of its Cloud Firestore URL.
-    On a cache hit the file is copied directly to output_dir without calling the Roam API.
-    On a cache miss the file is fetched from the API and stored in both the cache and output_dir.
+    Delegates fetching and caching to
+    :func:`~guffin.roam_asset_fetch.fetch_and_cache_asset`.  The asset is
+    saved to *output_dir* under its deterministic ``<sha256>.<ext>`` filename,
+    ensuring consistent filenames across cached and uncached runs.
 
     Args:
         api_endpoint: The Roam Local API endpoint (URL + bearer token).
-        firebase_url: The Cloud Firestore storage URL
-        output_dir: Directory where the image should be saved
-        cache_dir: Optional directory for caching downloaded assets across runs
+        firebase_url: The Cloud Firestore storage URL.
+        output_dir: Directory where the image file is written.
+        cache_dir: Optional directory for caching downloaded assets across runs.
 
     Returns:
-        Tuple of (firebase_url, local_file_path)
+        A ``(firebase_url, local_filename)`` tuple where ``local_filename`` is
+        the name of the saved file within *output_dir*.
 
     Raises:
-        ValidationError: If any parameter is None or invalid
-        Exception: If fetch or save fails
+        ValidationError: If any parameter is ``None`` or invalid.
+        requests.exceptions.ConnectionError: If the Local API is unreachable.
+        requests.exceptions.HTTPError: If the Local API returns a non-200 status.
     """
-    # Check the cache first
-    if cache_dir is not None:
-        key: str = _cache_key(firebase_url)
-        cached_files: Final[list[Path]] = list(cache_dir.glob(f"{key}.*"))
-        if cached_files:
-            cached_file: Final[Path] = cached_files[0]
-            dest: Final[Path] = output_dir / cached_file.name
-            shutil.copy2(cached_file, dest)
-            logger.info("Cache hit for %s -> %s", firebase_url, cached_file.name)
-            return (firebase_url, cached_file.name)
-
-    logger.debug("Fetching image from: %s", firebase_url)
-
-    # Fetch the file from Roam
-    roam_asset: Final[RoamAsset] = FetchRoamAsset.fetch(api_endpoint=api_endpoint, firebase_url=firebase_url)
-
-    # Determine the file name to use in the bundle output directory
-    file_name: str = roam_asset.file_name
-
-    # Save to the cache if a cache directory was provided
-    if cache_dir is not None:
-        key = _cache_key(firebase_url)
-        ext: Final[str] = Path(roam_asset.file_name).suffix  # e.g. ".jpeg"
-        cache_file_name: Final[str] = f"{key}{ext}"
-        cache_path: Final[Path] = cache_dir / cache_file_name
-        with open(cache_path, "wb") as f:
-            f.write(roam_asset.contents)
-        logger.info("Cached asset to: %s", cache_path)
-        # Use the cache file name in the bundle so repeated runs produce identical output
-        file_name = cache_file_name
-
-    # Save the file to the output directory
-    output_path: Final[Path] = output_dir / file_name
-    with open(output_path, "wb") as f:
-        f.write(roam_asset.contents)
-
-    logger.debug("Saved image to: %s", output_path)
-
-    return (firebase_url, file_name)
+    asset = fetch_and_cache_asset(firebase_url, api_endpoint, cache_dir)
+    output_path: Final[Path] = output_dir / asset.file_name
+    output_path.write_bytes(asset.contents)
+    logger.info("Saved image to: %s", output_path)
+    return (firebase_url, asset.file_name)
 
 
 @overload

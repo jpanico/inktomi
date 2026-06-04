@@ -1,6 +1,6 @@
 """Unit tests for guffin.pdf_rendering."""
 
-import pathlib
+from pathlib import Path
 
 import panflute as pf
 from pydantic import HttpUrl
@@ -14,9 +14,9 @@ from guffin.graph import (
 )
 from guffin.pdf_rendering import (
     _build_blocks,
-    _ext_for_media_type,
     vertex_tree_to_pandoc,
 )
+from guffin.roam_asset_fetch import _ext_for_media_type
 
 from conftest import article0_vertex_tree
 
@@ -216,7 +216,7 @@ class TestVertexTreeToPandocTextContentVertex:
 class TestVertexTreeToPandocImageVertex:
     """Tests for vertex_tree_to_pandoc() — ImageVertex rendering."""
 
-    def test_fetched_image_is_embedded(self, tmp_path: pathlib.Path) -> None:
+    def test_fetched_image_is_embedded(self, tmp_path: Path) -> None:
         """When image_files has an entry for the vertex, a pf.Image is used."""
         fake_img = tmp_path / "photo.jpg"
         fake_img.write_bytes(b"")

@@ -5,18 +5,81 @@ Public symbols:
 - :class:`FetchRoamAsset` — stateless utility class that fetches a Roam asset
   (image or file) by its Cloud Firestore URL via the Local API's ``file.get``
   action.
+- :func:`fetch_and_cache_asset` — fetch a Cloud Firestore asset, using a local
+  cache directory to avoid re-downloading unchanged assets.
 """
 
-from datetime import datetime
-from typing import Literal, Self, final
-from pydantic import Base64Bytes, BaseModel, ConfigDict, Field, validate_call
+import hashlib
 import logging
+import mimetypes
+from datetime import datetime
+from pathlib import Path
+from typing import Final, Literal, Self, final
 
-from guffin.roam_local_api import ApiEndpoint, Request as LocalApiRequest, Response as LocalApiResponse, invoke_action
+from pydantic import Base64Bytes, BaseModel, ConfigDict, Field, validate_call
+
 from guffin.roam_asset import RoamAsset
+from guffin.roam_local_api import ApiEndpoint, Request as LocalApiRequest, Response as LocalApiResponse, invoke_action
 from guffin.roam_primitives import MediaType, Url
 
 logger = logging.getLogger(__name__)
+
+_MEDIA_TYPE_EXTENSIONS: Final[dict[str, str]] = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+    "image/svg+xml": ".svg",
+    "image/tiff": ".tiff",
+    "image/bmp": ".bmp",
+}
+"""Override map from MIME type to file extension for common image formats.
+
+Used in preference to :func:`mimetypes.guess_extension`, which is
+platform-dependent and may return unexpected variants (e.g. ``.jpe``
+instead of ``.jpg``).
+"""
+
+_EXTENSION_MEDIA_TYPES: Final[dict[str, str]] = {ext: mt for mt, ext in _MEDIA_TYPE_EXTENSIONS.items()}
+"""Reverse of :data:`_MEDIA_TYPE_EXTENSIONS`: file extension → MIME type."""
+
+
+def _ext_for_media_type(media_type: str) -> str:
+    """Return a normalized file extension for *media_type*.
+
+    Consults :data:`_MEDIA_TYPE_EXTENSIONS` first, then falls back to
+    :func:`mimetypes.guess_extension`.
+
+    Args:
+        media_type: An IANA media type string (e.g. ``"image/jpeg"``).
+
+    Returns:
+        A dotted file extension string (e.g. ``".jpg"``), or ``".bin"``
+        if the type is unrecognized.
+    """
+    if media_type in _MEDIA_TYPE_EXTENSIONS:
+        return _MEDIA_TYPE_EXTENSIONS[media_type]
+    ext = mimetypes.guess_extension(media_type)
+    return ext if ext is not None else ".bin"
+
+
+def _media_type_for_ext(ext: str) -> str:
+    """Return the MIME type for *ext*.
+
+    Consults :data:`_EXTENSION_MEDIA_TYPES` first, then falls back to
+    :func:`mimetypes.guess_type`.
+
+    Args:
+        ext: A dotted file extension string (e.g. ``".jpg"``).
+
+    Returns:
+        An IANA media type string, or ``"application/octet-stream"`` if
+        the extension is unrecognized.
+    """
+    if ext in _EXTENSION_MEDIA_TYPES:
+        return _EXTENSION_MEDIA_TYPES[ext]
+    guessed, _ = mimetypes.guess_type(f"file{ext}")
+    return guessed if guessed is not None else "application/octet-stream"
 
 
 @final
@@ -139,3 +202,66 @@ class FetchRoamAsset:
             media_type=result.media_type,
             contents=result.content,
         )
+
+
+@validate_call
+def fetch_and_cache_asset(
+    firebase_url: Url,
+    api_endpoint: ApiEndpoint,
+    cache_dir: Path | None = None,
+) -> RoamAsset:
+    """Fetch a Cloud Firestore asset, using *cache_dir* as a read/write cache.
+
+    The cache key is the SHA-256 hex digest of the URL string.  Cached files
+    are stored as ``<sha256>.<ext>`` where the extension is derived from the
+    MIME type (e.g. ``.jpg`` for ``image/jpeg``).  The same naming convention
+    is applied to the :attr:`~guffin.roam_asset.RoamAsset.file_name` of the
+    returned asset, ensuring a consistent, deterministic filename regardless
+    of whether the result came from cache or a fresh API call.
+
+    Args:
+        firebase_url: The Cloud Firestore URL of the asset to fetch.
+        api_endpoint: The Roam Local API endpoint (URL + bearer token).
+        cache_dir: Optional directory for caching fetched assets across runs.
+            On a cache hit the asset is read from disk; on a cache miss the
+            fetched asset is written to *cache_dir* for future runs.
+
+    Returns:
+        A :class:`~guffin.roam_asset.RoamAsset` with decoded binary contents,
+        a MIME-type-derived ``file_name``, the asset's ``media_type``, and a
+        ``last_modified`` timestamp of now.
+
+    Raises:
+        ValidationError: If any parameter is ``None`` or invalid.
+        requests.exceptions.ConnectionError: If the Local API is unreachable.
+        requests.exceptions.HTTPError: If the Local API returns a non-200 status.
+    """
+    cache_key: Final[str] = hashlib.sha256(str(firebase_url).encode()).hexdigest()
+
+    if cache_dir is not None:
+        cached_files: Final[list[Path]] = list(cache_dir.glob(f"{cache_key}.*"))
+        if cached_files:
+            cached_path: Final[Path] = cached_files[0]
+            logger.info("Cache hit: %s -> %s", firebase_url, cached_path.name)
+            return RoamAsset(
+                file_name=cached_path.name,
+                last_modified=datetime.now(),
+                media_type=_media_type_for_ext(cached_path.suffix),
+                contents=cached_path.read_bytes(),
+            )
+
+    asset: Final[RoamAsset] = FetchRoamAsset.fetch(firebase_url=firebase_url, api_endpoint=api_endpoint)
+    ext: Final[str] = _ext_for_media_type(asset.media_type)
+    file_name: Final[str] = f"{cache_key}{ext}"
+
+    if cache_dir is not None:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        (cache_dir / file_name).write_bytes(asset.contents)
+        logger.info("Cached asset: %s -> %s", firebase_url, file_name)
+
+    return RoamAsset(
+        file_name=file_name,
+        last_modified=asset.last_modified,
+        media_type=asset.media_type,
+        contents=asset.contents,
+    )

@@ -2,10 +2,9 @@
 
 import logging
 
-# pyright: basic
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, patch
 from pydantic import HttpUrl, ValidationError
 
 from guffin.roam_md_bundle import (
@@ -196,11 +195,9 @@ class TestFindMarkdownImageLinks:
 class TestFetchAndSaveImage:
     """Tests for the fetch_and_save_image function."""
 
-    @patch("guffin.roam_md_bundle.FetchRoamAsset.fetch")
-    @patch("builtins.open", new_callable=mock_open)
-    def test_fetches_and_saves_image_successfully(self, mock_file: Mock, mock_fetch: Mock) -> None:
+    @patch("guffin.roam_md_bundle.fetch_and_cache_asset")
+    def test_fetches_and_saves_image_successfully(self, mock_fetch_cache: Mock, tmp_path: Path) -> None:
         """Test successful image fetch and save."""
-        # Setup
         api_endpoint: ApiEndpoint = ApiEndpoint(
             url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
             bearer_token="test-token",
@@ -208,28 +205,24 @@ class TestFetchAndSaveImage:
         firebase_url: HttpUrl = HttpUrl(
             "https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/img.png?token=abc"
         )
-        output_dir: Path = Path("/tmp/test")
-
-        mock_roam_asset: RoamAsset = RoamAsset(
-            file_name="test_image.png",
+        mock_asset: RoamAsset = RoamAsset(
+            file_name="abc123.png",
             last_modified=datetime.now(),
             media_type="image/png",
             contents=b"fake image data",
         )
-        mock_fetch.return_value = mock_roam_asset
+        mock_fetch_cache.return_value = mock_asset
 
-        # Execute
-        result_url, result_filename = fetch_and_save_image(api_endpoint, firebase_url, output_dir)
+        result_url, result_filename = fetch_and_save_image(api_endpoint, firebase_url, tmp_path)
 
-        # Verify
         assert result_url == firebase_url
         assert isinstance(result_url, HttpUrl)
-        assert result_filename == "test_image.png"
-        mock_fetch.assert_called_once()
-        mock_file.assert_called_once_with(output_dir / "test_image.png", "wb")
+        assert result_filename == "abc123.png"
+        assert (tmp_path / "abc123.png").read_bytes() == b"fake image data"
+        mock_fetch_cache.assert_called_once()
 
-    @patch("guffin.roam_md_bundle.FetchRoamAsset.fetch")
-    def test_fetch_failure_raises_exception(self, mock_fetch: Mock) -> None:
+    @patch("guffin.roam_md_bundle.fetch_and_cache_asset")
+    def test_fetch_failure_raises_exception(self, mock_fetch_cache: Mock, tmp_path: Path) -> None:
         """Test that fetch failure raises an exception."""
         api_endpoint: ApiEndpoint = ApiEndpoint(
             url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
@@ -238,12 +231,10 @@ class TestFetchAndSaveImage:
         firebase_url: HttpUrl = HttpUrl(
             "https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/img.png?token=abc"
         )
-        output_dir: Path = Path("/tmp/test")
-
-        mock_fetch.side_effect = Exception("Network error")
+        mock_fetch_cache.side_effect = Exception("Network error")
 
         with pytest.raises(Exception, match="Network error"):
-            fetch_and_save_image(api_endpoint, firebase_url, output_dir)
+            fetch_and_save_image(api_endpoint, firebase_url, tmp_path)
 
     def test_none_api_endpoint_raises_validation_error(self) -> None:
         """Test that None api_endpoint raises ValidationError."""

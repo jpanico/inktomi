@@ -1,7 +1,5 @@
 """Tests for the roam_local_api module."""
 
-# pyright: basic
-
 import json
 import logging
 from unittest.mock import MagicMock, patch

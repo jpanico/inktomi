@@ -1,9 +1,9 @@
 # guffin
 
-Python 3.14 toolkit for exporting Roam Research pages to self-contained documents. Supports two output formats:
+Python 3.14 toolkit for exporting Roam Research graph sub-trees to self-contained documents. Supports two output formats:
 
-- **Markdown** — renders to CommonMark and optionally bundles Cloud Firestore-hosted images into a self-contained `.mdbundle` directory.
-- **PDF** — builds a Pandoc object model directly from the normalized vertex tree via [Panflute](https://github.com/sergiocorreia/panflute), fetches and embeds Cloud Firestore images, and produces a PDF via [Pandoc](https://pandoc.org) + [Typst](https://typst.app).
+- **Markdown** — renders to CommonMark and optionally bundles Roam-hosted (Cloud Firestore) images into a self-contained `.mdbundle` directory.
+- **PDF** — builds a Pandoc object model directly from the normalized graph sub-tree via [Panflute](https://github.com/sergiocorreia/panflute), fetches and embeds Roam-hosted (Cloud Firestore) images, and produces a PDF via [Pandoc](https://pandoc.org) + [Typst](https://typst.app).
 
 ## Development Setup
 
@@ -18,7 +18,7 @@ Python 3.14 toolkit for exporting Roam Research pages to self-contained document
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/guffin.git
+   git clone https://github.com/jpanico/guffin.git
    cd guffin
    ```
 
@@ -119,7 +119,7 @@ Recommended order: `pydocstringformatter` → `black` → `ruff check --fix`.
 pyright
 ```
 
-All production code under `src/guffin/` must be fully annotated with no `Any` types. Test modules (`tests/`) use `basic` type checking (`# pyright: basic` directive at the top of each test file).
+All production code under `src/guffin/` must be fully annotated with no `Any` types. Test modules (`tests/`) are excluded from pyright via `pyproject.toml` and are not type-checked.
 
 ## Project Structure
 
@@ -127,7 +127,6 @@ All production code under `src/guffin/` must be fully annotated with no `Any` ty
 guffin/
 ├── src/
 │   └── guffin/                  # Main package
-│       ├── __init__.py
 │       ├── dump_roam_tree.py      # CLI: dump a Roam page or node subtree as a Rich tree to the terminal
 │       ├── export_roam_tree.py    # CLI: export a Roam page or node subtree (--format markdown|pdf)
 │       ├── roam_tree_loader.py    # Shared tree-loading pipeline; fetch_roam_trees resolves a target, fetches nodes, returns (NodeTree, VertexTree)
@@ -153,38 +152,23 @@ guffin/
 │       └── logging_config.py      # Colorized logging; reads LOG_LEVEL env var
 ├── tests/                         # pytest test suite
 │   ├── conftest.py                # Shared fixtures and helpers (api_endpoint, article0_node_tree, …)
-│   ├── fixtures/
-│   │   ├── images/
-│   │   │   ├── flower.jpeg                      # JPEG used in live asset-fetch tests
-│   │   │   ├── test_article_0.png               # Screenshot of Test Article 0 in Roam
-│   │   │   └── test_article_1.png               # Screenshot of Test Article 1 in Roam
-│   │   ├── json/
-│   │   │   └── image_node.json                  # Raw pull-block payload for a Firestore image block
-│   │   ├── markdown/
-│   │   │   ├── descendant_rule.md               # CSS descendant-rule reference snippet
-│   │   │   ├── flower.jpeg                      # Image asset bundled alongside test_article_0_expected.md
-│   │   │   └── test_article_0_expected.md       # Expected CommonMark output for Test Article 0
-│   │   └── yaml/
-│   │       ├── test_article_0_nodes.yaml        # Serialized NodeNetwork for Test Article 0
-│   │       ├── test_article_0_vertices.yaml     # Serialized VertexTree for Test Article 0
-│   │       ├── test_article_1_anchor_tree.yaml  # Serialized NodeTree for Test Article 1 (anchor subtree)
-│   │       ├── test_article_1_nodes_by_uid.yaml # Serialized NodesByUid for Test Article 1
-│   │       └── test_article_1_raw_result.yaml   # Raw Datalog result for Test Article 1
-│   ├── test_export_roam_tree.py
-│   ├── test_roam_asset_fetch.py
-│   ├── test_roam_graph.py
-│   ├── test_roam_local_api.py
-│   ├── test_roam_md_bundle.py
-│   ├── test_roam_md_normalize.py
-│   ├── test_roam_network.py
-│   ├── test_roam_node.py
-│   ├── test_roam_node_fetch.py
-│   ├── test_roam_node_fetch_result.py
-│   ├── test_md_rendering.py
-│   ├── test_pdf_rendering.py
-│   ├── test_roam_schema_fetch.py
-│   ├── test_roam_transcribe.py
-│   └── test_roam_tree.py
+│   └── fixtures/
+│       ├── images/
+│       │   ├── flower.jpeg                      # JPEG used in live asset-fetch tests
+│       │   ├── test_article_0.png               # Screenshot of Test Article 0 in Roam
+│       │   └── test_article_1.png               # Screenshot of Test Article 1 in Roam
+│       ├── json/
+│       │   └── image_node.json                  # Raw pull-block payload for a Firestore image block
+│       ├── markdown/
+│       │   ├── descendant_rule.md               # CSS descendant-rule reference snippet
+│       │   ├── flower.jpeg                      # Image asset bundled alongside test_article_0_expected.md
+│       │   └── test_article_0_expected.md       # Expected CommonMark output for Test Article 0
+│       └── yaml/
+│           ├── test_article_0_nodes.yaml        # Serialized NodeNetwork for Test Article 0
+│           ├── test_article_0_vertices.yaml     # Serialized VertexTree for Test Article 0
+│           ├── test_article_1_anchor_tree.yaml  # Serialized NodeTree for Test Article 1 (anchor subtree)
+│           ├── test_article_1_nodes_by_uid.yaml # Serialized NodesByUid for Test Article 1
+│           └── test_article_1_raw_result.yaml   # Raw Datalog result for Test Article 1
 ├── scripts/
 │   ├── dump-roam-tree.sh              # Shell wrapper for dump-roam-tree
 │   ├── export-roam-tree.sh            # Shell wrapper for export-roam-tree
@@ -199,8 +183,7 @@ guffin/
 │   ├── roam-querying.md            # Datalog query language, query structure, and all queries used in this project
 │   ├── roam-schema.md              # Full Roam attribute schema (kept in sync with RoamAttribute enum)
 │   └── roam_database.png           # Datomic/DataScript datom model diagram
-├── pyproject.toml                  # Project configuration
-└── README.md
+└── pyproject.toml                  # Project configuration
 ```
 
 ## Usage
@@ -209,10 +192,10 @@ The package provides two command-line utilities.
 
 ### `export-roam-tree` — Export a Roam page or node subtree
 
-Fetches a Roam page or node subtree via the Local API, normalizes it, and writes the result in one of two formats controlled by `--format`. The positional argument is interpreted as a **node UID** if it matches `^[A-Za-z0-9_-]{9}$` (exactly 9 alphanumeric/dash/underscore characters); otherwise it is treated as a **page title**.
+Fetches a Roam `Page` or `Node` subtree via the Local API, normalizes it, and writes the result in one of two formats controlled by `--format`. The positional argument is interpreted as a **node UID** if it matches `^[A-Za-z0-9_-]{9}$` (exactly 9 alphanumeric/dash/underscore characters); otherwise it is treated as a **page title**.
 
 ```bash
-export-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> -o <output_dir> \
+export-roam-tree <page_title_or_node_uid> --port <port> --graph <graph> --token <token> --output-dir <output_dir> \
   [--format markdown|pdf] [--bundle|--no-bundle] [--cache-dir <dir>]
 ```
 
@@ -222,13 +205,13 @@ By default (`--format markdown`) it creates a `.mdbundle` directory containing t
 
 ```bash
 # Bundled (default) — creates ~/docs/Test Article.mdbundle/
-export-roam-tree "Test Article" -p 3333 -g SCFH -t your-bearer-token -o ~/docs
+export-roam-tree "Test Article" --port 3333 --graph SCFH --token your-bearer-token --output-dir ~/docs
 
 # Plain .md — creates ~/docs/Test Article.md
-export-roam-tree "Test Article" -p 3333 -g SCFH -t your-bearer-token -o ~/docs --no-bundle
+export-roam-tree "Test Article" --port 3333 --graph SCFH --token your-bearer-token --output-dir ~/docs --no-bundle
 
 # Export by node UID
-export-roam-tree wdMgyBiP9 -p 3333 -g SCFH -t your-bearer-token -o ~/docs
+export-roam-tree wdMgyBiP9 --port 3333 --graph SCFH --token your-bearer-token --output-dir ~/docs
 ```
 
 #### PDF output
@@ -237,7 +220,7 @@ export-roam-tree wdMgyBiP9 -p 3333 -g SCFH -t your-bearer-token -o ~/docs
 
 ```bash
 # Creates ~/docs/Test Article.pdf
-export-roam-tree "Test Article" -p 3333 -g SCFH -t your-bearer-token -o ~/docs --format pdf
+export-roam-tree "Test Article" --port 3333 --graph SCFH --token your-bearer-token --output-dir ~/docs --format pdf
 ```
 
 The `--bundle/--no-bundle` flags are ignored with `--format pdf`. The `--cache-dir` option works with both formats.
@@ -249,7 +232,7 @@ All options can be supplied via environment variables:
 ```bash
 export ROAM_LOCAL_API_PORT=3333
 export ROAM_GRAPH_NAME=SCFH
-export ROAM_API_TOKEN=your-bearer-token
+export ROAM_API_TOKEN=<your-bearer-token>
 export ROAM_EXPORT_DIR=~/docs
 export ROAM_CACHE_DIR=~/.cache/roam   # optional: skip re-downloading unchanged images
 
@@ -259,11 +242,11 @@ export-roam-tree "Test Article" --format pdf         # PDF
 
 ### `dump-roam-tree` — Inspect a Roam page or node subtree as a Rich tree
 
-Fetches a Roam page or node subtree and renders it as a colorized tree in the terminal. Useful for inspecting the raw node structure or the normalized vertex structure. The positional argument follows the same page-title-vs-node-UID inference as `export-roam-tree`.
+Fetches a Roam `Page` or `Node` subtree via the Local API, and renders it as a colorized tree in the terminal. Useful for inspecting the raw node structure or the normalized vertex structure. The positional argument follows the same page-title-vs-node-UID inference as `export-roam-tree`.
 
 ```bash
-dump-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> \
-  [--vertex-tree|-v] [--node-tree|-n] [--raw-results|-r] [--include-refs|-i] [--node-props <props>]
+dump-roam-tree <page_title_or_node_uid> --port <port> --graph <graph> --token <token> \
+  [--vertex-tree] [--node-tree] [--raw-results] [--include-refs] [--node-props <props>]
 ```
 
 Flags (all are boolean toggles with a `--no-*` / uppercase-letter inverse):
@@ -273,23 +256,23 @@ Flags (all are boolean toggles with a `--no-*` / uppercase-letter inverse):
 | `--vertex-tree` | `-v/-V` | **on** | Render the normalized vertex tree |
 | `--node-tree` | `-n/-N` | off | Render the raw node tree |
 | `--raw-results` | `-r/-R` | off | Print the raw Datalog query results |
-| `--include-refs` | `-i/-I` | **on** | Also fetch nodes referenced via `:block/refs` and their descendants (page-title targets only) |
+| `--include-refs` | `-i/-I` | **on** | Also fetch nodes referenced via `:block/refs` and their descendants |
 
-`--node-props heading,parents` selects which `RoamNode` fields appear in each node panel body.
+`--node-props heading,parents` selects which `RoamNode` fields appear for each node in the output.
 
 Examples:
 ```bash
 # Default: vertex tree + refs included
-dump-roam-tree "Test Article" -p 3333 -g SCFH -t your-bearer-token
+dump-roam-tree "Test Article" --port 3333 --graph SCFH --token your-bearer-token
 
 # Node tree + vertex tree, with custom node props
-dump-roam-tree "Test Article" -p 3333 -g SCFH -t your-bearer-token -n -v --node-props heading,parents
+dump-roam-tree "Test Article" --port 3333 --graph SCFH --token your-bearer-token --node-tree --vertex-tree --node-props heading,parents
 
 # Raw Datalog results only, no refs
-dump-roam-tree "Test Article" -p 3333 -g SCFH -t your-bearer-token -r -V -I
+dump-roam-tree "Test Article" --port 3333 --graph SCFH --token your-bearer-token --raw-results --no-vertex-tree --no-include-refs
 
 # Fetch by node UID
-dump-roam-tree wdMgyBiP9 -p 3333 -g SCFH -t your-bearer-token
+dump-roam-tree wdMgyBiP9 --port 3333 --graph SCFH --token your-bearer-token
 ```
 
 ### macOS Integration: Auto-Open in Typora

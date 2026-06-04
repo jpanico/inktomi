@@ -51,13 +51,15 @@ Public symbols:
   and write a PDF file.
 """
 
-import hashlib
-import io
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownParameterType=false, reportUnknownArgumentType=false
+# Rationale: panflute has no type stubs, so all its symbols are typed as Unknown by pyright.
+# The four suppressed rules are triggered entirely by that Unknown propagation — disabling them
+# here avoids dozens of cascading false-positive errors without relaxing any other strict checks.
+
+from io import StringIO
 import logging
-import mimetypes
-import pathlib
-import shutil
 import tempfile
+from pathlib import Path
 from typing import Final
 
 import panflute as pf  # type: ignore[import-untyped]
@@ -72,117 +74,50 @@ from guffin.graph import (
     VertexChildren,
     VertexTree,
 )
-from guffin.roam_asset_fetch import FetchRoamAsset
+from guffin.roam_asset_fetch import fetch_and_cache_asset
 from guffin.roam_local_api import ApiEndpoint
 from guffin.roam_primitives import Uid
 
 logger = logging.getLogger(__name__)
 
-_MEDIA_TYPE_EXTENSIONS: Final[dict[str, str]] = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/gif": ".gif",
-    "image/webp": ".webp",
-    "image/svg+xml": ".svg",
-    "image/tiff": ".tiff",
-    "image/bmp": ".bmp",
-}
-"""Override map from MIME type to file extension for common image formats.
-
-Used in preference to :func:`mimetypes.guess_extension`, which is
-platform-dependent and may return unexpected variants (e.g. ``.jpe``
-instead of ``.jpg``).
-"""
-
-
-def _ext_for_media_type(media_type: str) -> str:
-    """Return a normalized file extension for *media_type*.
-
-    Consults :data:`_MEDIA_TYPE_EXTENSIONS` first, then falls back to
-    :func:`mimetypes.guess_extension`.
-
-    Args:
-        media_type: An IANA media type string (e.g. ``"image/jpeg"``).
-
-    Returns:
-        A dotted file extension string (e.g. ``".jpg"``), or ``".bin"``
-        if the type is unrecognized.
-    """
-    if media_type in _MEDIA_TYPE_EXTENSIONS:
-        return _MEDIA_TYPE_EXTENSIONS[media_type]
-    ext = mimetypes.guess_extension(media_type)
-    return ext if ext is not None else ".bin"
-
 
 def _fetch_images(
     vertex_tree: VertexTree,
     api_endpoint: ApiEndpoint,
-    image_dir: pathlib.Path,
-    cache_dir: pathlib.Path | None = None,
-) -> dict[Uid, pathlib.Path]:
+    image_dir: Path,
+    cache_dir: Path | None = None,
+) -> dict[Uid, Path]:
     """Fetch all :class:`~guffin.graph.ImageVertex` assets to *image_dir*.
 
-    For each :class:`~guffin.graph.ImageVertex` in *vertex_tree*, fetches
-    the Cloud Firestore asset via
-    :func:`~guffin.roam_asset_fetch.FetchRoamAsset.fetch` and writes the
-    decoded bytes to *image_dir* using a SHA-256 hash of the URL as the
-    base filename and the MIME-type-derived extension.
-
-    When *cache_dir* is provided:
-
-    - **Cache hit**: copies the cached file to *image_dir* without calling
-      the API.
-    - **Cache miss**: fetches from the API, writes to *image_dir*, then
-      copies to *cache_dir* for future runs.
-
-    Image vertices that fail to fetch are skipped with a warning; they
-    will fall back to a hyperlink in the PDF.
+    Delegates fetching and caching to
+    :func:`~guffin.roam_asset_fetch.fetch_and_cache_asset`.  Each fetched
+    asset is written to *image_dir* under its deterministic
+    ``<sha256>.<ext>`` filename.  Vertices that fail to fetch are skipped
+    with a warning and will fall back to a hyperlink in the PDF.
 
     Args:
         vertex_tree: The vertex tree whose image assets to fetch.
         api_endpoint: Roam Local API endpoint (URL + bearer token).
         image_dir: Directory where fetched image files are written.
         cache_dir: Optional directory for caching downloaded assets across
-            runs.
+            runs; forwarded to :func:`~guffin.roam_asset_fetch.fetch_and_cache_asset`.
 
     Returns:
         A mapping from :class:`~guffin.graph.ImageVertex` UID to the
         local :class:`~pathlib.Path` of the fetched image file.  Vertices
         that could not be fetched are absent from the mapping.
     """
-    image_files: dict[Uid, pathlib.Path] = {}
+    image_files: dict[Uid, Path] = {}
 
     for vertex in vertex_tree.vertices:
         if not isinstance(vertex, ImageVertex):
             continue
-
-        url_str: str = str(vertex.source)
-        cache_key: str = hashlib.sha256(url_str.encode()).hexdigest()
-
         try:
-            if cache_dir is not None:
-                cached: list[pathlib.Path] = list(cache_dir.glob(f"{cache_key}.*"))
-                if cached:
-                    dest: pathlib.Path = image_dir / cached[0].name
-                    shutil.copy2(cached[0], dest)
-                    image_files[vertex.uid] = dest
-                    logger.info("Cache hit for image uid=%r -> %s", vertex.uid, dest.name)
-                    continue
-
-            asset = FetchRoamAsset.fetch(firebase_url=vertex.source, api_endpoint=api_endpoint)
-            ext: str = _ext_for_media_type(asset.media_type)
-            file_name: str = f"{cache_key}{ext}"
-            img_path: pathlib.Path = image_dir / file_name
+            asset = fetch_and_cache_asset(vertex.source, api_endpoint, cache_dir)
+            img_path: Path = image_dir / asset.file_name
             img_path.write_bytes(asset.contents)
-
-            if cache_dir is not None:
-                cache_dir.mkdir(parents=True, exist_ok=True)
-                (cache_dir / file_name).write_bytes(asset.contents)
-                logger.info("Cached image uid=%r -> %s", vertex.uid, file_name)
-
             image_files[vertex.uid] = img_path
-            logger.info("Fetched image uid=%r -> %s", vertex.uid, file_name)
-
+            logger.info("Fetched image uid=%r -> %s", vertex.uid, img_path.name)
         except Exception as e:
             logger.warning("Failed to fetch image uid=%r source=%s: %s", vertex.uid, vertex.source, e)
 
@@ -208,7 +143,7 @@ def _inlines(text: str) -> list[pf.Inline]:
 def _build_list_item(
     vertex: TextContentVertex,
     uid_map: dict[Uid, Vertex],
-    image_files: dict[Uid, pathlib.Path],
+    image_files: dict[Uid, Path],
     depth: int,
 ) -> pf.ListItem:
     """Build a Pandoc :class:`~panflute.ListItem` from a :class:`~guffin.graph.TextContentVertex`.
@@ -237,7 +172,7 @@ def _build_list_item(
 def _build_blocks(
     child_uids: VertexChildren,
     uid_map: dict[Uid, Vertex],
-    image_files: dict[Uid, pathlib.Path],
+    image_files: dict[Uid, Path],
     depth: int,
 ) -> list[pf.Block]:
     """Build a list of Pandoc block elements from an ordered list of child UIDs.
@@ -287,7 +222,7 @@ def _build_blocks(
 def _vertex_to_blocks(
     vertex: Vertex,
     uid_map: dict[Uid, Vertex],
-    image_files: dict[Uid, pathlib.Path],
+    image_files: dict[Uid, Path],
     depth: int,
 ) -> list[pf.Block]:
     """Convert a single :data:`~guffin.graph.Vertex` to Pandoc block elements.
@@ -335,7 +270,7 @@ def _vertex_to_blocks(
             else:
                 return [pf.BulletList(_build_list_item(vertex, uid_map, image_files, depth))]
         case ImageVertex():
-            img_path: pathlib.Path | None = image_files.get(vertex.uid)
+            img_path: Path | None = image_files.get(vertex.uid)
             if img_path is not None:
                 alt: list[pf.Inline] = _inlines(vertex.alt_text or "")
                 img: pf.Image = pf.Image(*alt, url=str(img_path), title=vertex.file_name or "")
@@ -348,7 +283,7 @@ def _vertex_to_blocks(
                 return [pf.Para(link)]
 
 
-def vertex_tree_to_pandoc(vertex_tree: VertexTree, image_files: dict[Uid, pathlib.Path]) -> pf.Doc:
+def vertex_tree_to_pandoc(vertex_tree: VertexTree, image_files: dict[Uid, Path]) -> pf.Doc:
     """Convert a :class:`~guffin.graph.VertexTree` to a Panflute :class:`~panflute.Doc`.
 
     Locates the root vertex (the one not referenced as a child by any other
@@ -380,9 +315,9 @@ def vertex_tree_to_pandoc(vertex_tree: VertexTree, image_files: dict[Uid, pathli
 
 def render(
     vertex_tree: VertexTree,
-    output_path: pathlib.Path,
+    output_path: Path,
     api_endpoint: ApiEndpoint,
-    cache_dir: pathlib.Path | None = None,
+    cache_dir: Path | None = None,
 ) -> None:
     """Render *vertex_tree* to a PDF file at *output_path*.
 
@@ -409,11 +344,11 @@ def render(
             conversion fails.
     """
     with tempfile.TemporaryDirectory() as tmp:
-        image_dir: pathlib.Path = pathlib.Path(tmp)
-        image_files: dict[Uid, pathlib.Path] = _fetch_images(vertex_tree, api_endpoint, image_dir, cache_dir)
+        image_dir: Path = Path(tmp)
+        image_files: dict[Uid, Path] = _fetch_images(vertex_tree, api_endpoint, image_dir, cache_dir)
 
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files)
-        buf: Final[io.StringIO] = io.StringIO()
+        buf: Final[StringIO] = StringIO()
         pf.dump(doc, output_stream=buf)  # type: ignore[no-untyped-call]
         json_str: Final[str] = buf.getvalue()
         logger.debug("pandoc JSON length=%d bytes, output_path=%s", len(json_str), output_path)
