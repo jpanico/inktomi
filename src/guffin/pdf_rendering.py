@@ -45,6 +45,7 @@ Rendering rules:
 
 Public symbols:
 
+- :func:`build_blocks` — convert an ordered list of vertex UIDs to Pandoc block elements.
 - :func:`vertex_tree_to_pandoc` — convert a :class:`~guffin.graph.VertexTree`
   to a Panflute :class:`~panflute.Doc`.
 - :func:`render` — fetch image assets, build the Pandoc object model,
@@ -60,6 +61,7 @@ from io import StringIO
 import logging
 import tempfile
 from pathlib import Path
+from collections.abc import Mapping
 from typing import Final
 
 import panflute as pf  # type: ignore[import-untyped]
@@ -142,14 +144,14 @@ def _inlines(text: str) -> list[pf.Inline]:
 
 def _build_list_item(
     vertex: TextContentVertex,
-    uid_map: dict[Uid, Vertex],
+    uid_map: Mapping[Uid, Vertex],
     image_files: dict[Uid, Path],
     depth: int,
 ) -> pf.ListItem:
     """Build a Pandoc :class:`~panflute.ListItem` from a :class:`~guffin.graph.TextContentVertex`.
 
     The item body is a :class:`~panflute.Plain` inline block.  If the vertex
-    has children they are rendered recursively via :func:`_build_blocks` and
+    has children they are rendered recursively via :func:`build_blocks` and
     appended as nested :class:`~panflute.BulletList` blocks inside the item.
 
     Args:
@@ -165,13 +167,13 @@ def _build_list_item(
     """
     content: list[pf.Block] = [pf.Plain(*_inlines(vertex.text))]
     if vertex.children:
-        content.extend(_build_blocks(vertex.children, uid_map, image_files, depth + 1))
+        content.extend(build_blocks(vertex.children, uid_map, image_files, depth + 1))
     return pf.ListItem(*content)
 
 
-def _build_blocks(
+def build_blocks(
     child_uids: VertexChildren,
-    uid_map: dict[Uid, Vertex],
+    uid_map: Mapping[Uid, Vertex],
     image_files: dict[Uid, Path],
     depth: int,
 ) -> list[pf.Block]:
@@ -221,7 +223,7 @@ def _build_blocks(
 
 def _vertex_to_blocks(
     vertex: Vertex,
-    uid_map: dict[Uid, Vertex],
+    uid_map: Mapping[Uid, Vertex],
     image_files: dict[Uid, Path],
     depth: int,
 ) -> list[pf.Block]:
@@ -237,7 +239,7 @@ def _vertex_to_blocks(
       :class:`~panflute.Para`, followed by children.
     - :class:`~guffin.graph.TextContentVertex` at depth > 1: wrapped in a
       single-item :class:`~panflute.BulletList` (normally reached only from
-      :func:`_build_blocks` which handles sibling grouping).
+      :func:`build_blocks` which handles sibling grouping).
     - :class:`~guffin.graph.ImageVertex`: a :class:`~panflute.Para`
       containing a :class:`~panflute.Image` (local temp file path) if the
       asset was fetched, or a :class:`~panflute.Link` fallback otherwise.
@@ -255,17 +257,17 @@ def _vertex_to_blocks(
     """
     match vertex:
         case PageVertex():
-            return _build_blocks(vertex.children or [], uid_map, image_files, 1)
+            return build_blocks(vertex.children or [], uid_map, image_files, 1)
         case HeadingVertex():
             blocks: list[pf.Block] = [pf.Header(*_inlines(vertex.text), level=vertex.heading)]
             if vertex.children:
-                blocks.extend(_build_blocks(vertex.children, uid_map, image_files, depth + 1))
+                blocks.extend(build_blocks(vertex.children, uid_map, image_files, depth + 1))
             return blocks
         case TextContentVertex():
             if depth <= 1:
                 para_blocks: list[pf.Block] = [pf.Para(*_inlines(vertex.text))]
                 if vertex.children:
-                    para_blocks.extend(_build_blocks(vertex.children, uid_map, image_files, depth + 1))
+                    para_blocks.extend(build_blocks(vertex.children, uid_map, image_files, depth + 1))
                 return para_blocks
             else:
                 return [pf.BulletList(_build_list_item(vertex, uid_map, image_files, depth))]

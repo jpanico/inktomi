@@ -11,7 +11,6 @@ Public symbols:
 
 import hashlib
 import logging
-import mimetypes
 from datetime import datetime
 from pathlib import Path
 from typing import Final, Literal, Self, final
@@ -23,63 +22,6 @@ from guffin.roam_local_api import ApiEndpoint, Request as LocalApiRequest, Respo
 from guffin.roam_primitives import MediaType, Url
 
 logger = logging.getLogger(__name__)
-
-_MEDIA_TYPE_EXTENSIONS: Final[dict[str, str]] = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/gif": ".gif",
-    "image/webp": ".webp",
-    "image/svg+xml": ".svg",
-    "image/tiff": ".tiff",
-    "image/bmp": ".bmp",
-}
-"""Override map from MIME type to file extension for common image formats.
-
-Used in preference to :func:`mimetypes.guess_extension`, which is
-platform-dependent and may return unexpected variants (e.g. ``.jpe``
-instead of ``.jpg``).
-"""
-
-_EXTENSION_MEDIA_TYPES: Final[dict[str, str]] = {ext: mt for mt, ext in _MEDIA_TYPE_EXTENSIONS.items()}
-"""Reverse of :data:`_MEDIA_TYPE_EXTENSIONS`: file extension → MIME type."""
-
-
-def _ext_for_media_type(media_type: str) -> str:
-    """Return a normalized file extension for *media_type*.
-
-    Consults :data:`_MEDIA_TYPE_EXTENSIONS` first, then falls back to
-    :func:`mimetypes.guess_extension`.
-
-    Args:
-        media_type: An IANA media type string (e.g. ``"image/jpeg"``).
-
-    Returns:
-        A dotted file extension string (e.g. ``".jpg"``), or ``".bin"``
-        if the type is unrecognized.
-    """
-    if media_type in _MEDIA_TYPE_EXTENSIONS:
-        return _MEDIA_TYPE_EXTENSIONS[media_type]
-    ext = mimetypes.guess_extension(media_type)
-    return ext if ext is not None else ".bin"
-
-
-def _media_type_for_ext(ext: str) -> str:
-    """Return the MIME type for *ext*.
-
-    Consults :data:`_EXTENSION_MEDIA_TYPES` first, then falls back to
-    :func:`mimetypes.guess_type`.
-
-    Args:
-        ext: A dotted file extension string (e.g. ``".jpg"``).
-
-    Returns:
-        An IANA media type string, or ``"application/octet-stream"`` if
-        the extension is unrecognized.
-    """
-    if ext in _EXTENSION_MEDIA_TYPES:
-        return _EXTENSION_MEDIA_TYPES[ext]
-    guessed, _ = mimetypes.guess_type(f"file{ext}")
-    return guessed if guessed is not None else "application/octet-stream"
 
 
 @final
@@ -242,16 +184,19 @@ def fetch_and_cache_asset(
         cached_files: Final[list[Path]] = list(cache_dir.glob(f"{cache_key}.*"))
         if cached_files:
             cached_path: Final[Path] = cached_files[0]
+            cached_media_type: Final[MediaType | None] = MediaType.from_file_name(cached_path.name)
+            if cached_media_type is None:
+                raise ValueError(f"Cached file has unrecognized extension: {cached_path.name!r}")
             logger.info("Cache hit: %s -> %s", firebase_url, cached_path.name)
             return RoamAsset(
                 file_name=cached_path.name,
                 last_modified=datetime.now(),
-                media_type=_media_type_for_ext(cached_path.suffix),
+                media_type=cached_media_type,
                 contents=cached_path.read_bytes(),
             )
 
     asset: Final[RoamAsset] = FetchRoamAsset.fetch(firebase_url=firebase_url, api_endpoint=api_endpoint)
-    ext: Final[str] = _ext_for_media_type(asset.media_type)
+    ext: Final[str] = asset.media_type.extension
     file_name: Final[str] = f"{cache_key}{ext}"
 
     if cache_dir is not None:

@@ -11,6 +11,7 @@ from datetime import datetime
 from guffin.roam_asset_fetch import FetchRoamAsset
 from guffin.roam_asset import RoamAsset
 from guffin.roam_local_api import ApiEndpoint, ApiEndpointURL
+from guffin.roam_primitives import MediaType
 
 from conftest import FIXTURES_IMAGES_DIR
 
@@ -28,7 +29,7 @@ class TestRoamAsset:
         roam_asset: RoamAsset = RoamAsset(
             file_name="test.jpeg",
             last_modified=test_datetime,
-            media_type="image/jpeg",
+            media_type=MediaType.JPEG,
             contents=test_contents,
         )
 
@@ -43,7 +44,7 @@ class TestRoamAsset:
             RoamAsset(
                 file_name="",  # Empty string
                 last_modified=datetime.now(),
-                media_type="image/jpeg",
+                media_type=MediaType.JPEG,
                 contents=b"data",
             )
 
@@ -53,21 +54,13 @@ class TestRoamAsset:
             RoamAsset(
                 file_name="test.txt",
                 last_modified=datetime.now(),
-                media_type="invalid",  # Missing slash
+                media_type="invalid",  # type: ignore[arg-type]  # deliberately invalid
                 contents=b"data",
             )
 
     def test_valid_media_types(self) -> None:
-        """Test various valid MIME type formats."""
-        valid_media_types: list[str] = [
-            "image/jpeg",
-            "image/png",
-            "application/pdf",
-            "text/plain",
-            "video/mp4",
-        ]
-
-        for media_type in valid_media_types:
+        """Test that all MediaType enum members are accepted."""
+        for media_type in MediaType:
             roam_asset: RoamAsset = RoamAsset(
                 file_name="test.file",
                 last_modified=datetime.now(),
@@ -76,15 +69,25 @@ class TestRoamAsset:
             )
             assert roam_asset.media_type == media_type
 
+    def test_unknown_media_type_raises_validation_error(self) -> None:
+        """Test that a MIME type not in the MediaType enum raises a validation error."""
+        with pytest.raises(Exception):
+            RoamAsset(
+                file_name="test.txt",
+                last_modified=datetime.now(),
+                media_type="text/plain",  # type: ignore[arg-type]  # deliberately not in MediaType enum
+                contents=b"data",
+            )
+
     def test_missing_required_fields_raises_validation_error(self) -> None:
         """Test that missing required fields raise validation errors."""
         # Missing file_name
         with pytest.raises(Exception):
-            RoamAsset(last_modified=datetime.now(), media_type="image/jpeg", contents=b"data")  # type: ignore[call-arg]
+            RoamAsset(last_modified=datetime.now(), media_type=MediaType.JPEG, contents=b"data")  # type: ignore[call-arg]
 
         # Missing last_modified
         with pytest.raises(Exception):
-            RoamAsset(file_name="test.jpeg", media_type="image/jpeg", contents=b"data")  # type: ignore[call-arg]
+            RoamAsset(file_name="test.jpeg", media_type=MediaType.JPEG, contents=b"data")  # type: ignore[call-arg]
 
         # Missing media_type
         with pytest.raises(Exception):
@@ -92,22 +95,22 @@ class TestRoamAsset:
 
         # Missing contents
         with pytest.raises(Exception):
-            RoamAsset(file_name="test.jpeg", last_modified=datetime.now(), media_type="image/jpeg")  # type: ignore[call-arg]
+            RoamAsset(file_name="test.jpeg", last_modified=datetime.now(), media_type=MediaType.JPEG)  # type: ignore[call-arg]
 
     def test_bytes_contents_validation(self) -> None:
         """Test that contents must be bytes."""
         roam_asset: RoamAsset = RoamAsset(
-            file_name="test.txt", last_modified=datetime.now(), media_type="text/plain", contents=b"binary data"
+            file_name="test.png", last_modified=datetime.now(), media_type=MediaType.PNG, contents=b"binary data"
         )
         assert isinstance(roam_asset.contents, bytes)
 
     def test_different_file_types(self) -> None:
-        """Test RoamAsset with different file types and their typical MIME types."""
-        test_cases: list[tuple[str, str, bytes]] = [
-            ("image.jpeg", "image/jpeg", b"\xff\xd8\xff\xe0"),  # JPEG magic bytes
-            ("document.pdf", "application/pdf", b"%PDF-1.4"),  # PDF header
-            ("photo.png", "image/png", b"\x89PNG"),  # PNG signature
-            ("data.json", "application/json", b'{"key": "value"}'),
+        """Test RoamAsset with different image MIME types."""
+        test_cases: list[tuple[str, MediaType, bytes]] = [
+            ("image.jpeg", MediaType.JPEG, b"\xff\xd8\xff\xe0"),  # JPEG magic bytes
+            ("photo.png", MediaType.PNG, b"\x89PNG"),  # PNG signature
+            ("animation.gif", MediaType.GIF, b"GIF89a"),  # GIF header
+            ("icon.bmp", MediaType.BMP, b"BM"),  # BMP magic bytes
         ]
 
         for file_name, media_type, contents in test_cases:
@@ -122,9 +125,9 @@ class TestRoamAsset:
         """Test that last_modified coerces string to datetime."""
         # ISO 8601 format string
         roam_asset: RoamAsset = RoamAsset(
-            file_name="test.txt",
+            file_name="test.jpeg",
             last_modified="2024-01-15T10:30:00",  # type: ignore[arg-type]
-            media_type="text/plain",
+            media_type=MediaType.JPEG,
             contents=b"data",
         )
         assert isinstance(roam_asset.last_modified, datetime)
@@ -137,7 +140,7 @@ class TestRoamAsset:
     def test_immutability(self) -> None:
         """Test that RoamAsset is immutable."""
         roam_asset: RoamAsset = RoamAsset(
-            file_name="test.txt", last_modified=datetime.now(), media_type="text/plain", contents=b"data"
+            file_name="test.jpeg", last_modified=datetime.now(), media_type=MediaType.JPEG, contents=b"data"
         )
         with pytest.raises(Exception):  # Pydantic raises ValidationError for frozen models
             roam_asset.file_name = "changed.txt"  # type: ignore[misc]
@@ -167,19 +170,19 @@ class TestFetchRoamAssetResponsePayloadResult:
         """Test that the ``base64`` field is decoded to bytes by Base64Bytes."""
         test_content: bytes = b"Hello, Roam Research!"
         encoded: str = base64.b64encode(test_content).decode("utf-8")
-        raw: dict[str, str] = {"base64": encoded, "filename": "test.txt", "mimetype": "text/plain"}
+        raw: dict[str, str] = {"base64": encoded, "filename": "test.jpeg", "mimetype": "image/jpeg"}
 
         parsed: FetchRoamAsset.Response.Payload.Result = FetchRoamAsset.Response.Payload.Result.model_validate(raw)
 
         assert parsed.content == test_content
-        assert parsed.file_name == "test.txt"
-        assert parsed.media_type == "text/plain"
+        assert parsed.file_name == "test.jpeg"
+        assert parsed.media_type == "image/jpeg"
 
     def test_different_file_types(self) -> None:
         """Test parsing result dicts with different file types."""
         test_cases: list[tuple[str, bytes, str]] = [
             ("image.jpeg", b"\xff\xd8\xff\xe0", "image/jpeg"),  # JPEG magic bytes
-            ("document.pdf", b"%PDF-1.4", "application/pdf"),  # PDF header
+            ("animation.gif", b"GIF89a", "image/gif"),  # GIF header
             ("photo.png", b"\x89PNG", "image/png"),  # PNG signature
         ]
 
@@ -196,7 +199,7 @@ class TestFetchRoamAssetResponsePayloadResult:
     def test_missing_base64_key_raises_error(self) -> None:
         """Test that a missing ``base64`` key raises ValidationError."""
         with pytest.raises(ValidationError):
-            FetchRoamAsset.Response.Payload.Result.model_validate({"filename": "test.txt", "mimetype": "text/plain"})
+            FetchRoamAsset.Response.Payload.Result.model_validate({"filename": "test.jpeg", "mimetype": "image/jpeg"})
 
     def test_missing_filename_key_raises_error(self) -> None:
         """Test that a missing ``filename`` key raises ValidationError."""
@@ -218,7 +221,7 @@ class TestFetchRoamAssetRequestPayload:
 
         assert parsed["action"] == "file.get"
         assert isinstance(parsed["args"], list)
-        args = parsed["args"]
+        args: list[object] = parsed["args"]  # type: ignore[assignment]
         assert len(args) == 1
         arg = args[0]
         assert isinstance(arg, dict)

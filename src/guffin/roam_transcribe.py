@@ -21,7 +21,6 @@ Public symbols:
 """
 
 import logging
-import mimetypes
 import re
 from typing import Final
 from urllib.parse import unquote, urlparse
@@ -42,7 +41,7 @@ from guffin.graph import (
 from guffin.roam_md_normalize import normalize
 from guffin.roam_node import RoamNode
 from guffin.roam_tree import NodeTree
-from guffin.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, Url
+from guffin.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, MediaType, Url
 
 logger = logging.getLogger(__name__)
 
@@ -177,22 +176,6 @@ def _extract_file_name(firestore_url: str) -> str | None:
     return None
 
 
-def _infer_media_type(file_name: str) -> str | None:
-    """Return the IANA media type inferred from *file_name*'s extension, or ``None``.
-
-    Uses :func:`mimetypes.guess_type` from the standard library.
-
-    Args:
-        file_name: A filename string including extension (e.g. ``"photo.jpg"``).
-
-    Returns:
-        A media type string such as ``"image/jpeg"``, or ``None`` when the type
-        cannot be determined.
-    """
-    guessed, _ = mimetypes.guess_type(file_name)
-    return guessed
-
-
 @validate_call
 def is_image_node(node: RoamNode) -> bool:
     """Return ``True`` if *node* contains exactly one Markdown image link and nothing else.
@@ -302,7 +285,7 @@ def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
     if firestore_url is None:
         raise ValueError(f"RoamNode uid={node.uid!r} 'string' contains no Firestore URL")
     file_name: Final[str | None] = _extract_file_name(firestore_url)
-    media_type: Final[str | None] = _infer_media_type(file_name) if file_name is not None else None
+    media_type: Final[MediaType | None] = MediaType.from_file_name(file_name) if file_name is not None else None
     return ImageVertex(
         uid=node.uid,
         source=_url_adapter.validate_python(firestore_url),

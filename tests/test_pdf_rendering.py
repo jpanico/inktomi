@@ -1,8 +1,12 @@
 """Unit tests for guffin.pdf_rendering."""
 
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownParameterType=false, reportUnknownArgumentType=false, reportAttributeAccessIssue=false
+# Rationale: panflute has no type stubs; all five rules are triggered entirely by
+# Unknown propagation from that import — suppressing them here avoids false positives.
+
 from pathlib import Path
 
-import panflute as pf
+import panflute as pf  # type: ignore[import-untyped]
 from pydantic import HttpUrl
 
 from guffin.graph import (
@@ -13,11 +17,9 @@ from guffin.graph import (
     VertexTree,
 )
 from guffin.pdf_rendering import (
-    _build_blocks,
+    build_blocks,
     vertex_tree_to_pandoc,
 )
-from guffin.roam_asset_fetch import _ext_for_media_type
-
 from conftest import article0_vertex_tree
 
 _IMAGE_URL: HttpUrl = HttpUrl("https://example.com/imgs/photo.jpeg")
@@ -36,39 +38,6 @@ def _str_text(inline: pf.Inline) -> str:
 def _first_inline_text(block: pf.Block) -> str:
     """Return the text of the first Str in the first inline of a block."""
     return _str_text(list(block.content)[0])
-
-
-# ---------------------------------------------------------------------------
-# TestExtForMediaType
-# ---------------------------------------------------------------------------
-
-
-class TestExtForMediaType:
-    """Tests for _ext_for_media_type()."""
-
-    def test_jpeg(self) -> None:
-        """image/jpeg returns .jpg."""
-        assert _ext_for_media_type("image/jpeg") == ".jpg"
-
-    def test_png(self) -> None:
-        """image/png returns .png."""
-        assert _ext_for_media_type("image/png") == ".png"
-
-    def test_gif(self) -> None:
-        """image/gif returns .gif."""
-        assert _ext_for_media_type("image/gif") == ".gif"
-
-    def test_webp(self) -> None:
-        """image/webp returns .webp."""
-        assert _ext_for_media_type("image/webp") == ".webp"
-
-    def test_svg(self) -> None:
-        """image/svg+xml returns .svg."""
-        assert _ext_for_media_type("image/svg+xml") == ".svg"
-
-    def test_unknown_returns_bin(self) -> None:
-        """An unrecognized MIME type with no mimetypes entry returns .bin."""
-        assert _ext_for_media_type("application/x-roam-encrypted") == ".bin"
 
 
 # ---------------------------------------------------------------------------
@@ -271,14 +240,14 @@ class TestVertexTreeToPandocImageVertex:
 
 
 class TestBuildBlocksCoalescing:
-    """Tests for _build_blocks() — sibling TextContentVertex coalescing."""
+    """Tests for build_blocks() — sibling TextContentVertex coalescing."""
 
     def test_consecutive_text_siblings_coalesced_into_one_bullet_list(self) -> None:
         """Two consecutive TextContentVertex siblings at depth 2 produce a single BulletList."""
         t1 = TextContentVertex(uid="txt000001", text="Item 1")
         t2 = TextContentVertex(uid="txt000002", text="Item 2")
         uid_map = {"txt000001": t1, "txt000002": t2}
-        blocks = _build_blocks(["txt000001", "txt000002"], uid_map, {}, depth=2)
+        blocks = build_blocks(["txt000001", "txt000002"], uid_map, {}, depth=2)
         assert len(blocks) == 1
         assert isinstance(blocks[0], pf.BulletList)
         assert len(list(blocks[0].content)) == 2
@@ -289,7 +258,7 @@ class TestBuildBlocksCoalescing:
         h = HeadingVertex(uid="head00001", text="Break", heading=3)
         t2 = TextContentVertex(uid="txt000002", text="After")
         uid_map = {"txt000001": t1, "head00001": h, "txt000002": t2}
-        blocks = _build_blocks(["txt000001", "head00001", "txt000002"], uid_map, {}, depth=2)
+        blocks = build_blocks(["txt000001", "head00001", "txt000002"], uid_map, {}, depth=2)
         # [BulletList([Before]), Header, BulletList([After])]
         assert len(blocks) == 3
         assert isinstance(blocks[0], pf.BulletList)
@@ -301,7 +270,7 @@ class TestBuildBlocksCoalescing:
         t1 = TextContentVertex(uid="txt000001", text="Para 1")
         t2 = TextContentVertex(uid="txt000002", text="Para 2")
         uid_map = {"txt000001": t1, "txt000002": t2}
-        blocks = _build_blocks(["txt000001", "txt000002"], uid_map, {}, depth=1)
+        blocks = build_blocks(["txt000001", "txt000002"], uid_map, {}, depth=1)
         assert len(blocks) == 2
         assert all(isinstance(b, pf.Para) for b in blocks)
 
@@ -309,7 +278,7 @@ class TestBuildBlocksCoalescing:
         """A UID not in uid_map is silently skipped."""
         t1 = TextContentVertex(uid="txt000001", text="Present")
         uid_map = {"txt000001": t1}
-        blocks = _build_blocks(["missingXY", "txt000001"], uid_map, {}, depth=1)
+        blocks = build_blocks(["missingXY", "txt000001"], uid_map, {}, depth=1)
         assert len(blocks) == 1
         assert isinstance(blocks[0], pf.Para)
 
