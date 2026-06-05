@@ -20,7 +20,7 @@ Rendering rules:
 
 Public symbols:
 
-- :func:`render` — render a :class:`~guffin.graph.VertexTree` to a
+- :func:`vertex_tree_to_md` — render a :class:`~guffin.graph.VertexTree` to a
   CommonMark document string.
 - :func:`find_markdown_image_links` — find all Cloud Firestore image links in a
   Markdown string; return a list of ``(full_match, url)`` tuples.
@@ -40,6 +40,8 @@ Public symbols:
   its Cloud Firestore images, and write a ``.mdbundle`` directory.
 - :func:`bundle_md_document` — end-to-end: accept a Markdown string, fetch its
   Cloud Firestore images, and write a ``.mdbundle`` directory.
+- :func:`render` — end-to-end: render a :class:`~guffin.graph.VertexTree` to a
+  ``.mdbundle`` directory (parallel entry point to :func:`~guffin.pdf_rendering.render`).
 """
 
 import logging
@@ -71,7 +73,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def render(vertex_tree: VertexTree) -> str:
+def vertex_tree_to_md(vertex_tree: VertexTree) -> str:
     """Render *vertex_tree* to a CommonMark document string.
 
     The page title is rendered as an H1 heading.  Heading vertices become
@@ -464,3 +466,55 @@ def bundle_md_document(
     output_file: Final[Path] = bundle_dir / f"{bundle_dir_stem}.md"
     output_file.write_text(md_to_write, encoding="utf-8")
     logger.info("Wrote Markdown to: %s", output_file)
+
+
+def render(
+    vertex_tree: VertexTree,
+    filename_stem: str,
+    output_dir: Path,
+    api_endpoint: ApiEndpoint,
+    cache_dir: Path | None = None,
+    bundle: bool = True,
+) -> None:
+    """Render *vertex_tree* to a Markdown file or bundle inside *output_dir*.
+
+    Converts *vertex_tree* to CommonMark via :func:`vertex_tree_to_md`, then
+    writes the result in one of two modes controlled by *bundle*:
+
+    - ``bundle=True`` (default) — delegates to :func:`bundle_md_document` to
+      fetch Cloud Firestore image assets and write a self-contained
+      ``<normalized_filename_stem>.mdbundle/`` directory.
+    - ``bundle=False`` — writes the CommonMark text directly to
+      ``<output_dir>/<normalized_filename_stem>.md`` without fetching images.
+
+    Parallel entry point to :func:`~guffin.pdf_rendering.render` — same
+    signature (plus *bundle*), Markdown output.
+
+    Args:
+        vertex_tree: The normalized vertex tree to render.
+        filename_stem: String used to derive the output filename (e.g. a Roam
+            page title or node UID); POSIX-normalized before use.
+        output_dir: Directory in which the output file or bundle is written;
+            created if it does not already exist.
+        api_endpoint: Roam Local API endpoint used to fetch image assets
+            (bundle mode only; ignored when *bundle* is ``False``).
+        cache_dir: Optional directory for caching downloaded image assets
+            across runs.  Uses a SHA-256 hash of the Cloud Firestore URL as
+            the cache key.  Ignored when *bundle* is ``False``.
+        bundle: When ``True`` (default), writes a ``.mdbundle`` directory with
+            embedded images.  When ``False``, writes a plain ``.md`` file.
+    """
+    md_text: Final[str] = vertex_tree_to_md(vertex_tree)
+    if bundle:
+        bundle_md_document(
+            md_text=md_text,
+            document_name=filename_stem,
+            output_dir=output_dir,
+            api_endpoint=api_endpoint,
+            cache_dir=cache_dir,
+        )
+    else:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path: Final[Path] = output_dir / f"{normalize_for_posix(filename_stem)}.md"
+        output_path.write_text(md_text, encoding="utf-8")
+        logger.info("Wrote Markdown to %s", output_path)

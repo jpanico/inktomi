@@ -6,7 +6,7 @@ transcribes them into a :class:`~guffin.graph.VertexTree`, and writes the
 result in one of two output formats controlled by ``--format``:
 
 - **Markdown** (default, ``--format markdown``) — renders the tree to
-  CommonMark via :func:`~guffin.md_rendering.render`, then writes in one
+  CommonMark via :func:`~guffin.md_rendering.vertex_tree_to_md`, then writes in one
   of two bundle modes:
 
   - **Bundle mode** (default, ``--bundle``) — fetches Cloud Firestore images
@@ -58,7 +58,7 @@ import typer
 
 from guffin.graph import VertexTree
 from guffin.logging_config import configure_logging
-from guffin.md_rendering import bundle_md_document, render as render_md
+from guffin.md_rendering import render as render_md
 from guffin.pdf_rendering import render as render_pdf
 from guffin.roam_local_api import ApiEndpoint
 from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
@@ -207,32 +207,17 @@ def main(
         raise typer.Exit(code=1)
 
     if output_format is OutputFormat.PDF:
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_path: Final[pathlib.Path] = output_dir / f"{target}.pdf"
         try:
-            render_pdf(vertex_tree, output_path, api_endpoint=api_endpoint, cache_dir=cache_dir)
+            render_pdf(vertex_tree, target, output_dir, api_endpoint=api_endpoint, cache_dir=cache_dir)
         except Exception as e:
             logger.error("Error rendering PDF for %r: %s", target, e)
             raise typer.Exit(code=1)
     else:
-        md_document: Final[str] = render_md(vertex_tree)
-        if bundle:
-            try:
-                bundle_md_document(
-                    md_text=md_document,
-                    document_name=target,
-                    output_dir=output_dir,
-                    api_endpoint=api_endpoint,
-                    cache_dir=cache_dir,
-                )
-            except Exception as e:
-                logger.error("Error bundling %r: %s", target, e)
-                raise typer.Exit(code=1)
-        else:
-            output_dir.mkdir(parents=True, exist_ok=True)
-            md_path: Final[pathlib.Path] = output_dir / f"{target}.md"
-            md_path.write_text(md_document)
-            logger.info("Wrote CommonMark document to %s", md_path)
+        try:
+            render_md(vertex_tree, target, output_dir, api_endpoint=api_endpoint, cache_dir=cache_dir, bundle=bundle)
+        except Exception as e:
+            logger.error("Error rendering Markdown for %r: %s", target, e)
+            raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":

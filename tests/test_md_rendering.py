@@ -21,7 +21,7 @@ from guffin.md_rendering import (
     find_markdown_image_links,
     normalize_link_text,
     remove_escaped_double_brackets,
-    render,
+    vertex_tree_to_md as render,
     replace_image_links,
 )
 from guffin.roam_asset import RoamAsset

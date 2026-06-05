@@ -61,7 +61,7 @@ class TestExportRoamTreeNoBundle:
                 logging.root.handlers = saved_handlers
 
         assert result.exit_code == 0, result.output
-        output_file: pathlib.Path = tmp_path / "Test Article 0.md"
+        output_file: pathlib.Path = tmp_path / "Test_Article_0.md"
         assert output_file.exists()
         expected: str = (FIXTURES_MD_DIR / "test_article_0_expected.md").read_text()
         assert output_file.read_text() == expected
