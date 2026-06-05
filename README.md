@@ -11,7 +11,7 @@ Python 3.14 toolkit for exporting Roam Research graph sub-trees to self-containe
 
 - Python 3.14 or higher
 - Git
-- [Pandoc](https://pandoc.org/installing.html) — required for PDF export (`brew install pandoc`)
+- [Pandoc](https://pandoc.org/installing.html) — required for all export formats (`brew install pandoc`)
 - [Typst](https://typst.app) — PDF engine used by Pandoc (`brew install typst`)
 
 ### Initial Setup
@@ -217,7 +217,7 @@ export-roam-tree wdMgyBiP9 --port 3333 --graph SCFH --token your-bearer-token --
 
 #### PDF output
 
-`--format pdf` builds a Pandoc object model directly from the vertex tree via Panflute, fetches and embeds Cloud Firestore images, and produces a PDF via Pandoc + Typst. Requires `pandoc` and `typst` on `PATH`.
+`--format pdf` builds a Pandoc object model directly from the vertex tree via Panflute, fetches and embeds Cloud Firestore images, and produces a PDF via Pandoc + Typst. Requires `typst` on `PATH`.
 
 ```bash
 # Creates ~/docs/Test Article.pdf
