@@ -208,13 +208,13 @@ def main(
 
     if output_format is OutputFormat.PDF:
         try:
-            render_pdf(vertex_tree, target, output_dir, api_endpoint=api_endpoint, cache_dir=cache_dir)
+            render_pdf(vertex_tree, target, output_dir, api_endpoint, cache_dir)
         except Exception as e:
             logger.error("Error rendering PDF for %r: %s", target, e)
             raise typer.Exit(code=1)
     else:
         try:
-            render_md(vertex_tree, target, output_dir, api_endpoint=api_endpoint, cache_dir=cache_dir, bundle=bundle)
+            render_md(vertex_tree, target, output_dir, api_endpoint, cache_dir, bundle)
         except Exception as e:
             logger.error("Error rendering Markdown for %r: %s", target, e)
             raise typer.Exit(code=1)
