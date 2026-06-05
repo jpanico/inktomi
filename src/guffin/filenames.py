@@ -2,7 +2,7 @@
 
 Public symbols:
 
-- :func:`normalize_for_posix` — normalize a string to be safe for POSIX
+- :func:`shell_safe_filename` — normalize a string to be safe for POSIX
   filenames without shell escaping.
 """
 
@@ -14,7 +14,7 @@ from pydantic import validate_call
 
 
 @validate_call
-def normalize_for_posix(text: str) -> str:
+def shell_safe_filename(text: str) -> str:
     """Normalize a string to be safe for POSIX filenames without shell escaping.
 
     Converts the string to use only characters that are safe in POSIX filenames

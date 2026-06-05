@@ -26,7 +26,7 @@ from typing import Final
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
 
-from guffin.filenames import normalize_for_posix
+from guffin.filenames import shell_safe_filename
 from guffin.graph import VertexTree
 from guffin.pandoc_rendering import fetch_images, vertex_tree_to_pandoc
 from guffin.roam_local_api import ApiEndpoint
@@ -80,7 +80,7 @@ def render(
         bundle: When ``True`` (default), writes a ``.mdbundle`` directory with
             embedded images.  When ``False``, writes a plain ``.md`` file.
     """
-    stem: Final[str] = normalize_for_posix(filename_stem)
+    stem: Final[str] = shell_safe_filename(filename_stem)
 
     if bundle:
         bundle_dir: Final[Path] = output_dir / f"{stem}.mdbundle"

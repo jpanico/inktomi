@@ -77,6 +77,7 @@ from guffin.graph import (
     Vertex,
     VertexChildren,
     VertexTree,
+    root_vertex,
 )
 from guffin.roam_asset_fetch import fetch_and_cache_asset
 from guffin.roam_local_api import ApiEndpoint
@@ -429,8 +430,7 @@ def vertex_tree_to_pandoc(
         :func:`panflute.dump` and subsequent Pandoc conversion.
     """
     uid_map: Final[dict[Uid, Vertex]] = {v.uid: v for v in vertex_tree.vertices}
-    child_uids: Final[set[Uid]] = {uid for v in vertex_tree.vertices if v.children for uid in v.children}
-    root: Final[Vertex] = next(v for v in vertex_tree.vertices if v.uid not in child_uids)
+    root: Final[Vertex] = root_vertex(vertex_tree)
 
     # Collect all text strings for batch inline parsing.
     texts: Final[list[str]] = []

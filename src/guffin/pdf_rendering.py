@@ -32,7 +32,7 @@ from typing import Final
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
 
-from guffin.filenames import normalize_for_posix
+from guffin.filenames import shell_safe_filename
 from guffin.graph import VertexTree
 from guffin.pandoc_rendering import fetch_images, vertex_tree_to_pandoc
 from guffin.roam_local_api import ApiEndpoint
@@ -50,7 +50,7 @@ def render(
     """Render *vertex_tree* to a PDF file inside *output_dir*.
 
     Derives the output filename from *filename_stem* via
-    :func:`~guffin.filenames.normalize_for_posix`, creating
+    :func:`~guffin.filenames.shell_safe_filename`, creating
     ``<output_dir>/<normalized_filename_stem>.pdf``.  Fetches all Cloud
     Firestore image assets into a temporary directory via
     :func:`~guffin.pandoc_rendering.fetch_images`, builds a Panflute
@@ -78,7 +78,7 @@ def render(
             conversion fails.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path: Final[Path] = output_dir / f"{normalize_for_posix(filename_stem)}.pdf"
+    output_path: Final[Path] = output_dir / f"{shell_safe_filename(filename_stem)}.pdf"
 
     with tempfile.TemporaryDirectory() as tmp:
         image_files = fetch_images(vertex_tree, api_endpoint, Path(tmp), cache_dir)

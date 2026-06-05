@@ -48,11 +48,12 @@ Public symbols:
 - :func:`text_content_vertices` — return all :class:`TextContentVertex` instances in a :class:`VertexTree`.
 - :func:`image_vertices` — return all :class:`ImageVertex` instances in a :class:`VertexTree`.
 - :func:`image_urls` — return all Cloud Firestore image URLs from a :class:`VertexTree`.
+- :func:`root_vertex` — return the single root :data:`Vertex` of a :class:`VertexTree`.
 """
 
 from collections.abc import Iterator
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
@@ -322,9 +323,7 @@ class VertexTreeDFSIterator(Iterator[Vertex]):
             tree: The :class:`VertexTree` to traverse.
         """
         self._uid_map: dict[Uid, Vertex] = {v.uid: v for v in tree.vertices}
-        child_uids: set[Uid] = {uid for v in tree.vertices if v.children for uid in v.children}
-        root: Vertex = next(v for v in tree.vertices if v.uid not in child_uids)
-        self._stack: list[Vertex] = [root]
+        self._stack: list[Vertex] = [root_vertex(tree)]
 
     def __iter__(self) -> Iterator[Vertex]:
         """Return *self* (this object is its own iterator)."""
@@ -368,3 +367,19 @@ def image_vertices(tree: VertexTree) -> list[ImageVertex]:
 def image_urls(tree: VertexTree) -> list[Url]:
     """Return the Cloud Firestore URL of every :class:`ImageVertex` in *tree*, in insertion order."""
     return [v.source for v in image_vertices(tree)]
+
+
+def root_vertex(tree: VertexTree) -> Vertex:
+    """Return the single root :data:`Vertex` of *tree*.
+
+    The root is the unique vertex whose :attr:`~_BaseVertex.uid` does not
+    appear in any other vertex's :attr:`~_BaseVertex.children` list.
+
+    Args:
+        tree: The :class:`VertexTree` to inspect.
+
+    Returns:
+        The root :data:`Vertex`.
+    """
+    child_uids: Final[set[Uid]] = {uid for v in tree.vertices if v.children for uid in v.children}
+    return next(v for v in tree.vertices if v.uid not in child_uids)
