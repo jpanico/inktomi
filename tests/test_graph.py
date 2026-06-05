@@ -1,6 +1,6 @@
 """Tests for graph module utility functions."""
 
-from guffin.graph import ImageVertex, PageVertex, VertexTree, image_urls, image_vertices
+from guffin.graph import ImageVertex, PageVertex, TextContentVertex, VertexTree, image_urls, image_vertices, root_vertex
 
 from conftest import article0_vertex_tree
 
@@ -19,6 +19,10 @@ def _page(uid: str = "pageuid01") -> PageVertex:
 
 def _image(uid: str = "imguid001", url: str = _URL_A) -> ImageVertex:
     return ImageVertex(uid=uid, source=url)  # type: ignore[arg-type]
+
+
+def _text(uid: str = "textuid01") -> TextContentVertex:
+    return TextContentVertex(uid=uid, text="hello")
 
 
 # ---------------------------------------------------------------------------
@@ -78,3 +82,36 @@ class TestImageUrls:
         urls = image_urls(article0_vertex_tree())
         assert len(urls) == 1
         assert str(urls[0]) == _ARTICLE_IMAGE_URL
+
+
+# ---------------------------------------------------------------------------
+# TestRootVertex
+# ---------------------------------------------------------------------------
+
+
+class TestRootVertex:
+    """Tests for root_vertex()."""
+
+    def test_single_vertex_is_root(self) -> None:
+        """A tree with one vertex returns that vertex as root."""
+        page = _page()
+        tree = VertexTree(vertices=[page])
+        assert root_vertex(tree) == page
+
+    def test_returns_vertex_with_no_parent(self) -> None:
+        """Root is the vertex whose uid does not appear in any children list."""
+        page = _page(uid="pageuid01")
+        child = _text(uid="textuid01")
+        tree = VertexTree(vertices=[PageVertex(uid="pageuid01", title="Page", children=["textuid01"]), child])
+        assert root_vertex(tree).uid == "pageuid01"
+
+    def test_non_root_is_not_returned(self) -> None:
+        """A child vertex is never returned as root."""
+        page = PageVertex(uid="pageuid01", title="Page", children=["textuid01"])
+        child = _text(uid="textuid01")
+        tree = VertexTree(vertices=[page, child])
+        assert root_vertex(tree).uid != "textuid01"
+
+    def test_article_fixture_root_is_page_vertex(self) -> None:
+        """Test Article 0 fixture root is a PageVertex."""
+        assert isinstance(root_vertex(article0_vertex_tree()), PageVertex)
