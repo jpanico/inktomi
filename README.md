@@ -130,13 +130,14 @@ guffin/
 │       ├── dump_roam_tree.py      # CLI: dump a Roam page or node subtree as a Rich tree to the terminal
 │       ├── export_roam_tree.py    # CLI: export a Roam page or node subtree (--format markdown|pdf)
 │       ├── roam_tree_loader.py    # Shared tree-loading pipeline; fetch_roam_trees resolves a target, fetches nodes, returns (NodeTree, VertexTree)
-│       ├── roam_md_bundle.py      # Core Markdown bundling logic
 │       ├── roam_md_normalize.py   # Normalize Roam-flavored Markdown to CommonMark
 │       ├── roam_transcribe.py     # Transcribe NodeTree → VertexTree (applies normalize())
-│       ├── md_rendering.py        # Render VertexTree → CommonMark document string
-│       ├── pdf_rendering.py       # Render VertexTree → PDF via Panflute + Pandoc + Typst
+│       ├── pandoc_rendering.py    # Shared Pandoc/panflute utilities: inline CommonMark parsing, image fetching, VertexTree → Doc conversion
+│       ├── md_rendering.py        # Render VertexTree → Markdown via Pandoc; write .mdbundle or plain .md
+│       ├── pdf_rendering.py       # Render VertexTree → PDF via pandoc_rendering + Pandoc + Typst
 │       ├── rich_rendering.py      # Rich panel/tree rendering for NodeTree and VertexTree
 │       ├── validation.py          # Generic accumulator-pipeline validation framework
+│       ├── filenames.py           # POSIX filename normalization utilities
 │       ├── roam_primitives.py     # Foundational type aliases, UID_PATTERN/UID_RE, IMAGE_LINK_RE (dep root)
 │       ├── roam_node.py           # RoamNode, NodeType, node_type, NodesByUid
 │       ├── roam_network.py        # NodeNetwork type alias; network validators and utilities (all_descendants, refs_ids)

@@ -1,13 +1,16 @@
-"""Unit tests for guffin.pdf_rendering."""
+"""Unit tests for guffin.pandoc_rendering."""
 
-# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownParameterType=false, reportUnknownArgumentType=false, reportAttributeAccessIssue=false
-# Rationale: panflute has no type stubs; all five rules are triggered entirely by
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownParameterType=false, reportUnknownArgumentType=false, reportAttributeAccessIssue=false, reportArgumentType=false
+# Rationale: panflute has no type stubs; all six rules are triggered entirely by
 # Unknown propagation from that import — suppressing them here avoids false positives.
 
+from datetime import datetime
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import panflute as pf  # type: ignore[import-untyped]
-from pydantic import HttpUrl
+import pytest
+from pydantic import HttpUrl, ValidationError
 
 from guffin.graph import (
     HeadingVertex,
@@ -16,10 +19,16 @@ from guffin.graph import (
     TextContentVertex,
     VertexTree,
 )
-from guffin.pdf_rendering import (
+from guffin.pandoc_rendering import (
+    parse_inline_md,
     build_blocks,
+    fetch_and_save_image,
     vertex_tree_to_pandoc,
 )
+from guffin.roam_asset import RoamAsset
+from guffin.roam_local_api import ApiEndpoint, ApiEndpointURL
+from guffin.roam_primitives import MediaType
+
 from conftest import article0_vertex_tree
 
 _IMAGE_URL: HttpUrl = HttpUrl("https://example.com/imgs/photo.jpeg")
@@ -29,15 +38,151 @@ _IMAGE_URL: HttpUrl = HttpUrl("https://example.com/imgs/photo.jpeg")
 # ---------------------------------------------------------------------------
 
 
-def _str_text(inline: pf.Inline) -> str:
-    """Return the text of a panflute Str inline element."""
-    assert isinstance(inline, pf.Str)
-    return inline.text
+def _collect_text(element: pf.Element) -> str:
+    """Reconstruct plain text from panflute Str, Space, and SoftBreak inlines."""
+    parts: list[str] = []
+    for inline in element.content:
+        if isinstance(inline, pf.Str):
+            parts.append(inline.text)
+        elif isinstance(inline, (pf.Space, pf.SoftBreak)):
+            parts.append(" ")
+    return "".join(parts)
 
 
-def _first_inline_text(block: pf.Block) -> str:
-    """Return the text of the first Str in the first inline of a block."""
-    return _str_text(list(block.content)[0])
+# ---------------------------------------------------------------------------
+# TestParseInlineMd
+# ---------------------------------------------------------------------------
+
+
+class TestParseInlineMd:
+    """Tests for parse_inline_md()."""
+
+    def test_empty_input_returns_empty_dict(self) -> None:
+        """An empty text list produces an empty mapping."""
+        assert parse_inline_md([]) == {}
+
+    def test_all_empty_strings_returns_empty_dict(self) -> None:
+        """A list of only empty strings produces an empty mapping."""
+        assert parse_inline_md(["", "", ""]) == {}
+
+    def test_plain_text_parses_to_str_inlines(self) -> None:
+        """Plain text produces Str and Space inline elements."""
+        result = parse_inline_md(["hello world"])
+        assert "hello world" in result
+        text = "".join(
+            i.text if isinstance(i, pf.Str) else " " for i in result["hello world"] if isinstance(i, (pf.Str, pf.Space))
+        )
+        assert text == "hello world"
+
+    def test_bold_text_parses_to_strong(self) -> None:
+        """CommonMark bold syntax produces a Strong inline."""
+        result = parse_inline_md(["**bold**"])
+        assert "**bold**" in result
+        inlines = result["**bold**"]
+        assert any(isinstance(i, pf.Strong) for i in inlines)
+
+    def test_italic_text_parses_to_emph(self) -> None:
+        """CommonMark italic syntax produces an Emph inline."""
+        result = parse_inline_md(["*italic*"])
+        assert "*italic*" in result
+        inlines = result["*italic*"]
+        assert any(isinstance(i, pf.Emph) for i in inlines)
+
+    def test_code_span_parses_to_code(self) -> None:
+        """CommonMark code span produces a Code inline."""
+        result = parse_inline_md(["`code`"])
+        assert "`code`" in result
+        inlines = result["`code`"]
+        assert any(isinstance(i, pf.Code) for i in inlines)
+
+    def test_multiple_texts_all_present(self) -> None:
+        """Multiple distinct texts all appear in the result mapping."""
+        texts = ["first", "**second**", "*third*"]
+        result = parse_inline_md(texts)
+        for t in texts:
+            assert t in result
+
+    def test_duplicate_texts_deduplicated(self) -> None:
+        """Duplicate texts produce a single entry in the mapping."""
+        result = parse_inline_md(["hello", "hello", "hello"])
+        assert len(result) == 1
+        assert "hello" in result
+
+    def test_empty_strings_ignored(self) -> None:
+        """Empty strings do not appear in the result mapping."""
+        result = parse_inline_md(["hello", "", "world"])
+        assert "" not in result
+        assert "hello" in result
+        assert "world" in result
+
+
+# ---------------------------------------------------------------------------
+# TestFetchAndSaveImage
+# ---------------------------------------------------------------------------
+
+
+class TestFetchAndSaveImage:
+    """Tests for fetch_and_save_image()."""
+
+    @patch("guffin.pandoc_rendering.fetch_and_cache_asset")
+    def test_fetches_and_saves_image_successfully(self, mock_fetch_cache: Mock, tmp_path: Path) -> None:
+        """Successful image fetch writes the file and returns (url, filename)."""
+        api_endpoint = ApiEndpoint(
+            url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
+            bearer_token="test-token",
+        )
+        firebase_url = HttpUrl("https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/img.png?token=abc")
+        mock_fetch_cache.return_value = RoamAsset(
+            file_name="abc123.png",
+            last_modified=datetime.now(),
+            media_type=MediaType.PNG,
+            contents=b"fake image data",
+        )
+
+        result_url, result_filename = fetch_and_save_image(api_endpoint, firebase_url, tmp_path)
+
+        assert result_url == firebase_url
+        assert result_filename == "abc123.png"
+        assert (tmp_path / "abc123.png").read_bytes() == b"fake image data"
+        mock_fetch_cache.assert_called_once()
+
+    @patch("guffin.pandoc_rendering.fetch_and_cache_asset")
+    def test_fetch_failure_raises_exception(self, mock_fetch_cache: Mock, tmp_path: Path) -> None:
+        """A fetch failure propagates as an exception."""
+        api_endpoint = ApiEndpoint(
+            url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
+            bearer_token="test-token",
+        )
+        firebase_url = HttpUrl("https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/img.png?token=abc")
+        mock_fetch_cache.side_effect = Exception("Network error")
+
+        with pytest.raises(Exception, match="Network error"):
+            fetch_and_save_image(api_endpoint, firebase_url, tmp_path)
+
+    def test_none_api_endpoint_raises_validation_error(self) -> None:
+        """None api_endpoint raises ValidationError."""
+        firebase_url = HttpUrl("https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/img.png?token=abc")
+        with pytest.raises(ValidationError):
+            fetch_and_save_image(None, firebase_url, Path("/tmp/test"))  # type: ignore[arg-type]
+
+    def test_none_firebase_url_raises_validation_error(self) -> None:
+        """None firebase_url raises ValidationError."""
+        api_endpoint = ApiEndpoint(
+            url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
+            bearer_token="test-token",
+        )
+        with pytest.raises(ValidationError):
+            fetch_and_save_image(api_endpoint, None, Path("/tmp/test"))  # type: ignore[arg-type]
+
+    def test_none_output_dir_raises_validation_error(self) -> None:
+        """None output_dir raises ValidationError."""
+        api_endpoint = ApiEndpoint(
+            url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
+            bearer_token="test-token",
+        )
+        firebase_url = HttpUrl("https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/img.png?token=abc")
+        with pytest.raises(ValidationError):
+            fetch_and_save_image(api_endpoint, firebase_url, None)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
@@ -49,13 +194,11 @@ class TestVertexTreeToPandocPageVertex:
     """Tests for vertex_tree_to_pandoc() — PageVertex root behaviour."""
 
     def test_page_title_set_in_metadata(self) -> None:
-        """Page title appears as the Pandoc metadata title."""
+        """Page title appears as the Pandoc metadata title (default title_in_header=False)."""
         tree = VertexTree(vertices=[PageVertex(uid="page00001", title="My Page")])
         doc = vertex_tree_to_pandoc(tree, {})
         assert "title" in doc.metadata
-        title_inlines = list(doc.metadata["title"].content)
-        assert len(title_inlines) == 1
-        assert _str_text(title_inlines[0]) == "My Page"
+        assert _collect_text(doc.metadata["title"]) == "My Page"
 
     def test_page_with_no_children_produces_no_blocks(self) -> None:
         """A bare PageVertex with no children produces an empty document body."""
@@ -68,6 +211,30 @@ class TestVertexTreeToPandocPageVertex:
         tree = VertexTree(vertices=[HeadingVertex(uid="head00001", text="Intro", heading=1)])
         doc = vertex_tree_to_pandoc(tree, {})
         assert "title" not in doc.metadata
+
+    def test_title_in_header_renders_h1_not_metadata(self) -> None:
+        """title_in_header=True renders page title as H1 body block, not metadata."""
+        tree = VertexTree(vertices=[PageVertex(uid="page00001", title="My Page")])
+        doc = vertex_tree_to_pandoc(tree, {}, title_in_header=True)
+        assert "title" not in doc.metadata
+        blocks = list(doc.content)
+        assert len(blocks) == 1
+        assert isinstance(blocks[0], pf.Header)
+        assert blocks[0].level == 1
+        assert _collect_text(blocks[0]) == "My Page"
+
+    def test_title_in_header_includes_children_after_h1(self) -> None:
+        """title_in_header=True: H1 is followed by rendered children."""
+        page = PageVertex(uid="page00001", title="Doc", children=["head0001a"])
+        heading = HeadingVertex(uid="head0001a", text="Section", heading=2)
+        tree = VertexTree(vertices=[page, heading])
+        doc = vertex_tree_to_pandoc(tree, {}, title_in_header=True)
+        blocks = list(doc.content)
+        assert len(blocks) == 2
+        assert isinstance(blocks[0], pf.Header)
+        assert blocks[0].level == 1
+        assert isinstance(blocks[1], pf.Header)
+        assert blocks[1].level == 2
 
 
 # ---------------------------------------------------------------------------
@@ -87,7 +254,7 @@ class TestVertexTreeToPandocHeadingVertex:
         assert len(blocks) == 1
         assert isinstance(blocks[0], pf.Header)
         assert blocks[0].level == 2
-        assert _first_inline_text(blocks[0]) == "Section 1"
+        assert _collect_text(blocks[0]) == "Section 1"
 
     def test_h3_heading(self) -> None:
         """HeadingVertex at level 3 produces an H3 Header."""
@@ -118,8 +285,10 @@ class TestVertexTreeToPandocHeadingVertex:
         assert len(blocks) == 2
         assert isinstance(blocks[0], pf.Header)
         assert blocks[0].level == 2
+        assert _collect_text(blocks[0]) == "Chapter"
         assert isinstance(blocks[1], pf.Header)
         assert blocks[1].level == 3
+        assert _collect_text(blocks[1]) == "Section"
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +307,7 @@ class TestVertexTreeToPandocTextContentVertex:
         blocks = list(vertex_tree_to_pandoc(tree, {}).content)
         assert len(blocks) == 1
         assert isinstance(blocks[0], pf.Para)
-        assert _first_inline_text(blocks[0]) == "Hello world"
+        assert _collect_text(blocks[0]) == "Hello world"
 
     def test_depth_2_text_under_heading_is_bullet(self) -> None:
         """A TextContentVertex under a HeadingVertex (depth 2) renders as a BulletList."""
@@ -147,7 +316,6 @@ class TestVertexTreeToPandocTextContentVertex:
         block = TextContentVertex(uid="txt00001a", text="Body text")
         tree = VertexTree(vertices=[page, heading, block])
         blocks = list(vertex_tree_to_pandoc(tree, {}).content)
-        # blocks: [Header, BulletList]
         assert len(blocks) == 2
         assert isinstance(blocks[1], pf.BulletList)
         items = list(blocks[1].content)
@@ -155,7 +323,7 @@ class TestVertexTreeToPandocTextContentVertex:
         assert isinstance(items[0], pf.ListItem)
         item_blocks = list(items[0].content)
         assert isinstance(item_blocks[0], pf.Plain)
-        assert _first_inline_text(item_blocks[0]) == "Body text"
+        assert _collect_text(item_blocks[0]) == "Body text"
 
     def test_nested_text_produces_nested_bullet_list(self) -> None:
         """A TextContentVertex child of another TextContentVertex renders as a nested BulletList."""
@@ -169,12 +337,11 @@ class TestVertexTreeToPandocTextContentVertex:
         assert isinstance(bullet_list, pf.BulletList)
         parent_item = list(bullet_list.content)[0]
         parent_item_blocks = list(parent_item.content)
-        # [Plain("Parent"), BulletList([ListItem(Plain("Child"))])]
         assert len(parent_item_blocks) == 2
         nested_list = parent_item_blocks[1]
         assert isinstance(nested_list, pf.BulletList)
         child_item = list(nested_list.content)[0]
-        assert _first_inline_text(list(child_item.content)[0]) == "Child"
+        assert _collect_text(list(child_item.content)[0]) == "Child"
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +388,7 @@ class TestVertexTreeToPandocImageVertex:
         doc = vertex_tree_to_pandoc(tree, {})
         inline = list(list(doc.content)[0].content)[0]
         assert isinstance(inline, pf.Link)
-        assert _str_text(list(inline.content)[0]) == "A flower"
+        assert _collect_text(inline) == "A flower"
 
     def test_unfetched_image_link_label_falls_back_to_file_name(self) -> None:
         """The fallback link label uses file_name when alt_text is absent."""
@@ -231,7 +398,7 @@ class TestVertexTreeToPandocImageVertex:
         doc = vertex_tree_to_pandoc(tree, {})
         inline = list(list(doc.content)[0].content)[0]
         assert isinstance(inline, pf.Link)
-        assert _str_text(list(inline.content)[0]) == "photo.jpg"
+        assert _collect_text(inline) == "photo.jpg"
 
 
 # ---------------------------------------------------------------------------
@@ -247,7 +414,7 @@ class TestBuildBlocksCoalescing:
         t1 = TextContentVertex(uid="txt000001", text="Item 1")
         t2 = TextContentVertex(uid="txt000002", text="Item 2")
         uid_map = {"txt000001": t1, "txt000002": t2}
-        blocks = build_blocks(["txt000001", "txt000002"], uid_map, {}, depth=2)
+        blocks = build_blocks(["txt000001", "txt000002"], uid_map, {}, {}, depth=2)
         assert len(blocks) == 1
         assert isinstance(blocks[0], pf.BulletList)
         assert len(list(blocks[0].content)) == 2
@@ -258,8 +425,7 @@ class TestBuildBlocksCoalescing:
         h = HeadingVertex(uid="head00001", text="Break", heading=3)
         t2 = TextContentVertex(uid="txt000002", text="After")
         uid_map = {"txt000001": t1, "head00001": h, "txt000002": t2}
-        blocks = build_blocks(["txt000001", "head00001", "txt000002"], uid_map, {}, depth=2)
-        # [BulletList([Before]), Header, BulletList([After])]
+        blocks = build_blocks(["txt000001", "head00001", "txt000002"], uid_map, {}, {}, depth=2)
         assert len(blocks) == 3
         assert isinstance(blocks[0], pf.BulletList)
         assert isinstance(blocks[1], pf.Header)
@@ -270,7 +436,7 @@ class TestBuildBlocksCoalescing:
         t1 = TextContentVertex(uid="txt000001", text="Para 1")
         t2 = TextContentVertex(uid="txt000002", text="Para 2")
         uid_map = {"txt000001": t1, "txt000002": t2}
-        blocks = build_blocks(["txt000001", "txt000002"], uid_map, {}, depth=1)
+        blocks = build_blocks(["txt000001", "txt000002"], uid_map, {}, {}, depth=1)
         assert len(blocks) == 2
         assert all(isinstance(b, pf.Para) for b in blocks)
 
@@ -278,7 +444,7 @@ class TestBuildBlocksCoalescing:
         """A UID not in uid_map is silently skipped."""
         t1 = TextContentVertex(uid="txt000001", text="Present")
         uid_map = {"txt000001": t1}
-        blocks = build_blocks(["missingXY", "txt000001"], uid_map, {}, depth=1)
+        blocks = build_blocks(["missingXY", "txt000001"], uid_map, {}, {}, depth=1)
         assert len(blocks) == 1
         assert isinstance(blocks[0], pf.Para)
 
@@ -289,13 +455,12 @@ class TestBuildBlocksCoalescing:
 
 
 class TestVertexTreeToPandocArticleFixture:
-    """Integration test for vertex_tree_to_pandoc() using the Test Article 0 fixture."""
+    """Integration tests for vertex_tree_to_pandoc() using the Test Article 0 fixture."""
 
     def test_metadata_title_is_test_article_0(self) -> None:
         """Doc metadata title matches the page title from the fixture."""
         doc = vertex_tree_to_pandoc(article0_vertex_tree(), {})
-        title_inlines = list(doc.metadata["title"].content)
-        assert _str_text(title_inlines[0]) == "Test Article 0"
+        assert _collect_text(doc.metadata["title"]) == "Test Article 0"
 
     def test_block_count(self) -> None:
         """The fixture produces the expected number of top-level blocks."""
@@ -309,7 +474,7 @@ class TestVertexTreeToPandocArticleFixture:
         first = list(doc.content)[0]
         assert isinstance(first, pf.Header)
         assert first.level == 2
-        assert _first_inline_text(first) == "Section 1"
+        assert _collect_text(first) == "Section 1"
 
     def test_image_renders_as_fallback_link_when_no_image_files(self) -> None:
         """The ImageVertex in the fixture renders as a pf.Link when image_files is empty."""
@@ -328,4 +493,4 @@ class TestVertexTreeToPandocArticleFixture:
         assert len(bullet_lists) == 1
         items = list(bullet_lists[0].content)
         assert len(items) == 1
-        assert _first_inline_text(list(items[0].content)[0]) == "AI assistant (Claude Opus 4.6): "
+        assert _collect_text(list(items[0].content)[0]) == "AI assistant (Claude Opus 4.6):"
