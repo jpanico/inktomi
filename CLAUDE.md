@@ -70,6 +70,9 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
 - `scripts/` — shell wrapper scripts (`dump-roam-tree.sh`, `export-roam-tree.sh`) and maintenance scripts (`regen_article0_fixtures.py` — regenerates all test fixtures derived from "Test Article 0" from the live graph)
 - `tests/fixtures/` — sample markdown, images, JSON, YAML for tests
 
+## Git
+- **Never commit or push without explicit instructions**: do not run `git commit` or `git push` unless the user explicitly asks. This applies even after completing a task — finish the work, then wait for the user to request a commit/push.
+
 ## Conventions
 - Src layout: package lives under `src/guffin/`
 - Line length: 120 chars (Black + Ruff)

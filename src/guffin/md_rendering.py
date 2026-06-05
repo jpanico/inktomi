@@ -34,10 +34,6 @@ Public symbols:
   links.
 - :func:`remove_escaped_double_brackets` — strip escaped ``\\[\\[`` / ``\\]\\]``
   bracket pairs from Markdown text (artefacts of Roam's export format).
-- :func:`create_bundle_directory` — create the ``.mdbundle`` output directory
-  for a document name.
-- :func:`bundle_md_file` — end-to-end: read a Markdown file from disk, fetch
-  its Cloud Firestore images, and write a ``.mdbundle`` directory.
 - :func:`bundle_md_document` — end-to-end: accept a Markdown string, fetch its
   Cloud Firestore images, and write a ``.mdbundle`` directory.
 - :func:`render` — end-to-end: render a :class:`~guffin.graph.VertexTree` to a
@@ -331,87 +327,9 @@ def fetch_all_images(
     return url_replacements
 
 
-@validate_call
-def create_bundle_directory(markdown_file: Path, output_dir: Path) -> Path:
-    """Create the ``.mdbundle`` directory for *markdown_file*.
-
-    Args:
-        markdown_file: Path to the Markdown file being bundled.
-        output_dir: Parent directory where the ``.mdbundle`` folder will be created.
-
-    Returns:
-        Path to the created bundle directory.
-
-    Raises:
-        ValidationError: If any parameter is ``None`` or invalid.
-    """
-    bundle_dir_stem: Final[str] = normalize_for_posix(markdown_file.stem)
-    bundle_dir: Final[Path] = output_dir / f"{bundle_dir_stem}.mdbundle"
-    bundle_dir.mkdir(parents=True, exist_ok=True)
-    logger.debug("Created bundle directory: %s", bundle_dir)
-    return bundle_dir
-
-
 # ---------------------------------------------------------------------------
 # End-to-end export functions
 # ---------------------------------------------------------------------------
-
-
-@validate_call
-def bundle_md_file(
-    markdown_file: Path,
-    local_api_port: int,
-    graph_name: str,
-    api_bearer_token: str,
-    output_dir: Path,
-    cache_dir: Path | None = None,
-) -> None:
-    """Bundle a Markdown file with its referenced Cloud Firestore images.
-
-    Fetches and saves Cloud Firestore-hosted images, updating image links in
-    the Markdown file to use local file references.  Creates a
-    ``<markdown_file.stem>.mdbundle/`` directory inside *output_dir* containing
-    the updated Markdown and all downloaded images.
-
-    Args:
-        markdown_file: Path to the Markdown file.
-        local_api_port: Port for the Roam Local API.
-        graph_name: Name of the Roam graph.
-        api_bearer_token: Bearer token for authenticating with the Roam Local API.
-        output_dir: Parent directory where the ``.mdbundle`` folder will be created.
-        cache_dir: Optional directory for caching downloaded assets across runs.
-
-    Raises:
-        ValidationError: If any parameter is ``None`` or invalid.
-        FileNotFoundError: If *markdown_file* does not exist.
-    """
-    if not markdown_file.exists():
-        raise FileNotFoundError(f"Markdown file not found: {markdown_file}")
-
-    bundle_dir: Final[Path] = create_bundle_directory(markdown_file, output_dir)
-    markdown_text: Final[str] = markdown_file.read_text(encoding="utf-8")
-    image_links: Final[list[tuple[str, HttpUrl]]] = find_markdown_image_links(markdown_text)
-
-    if not image_links:
-        logger.debug("No Cloud Firestore image links found in the file")
-        return
-
-    api_endpoint: Final[ApiEndpoint] = ApiEndpoint.from_parts(
-        local_api_port=local_api_port, graph_name=graph_name, bearer_token=api_bearer_token
-    )
-    url_replacements: Final[list[tuple[HttpUrl, str]]] = fetch_all_images(
-        image_links, api_endpoint, bundle_dir, cache_dir
-    )
-
-    if url_replacements:
-        updated_text: str = replace_image_links(markdown_text, url_replacements)
-        updated_text = normalize_link_text(updated_text)
-        updated_text = remove_escaped_double_brackets(updated_text)
-        output_file: Final[Path] = bundle_dir / f"{bundle_dir.stem}.md"
-        output_file.write_text(updated_text, encoding="utf-8")
-        logger.debug("Wrote updated Markdown to: %s", output_file)
-    else:
-        logger.warning("No images were successfully fetched")
 
 
 @validate_call
@@ -462,6 +380,9 @@ def bundle_md_document(
             logger.warning("No images were successfully fetched")
     else:
         logger.info("No Cloud Firestore image links found in the document")
+
+    md_to_write = normalize_link_text(md_to_write)
+    md_to_write = remove_escaped_double_brackets(md_to_write)
 
     output_file: Final[Path] = bundle_dir / f"{bundle_dir_stem}.md"
     output_file.write_text(md_to_write, encoding="utf-8")

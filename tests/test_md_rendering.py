@@ -16,7 +16,6 @@ from guffin.graph import (
     VertexTree,
 )
 from guffin.md_rendering import (
-    bundle_md_file,
     fetch_and_save_image,
     find_markdown_image_links,
     normalize_link_text,
@@ -465,91 +464,3 @@ class TestRemoveEscapedDoubleBrackets:
         """Test that function handles text with both escaped brackets and normal content."""
         text = r"# \[\[Page\]\] Title" + "\n\n" + r"Some text [link](url) and more \[\[refs\]\]"
         assert remove_escaped_double_brackets(text) == "# Page Title\n\nSome text [link](url) and more refs"
-
-
-# ---------------------------------------------------------------------------
-# TestBundleMdFile
-# ---------------------------------------------------------------------------
-
-
-class TestBundleMdFile:
-    """Tests for bundle_md_file()."""
-
-    def test_file_not_found_raises_exception(self, tmp_path: Path) -> None:
-        """Test that a non-existent file raises FileNotFoundError."""
-        with pytest.raises(FileNotFoundError, match="Markdown file not found"):
-            bundle_md_file(tmp_path / "nonexistent_file.md", 3333, "test-graph", "test-token", tmp_path)
-
-    @patch("guffin.md_rendering.find_markdown_image_links")
-    def test_no_firebase_links_exits_early(self, mock_find: Mock, tmp_path: Path) -> None:
-        """Test that the function exits early when no Cloud Firestore links are found."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-        output_dir.mkdir()
-        markdown_file = input_dir / "test.md"
-        markdown_file.write_text("# Test\n\nNo images here.")
-        mock_find.return_value = []
-
-        bundle_md_file(markdown_file, 3333, "test-graph", "test-token", output_dir)
-
-        assert not (output_dir / "test.md").exists()
-
-    @patch("guffin.md_rendering.fetch_and_save_image")
-    @patch("guffin.md_rendering.find_markdown_image_links")
-    def test_processes_file_successfully(self, mock_find: Mock, mock_fetch: Mock, tmp_path: Path) -> None:
-        """Test successful end-to-end file bundling."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-        output_dir.mkdir()
-        markdown_file = input_dir / "test.md"
-        markdown_file.write_text("![image](https://firebasestorage.googleapis.com/o/img.png)")
-        mock_find.return_value = [
-            (
-                "![image](https://firebasestorage.googleapis.com/o/img.png)",
-                "https://firebasestorage.googleapis.com/o/img.png",
-            )
-        ]
-        mock_fetch.return_value = ("https://firebasestorage.googleapis.com/o/img.png", "local_image.png")
-
-        bundle_md_file(markdown_file, 3333, "test-graph", "test-token", output_dir)
-
-        bundle_dir = output_dir / "test.mdbundle"
-        assert bundle_dir.exists()
-        assert bundle_dir.is_dir()
-        output_file = bundle_dir / "test.md"
-        assert output_file.exists()
-        output_content = output_file.read_text()
-        assert "local_image.png" in output_content
-        assert "firebasestorage.googleapis.com" not in output_content
-
-    @patch("guffin.md_rendering.fetch_and_save_image")
-    @patch("guffin.md_rendering.find_markdown_image_links")
-    def test_continues_on_fetch_error(self, mock_find: Mock, mock_fetch: Mock, tmp_path: Path) -> None:
-        """Test that bundling continues when one image fetch fails."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "output"
-        input_dir.mkdir()
-        output_dir.mkdir()
-        markdown_file = input_dir / "test.md"
-        markdown_file.write_text(
-            "![img1](https://firebasestorage.googleapis.com/o/img1.png)\n"
-            "![img2](https://firebasestorage.googleapis.com/o/img2.png)"
-        )
-        mock_find.return_value = [
-            ("![img1](...)", "https://firebasestorage.googleapis.com/o/img1.png"),
-            ("![img2](...)", "https://firebasestorage.googleapis.com/o/img2.png"),
-        ]
-        mock_fetch.side_effect = [
-            Exception("Network error"),
-            ("https://firebasestorage.googleapis.com/o/img2.png", "local_image2.png"),
-        ]
-
-        bundle_md_file(markdown_file, 3333, "test-graph", "test-token", output_dir)
-
-        bundle_dir = output_dir / "test.mdbundle"
-        assert bundle_dir.exists()
-        output_file = bundle_dir / "test.md"
-        assert output_file.exists()
-        assert "local_image2.png" in output_file.read_text()
