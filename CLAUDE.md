@@ -45,7 +45,7 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `roam_tree_loader.py` — shared tree-loading pipeline; `fetch_roam_trees` resolves a target, fetches nodes, and returns a `(NodeFetchResult, VertexTree | None)` pair
   - **Core logic**
     - `roam_md_bundle.py` — core bundling logic
-    - `roam_md_normalize.py` — normalizes Roam-flavored Markdown strings to CommonMark
+    - `roam_md_to_commonmark.py` — converts Roam-flavored Markdown strings to CommonMark
     - `roam_transcribe.py` — transcribes `NodeTree` → `VertexTree`; applies `normalize()` to all text fields
     - `md_rendering.py` — renders a `VertexTree` to a CommonMark document string
     - `pdf_rendering.py` — renders a `VertexTree` to PDF: fetches image assets via `FetchRoamAsset`, builds a Panflute `Doc`, exports via Pandoc + Typst

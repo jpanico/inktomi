@@ -1,56 +1,56 @@
-"""Unit tests for guffin.roam_md_normalize."""
+"""Unit tests for guffin.roam_md_to_commonmark."""
 
-from guffin.roam_md_normalize import normalize, normalize_italics, strip_square_brackets
+from guffin.roam_md_to_commonmark import convert_italics, strip_square_brackets, to_commonmark
 
 
-class TestNormalizeItalics:
-    """Tests for normalize_italics — converting Roam __italic__ to CommonMark *italic*."""
+class TestConvertItalics:
+    """Tests for convert_italics — converting Roam __italic__ to CommonMark *italic*."""
 
     def test_basic(self) -> None:
         """Test that a simple __word__ is converted to *word*."""
-        assert normalize_italics("__hello__") == "*hello*"
+        assert convert_italics("__hello__") == "*hello*"
 
     def test_multi_word(self) -> None:
         """Test that a multi-word __italic span__ is converted correctly."""
-        assert normalize_italics("__hello world__") == "*hello world*"
+        assert convert_italics("__hello world__") == "*hello world*"
 
     def test_multiple_spans(self) -> None:
         """Test that multiple __italic__ spans in one string are all converted."""
-        assert normalize_italics("__foo__ and __bar__") == "*foo* and *bar*"
+        assert convert_italics("__foo__ and __bar__") == "*foo* and *bar*"
 
     def test_inline(self) -> None:
         """Test that an italic span embedded in plain text is converted."""
-        assert normalize_italics("some __italic__ text") == "some *italic* text"
+        assert convert_italics("some __italic__ text") == "some *italic* text"
 
     def test_no_italic(self) -> None:
         """Test that plain text without italic markers is returned unchanged."""
-        assert normalize_italics("plain text") == "plain text"
+        assert convert_italics("plain text") == "plain text"
 
     def test_bold_unchanged(self) -> None:
         """Test that CommonMark **bold** markers are left alone."""
-        assert normalize_italics("**bold**") == "**bold**"
+        assert convert_italics("**bold**") == "**bold**"
 
     def test_italic_and_bold(self) -> None:
         """Test that italic is converted while bold is preserved in the same string."""
-        assert normalize_italics("__italic__ and **bold**") == "*italic* and **bold**"
+        assert convert_italics("__italic__ and **bold**") == "*italic* and **bold**"
 
     def test_leading_space_inside_not_matched(self) -> None:
         """Test that a space after opening __ prevents the span from matching."""
         # space after opening __ → not a Roam italic
-        assert normalize_italics("__ not italic__") == "__ not italic__"
+        assert convert_italics("__ not italic__") == "__ not italic__"
 
     def test_trailing_space_inside_not_matched(self) -> None:
         """Test that a space before closing __ prevents the span from matching."""
         # space before closing __ → not a Roam italic
-        assert normalize_italics("__not italic __") == "__not italic __"
+        assert convert_italics("__not italic __") == "__not italic __"
 
     def test_adjacent_punctuation(self) -> None:
         """Test that punctuation immediately after closing __ does not block conversion."""
-        assert normalize_italics("__italic__!") == "*italic*!"
+        assert convert_italics("__italic__!") == "*italic*!"
 
     def test_empty_string(self) -> None:
         """Test that an empty string is returned unchanged."""
-        assert normalize_italics("") == ""
+        assert convert_italics("") == ""
 
 
 class TestStripSquareBrackets:
@@ -95,27 +95,27 @@ class TestStripSquareBrackets:
         assert strip_square_brackets("See [[Page Name]] for details.") == "See Page Name for details."
 
 
-class TestNormalize:
-    """Tests for normalize — applying all Roam-to-CommonMark transformations in order."""
+class TestToCommonmark:
+    """Tests for to_commonmark — applying all Roam-to-CommonMark conversions in order."""
 
     def test_italics_and_page_link(self) -> None:
         """Test that both italic conversion and bracket stripping are applied."""
-        assert normalize("__italic__ [[page]]") == "*italic* page"
+        assert to_commonmark("__italic__ [[page]]") == "*italic* page"
 
     def test_italics_applied_before_brackets(self) -> None:
         """Test that italic conversion runs before bracket stripping."""
         # italic span inside a page link: [[__italic__]] → after italics: [[*italic*]]
         # after strip brackets: *italic*
-        assert normalize("[[__italic__]]") == "*italic*"
+        assert to_commonmark("[[__italic__]]") == "*italic*"
 
     def test_plain_text_passthrough(self) -> None:
         """Test that plain text with no Roam syntax is returned unchanged."""
-        assert normalize("plain text") == "plain text"
+        assert to_commonmark("plain text") == "plain text"
 
     def test_empty_string(self) -> None:
         """Test that an empty string is returned unchanged."""
-        assert normalize("") == ""
+        assert to_commonmark("") == ""
 
     def test_bold_and_page_link(self) -> None:
         """Test that bold is preserved while the page link brackets are stripped."""
-        assert normalize("**bold** [[page]]") == "**bold** page"
+        assert to_commonmark("**bold** [[page]]") == "**bold** page"

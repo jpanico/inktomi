@@ -5,15 +5,15 @@ in several ways.  This module provides functions that transform a single Roam bl
 string into a CommonMark-compatible string.  See ``docs/roam-md.md`` for a full
 description of the differences.
 
-The normalization functions operate on plain Python strings (one block string at a
+The conversion functions operate on plain Python strings (one block string at a
 time) and are stateless and side-effect-free.  They are designed to be composed via
-:func:`normalize`, which applies every transformation in a defined, stable order.
+:func:`to_commonmark`, which applies every transformation in a defined, stable order.
 
 Public symbols:
 
-- :func:`normalize` — apply all normalizations to a Roam block string and return the
+- :func:`to_commonmark` — apply all conversions to a Roam block string and return the
   CommonMark result.
-- :func:`normalize_italics` — convert ``__italic__`` → ``*italic*``.
+- :func:`convert_italics` — convert ``__italic__`` → ``*italic*``.
 - :func:`strip_square_brackets` — remove all ``[`` and ``]`` characters (strips
   page-link, tag, and alias bracket scaffolding).
 """
@@ -38,11 +38,11 @@ _SQUARE_BRACKET_RE: re.Pattern[str] = re.compile(r"[\[\]]")
 # ---------------------------------------------------------------------------
 
 
-def normalize(roam_string: str) -> str:
-    """Apply all Roam-to-CommonMark normalizations to *roam_string*.
+def to_commonmark(roam_string: str) -> str:
+    """Convert a Roam block string to CommonMark by applying all transformations.
 
     Transformations are applied in a fixed order designed to avoid
-    double-substitution artefacts.  Each individual normalization is also
+    double-substitution artefacts.  Each individual conversion is also
     available as a standalone function for testing or selective use.
 
     Args:
@@ -50,15 +50,15 @@ def normalize(roam_string: str) -> str:
             :class:`~guffin.roam_node.RoamNode`).
 
     Returns:
-        The normalized CommonMark string.
+        The CommonMark string.
     """
     result: str = roam_string
-    result = normalize_italics(result)
+    result = convert_italics(result)
     result = strip_square_brackets(result)
     return result
 
 
-def normalize_italics(roam_string: str) -> str:
+def convert_italics(roam_string: str) -> str:
     """Convert Roam italic syntax to CommonMark italic syntax.
 
     Roam uses ``__double underscores__`` for italics; CommonMark uses

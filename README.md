@@ -130,7 +130,7 @@ guffin/
 │       ├── dump_roam_tree.py      # CLI: dump a Roam page or node subtree as a Rich tree to the terminal
 │       ├── export_roam_tree.py    # CLI: export a Roam page or node subtree (--format markdown|pdf)
 │       ├── roam_tree_loader.py    # Shared tree-loading pipeline; fetch_roam_trees resolves a target, fetches nodes, returns (NodeTree, VertexTree)
-│       ├── roam_md_normalize.py   # Normalize Roam-flavored Markdown to CommonMark
+│       ├── roam_md_to_commonmark.py # Convert Roam-flavored Markdown to CommonMark
 │       ├── roam_transcribe.py     # Transcribe NodeTree → VertexTree (applies normalize())
 │       ├── pandoc_rendering.py    # Shared Pandoc/panflute utilities: inline CommonMark parsing, image fetching, VertexTree → Doc conversion
 │       ├── md_rendering.py        # Render VertexTree → Markdown via Pandoc; write .mdbundle or plain .md
