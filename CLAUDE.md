@@ -116,4 +116,5 @@ All code written or modified by Claude MUST follow these conventions — no exce
 - `ROAM_EXPORT_DIR` — output directory for `export-roam-tree`
 - `ROAM_CACHE_DIR` — directory for caching downloaded Cloud Firestore assets (`export-roam-tree`)
 - `ROAM_PDF_TEMPLATE_DIR` — directory containing a `user_cfg.typ` override for PDF styling (`export-roam-tree --format pdf`)
+- `ROAM_DUMP_PANDOC_AST` — set to any non-empty value to dump the Pandoc JSON AST to `<output-dir>/<target>.pandoc.json` before the Pandoc conversion step (`export-roam-tree`, both formats)
 - `ROAM_LIVE_TESTS` — set to any non-empty value to enable live tests (e.g. `ROAM_LIVE_TESTS=1`); requires Roam Desktop running locally

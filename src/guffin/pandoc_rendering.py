@@ -51,6 +51,8 @@ Public symbols:
   block elements.
 - :func:`vertex_tree_to_pandoc` — convert a
   :class:`~guffin.graph.VertexTree` to a Panflute :class:`~panflute.Doc`.
+- :func:`doc_to_json` — serialize a Panflute :class:`~panflute.Doc` to a
+  Pandoc JSON string, optionally writing it to a file for debugging.
 """
 
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownParameterType=false, reportUnknownArgumentType=false
@@ -462,3 +464,41 @@ def vertex_tree_to_pandoc(
         blocks.extend(_vertex_to_blocks(root, uid_map, image_files, inline_map, depth=0))
 
     return pf.Doc(*blocks, metadata=metadata)
+
+
+def doc_to_json(
+    doc: pf.Doc,
+    dump_pandoc_ast: bool = False,
+    ast_dump_dir: Path | None = None,
+    ast_dump_stem: str | None = None,
+) -> str:
+    """Serialize *doc* to a Pandoc JSON string.
+
+    Dumps *doc* via :func:`panflute.dump` and returns the resulting JSON
+    string.  When *dump_pandoc_ast* is ``True`` and both *ast_dump_dir* and
+    *ast_dump_stem* are provided, the JSON is also written to
+    ``<ast_dump_dir>/<ast_dump_stem>.pandoc.json`` before being returned —
+    useful for inspecting the intermediate Pandoc AST without modifying the
+    main rendering pipeline.
+
+    Args:
+        doc: The Panflute document to serialize.
+        dump_pandoc_ast: When ``True``, write the JSON to disk alongside the
+            primary output.  Requires *ast_dump_dir* and *ast_dump_stem*.
+        ast_dump_dir: Directory in which to write the ``.pandoc.json`` file.
+            Ignored when *dump_pandoc_ast* is ``False``.
+        ast_dump_stem: POSIX-normalized filename stem (no extension) used to
+            construct the dump filename.  Ignored when *dump_pandoc_ast* is
+            ``False``.
+
+    Returns:
+        The Pandoc JSON representation of *doc*.
+    """
+    buf: Final[StringIO] = StringIO()
+    pf.dump(doc, output_stream=buf)  # type: ignore[no-untyped-call]
+    json_str: Final[str] = buf.getvalue()
+    if dump_pandoc_ast and ast_dump_dir is not None and ast_dump_stem is not None:
+        ast_dump_path: Final[Path] = ast_dump_dir / f"{ast_dump_stem}.pandoc.json"
+        ast_dump_path.write_text(json_str, encoding="utf-8")
+        logger.info("Wrote Pandoc AST to %s", ast_dump_path)
+    return json_str

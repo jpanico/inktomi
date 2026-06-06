@@ -181,6 +181,18 @@ def main(
             ),
         ),
     ] = None,
+    dump_pandoc_ast: Annotated[
+        bool,
+        typer.Option(
+            "--dump-pandoc-ast/--no-dump-pandoc-ast",
+            envvar="ROAM_DUMP_PANDOC_AST",
+            help=(
+                "When enabled, writes the Pandoc JSON AST (serialized Panflute Doc) to "
+                "<output-dir>/<target>.pandoc.json before the Pandoc conversion step. "
+                "Applies to both --format markdown and --format pdf."
+            ),
+        ),
+    ] = False,
 ) -> None:
     """Export a Roam Research page or node subtree to Markdown or PDF.
 
@@ -199,7 +211,7 @@ def main(
     """
     logger.debug(
         "target=%r, local_api_port=%r, graph_name=%r, output_dir=%r, "
-        "output_format=%r, bundle=%r, cache_dir=%r, template_dir=%r",
+        "output_format=%r, bundle=%r, cache_dir=%r, template_dir=%r, dump_pandoc_ast=%r",
         target,
         local_api_port,
         graph_name,
@@ -208,6 +220,7 @@ def main(
         bundle,
         cache_dir,
         template_dir,
+        dump_pandoc_ast,
     )
 
     api_endpoint: Final[ApiEndpoint] = ApiEndpoint.from_parts(
@@ -226,13 +239,13 @@ def main(
 
     if output_format is OutputFormat.PDF:
         try:
-            render_pdf(vertex_tree, target, output_dir, api_endpoint, cache_dir, template_dir)
+            render_pdf(vertex_tree, target, output_dir, api_endpoint, cache_dir, template_dir, dump_pandoc_ast)
         except Exception as e:
             logger.error("Error rendering PDF for %r: %s", target, e)
             raise typer.Exit(code=1)
     else:
         try:
-            render_md(vertex_tree, target, output_dir, api_endpoint, cache_dir, bundle)
+            render_md(vertex_tree, target, output_dir, api_endpoint, cache_dir, bundle, dump_pandoc_ast)
         except Exception as e:
             logger.error("Error rendering Markdown for %r: %s", target, e)
             raise typer.Exit(code=1)

@@ -29,7 +29,6 @@ Public symbols:
 # here avoids dozens of cascading false-positive errors without relaxing any other strict checks.
 
 import importlib.resources
-from io import StringIO
 import logging
 import tempfile
 from pathlib import Path
@@ -40,7 +39,7 @@ import pypandoc  # type: ignore[import-untyped]
 
 from guffin.filenames import shell_safe_filename
 from guffin.graph import VertexTree
-from guffin.pandoc_rendering import fetch_images, vertex_tree_to_pandoc
+from guffin.pandoc_rendering import doc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam_local_api import ApiEndpoint
 
 logger = logging.getLogger(__name__)
@@ -65,6 +64,7 @@ def render(
     api_endpoint: ApiEndpoint,
     cache_dir: Path | None = None,
     template_dir: Path | None = None,
+    dump_pandoc_ast: bool = False,
 ) -> None:
     """Render *vertex_tree* to a PDF file inside *output_dir*.
 
@@ -97,6 +97,11 @@ def render(
             so Bergfink loads the user-supplied config in place of the
             bundled one.  All other template files are always sourced from
             the bundled package data.
+        dump_pandoc_ast: When ``True``, writes the Pandoc JSON AST (the
+            serialized Panflute Doc) to
+            ``<output_dir>/<normalized_filename_stem>.pandoc.json`` before
+            invoking Pandoc.  Useful for debugging the intermediate
+            representation.
 
     Raises:
         RuntimeError: If Pandoc or Typst is not found, or if the Pandoc
@@ -105,7 +110,8 @@ def render(
             ``user_cfg.typ``.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path: Final[Path] = output_dir / f"{shell_safe_filename(filename_stem)}.pdf"
+    stem: Final[str] = shell_safe_filename(filename_stem)
+    output_path: Final[Path] = output_dir / f"{stem}.pdf"
 
     bundled_dir: Final[Path] = _bundled_templates_dir()
     template_path: Final[Path] = bundled_dir / _TEMPLATE_ENTRY
@@ -126,9 +132,7 @@ def render(
     with tempfile.TemporaryDirectory() as tmp:
         image_files = fetch_images(vertex_tree, api_endpoint, Path(tmp), cache_dir)
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files)
-        buf: Final[StringIO] = StringIO()
-        pf.dump(doc, output_stream=buf)  # type: ignore[no-untyped-call]
-        json_str: Final[str] = buf.getvalue()
+        json_str: Final[str] = doc_to_json(doc, dump_pandoc_ast, output_dir, stem)
         logger.debug("pandoc JSON length=%d bytes, output_path=%s", len(json_str), output_path)
 
         pypandoc.convert_text(  # type: ignore[no-untyped-call]

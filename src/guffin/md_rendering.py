@@ -18,7 +18,6 @@ Public symbols:
 # The four suppressed rules are triggered entirely by that Unknown propagation — disabling them
 # here avoids dozens of cascading false-positive errors without relaxing any other strict checks.
 
-from io import StringIO
 import logging
 from pathlib import Path
 from typing import Final
@@ -28,7 +27,7 @@ import pypandoc  # type: ignore[import-untyped]
 
 from guffin.filenames import shell_safe_filename
 from guffin.graph import VertexTree
-from guffin.pandoc_rendering import fetch_images, vertex_tree_to_pandoc
+from guffin.pandoc_rendering import doc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam_local_api import ApiEndpoint
 from guffin.roam_primitives import Uid
 
@@ -42,6 +41,7 @@ def render(
     api_endpoint: ApiEndpoint,
     cache_dir: Path | None = None,
     bundle: bool = True,
+    dump_pandoc_ast: bool = False,
 ) -> None:
     """Render *vertex_tree* to a Markdown file or bundle inside *output_dir*.
 
@@ -76,6 +76,11 @@ def render(
             across runs.  Ignored when *bundle* is ``False``.
         bundle: When ``True`` (default), writes a ``.mdbundle`` directory with
             embedded images.  When ``False``, writes a plain ``.md`` file.
+        dump_pandoc_ast: When ``True``, writes the Pandoc JSON AST (the
+            serialized Panflute Doc) to
+            ``<output_dir>/<normalized_filename_stem>.pandoc.json`` before
+            invoking Pandoc.  Useful for debugging the intermediate
+            representation.
     """
     stem: Final[str] = shell_safe_filename(filename_stem)
 
@@ -90,10 +95,9 @@ def render(
         image_files: Final[dict[Uid, Path]] = {uid: Path(p.name) for uid, p in abs_image_files.items()}
 
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files, title_in_header=True)
-        buf: Final[StringIO] = StringIO()
-        pf.dump(doc, output_stream=buf)  # type: ignore[no-untyped-call]
+        bundle_json_str: Final[str] = doc_to_json(doc, dump_pandoc_ast, output_dir, stem)
         md_text: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
-            buf.getvalue(), "commonmark", format="json", extra_args=["--wrap=none"]
+            bundle_json_str, "commonmark", format="json", extra_args=["--wrap=none"]
         )
         output_file: Final[Path] = bundle_dir / f"{stem}.md"
         output_file.write_text(md_text, encoding="utf-8")
@@ -102,9 +106,7 @@ def render(
     else:
         output_dir.mkdir(parents=True, exist_ok=True)
         no_bundle_doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, {}, title_in_header=True)
-        no_bundle_buf: Final[StringIO] = StringIO()
-        pf.dump(no_bundle_doc, output_stream=no_bundle_buf)  # type: ignore[no-untyped-call]
-        json_str: Final[str] = no_bundle_buf.getvalue()
+        json_str: Final[str] = doc_to_json(no_bundle_doc, dump_pandoc_ast, output_dir, stem)
         no_bundle_md: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
             json_str, "commonmark", format="json", extra_args=["--wrap=none"]
         )
