@@ -42,13 +42,14 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
   - **CLI entry points**
     - `dump_roam_tree.py` — dumps a Roam page or node subtree as a Rich tree to the terminal; supports `--vertex-tree`/`--node-tree`/`--raw-results` flags (`dump-roam-tree`)
     - `export_roam_tree.py` — exports a Roam page or node subtree; `--format markdown` (default) writes a `.mdbundle` or plain `.md`; `--format pdf` writes a PDF via Panflute + Pandoc + Typst; target is a page title or node UID (`export-roam-tree`)
-    - `roam_tree_loader.py` — shared tree-loading pipeline; `fetch_roam_trees` resolves a target, fetches nodes, and returns a `(NodeFetchResult, VertexTree | None)` pair
   - **Core logic**
-    - `roam_md_bundle.py` — core bundling logic
-    - `roam_md_to_commonmark.py` — converts Roam-flavored Markdown strings to CommonMark
-    - `roam_transcribe.py` — transcribes `NodeTree` → `VertexTree`; applies `normalize()` to all text fields
-    - `md_rendering.py` — renders a `VertexTree` to a CommonMark document string
-    - `pdf_rendering.py` — renders a `VertexTree` to PDF: fetches image assets via `FetchRoamAsset`, builds a Panflute `Doc`, exports via Pandoc + Typst
+    - `roam_tree_loader.py` — shared tree-loading pipeline; `fetch_roam_trees` resolves a target, fetches nodes, and returns a `(NodeFetchResult, VertexTree | None)` pair
+    - `roam_md_to_commonmark.py` — converts Roam-flavored Markdown strings to CommonMark; `to_commonmark()` is the main entry point
+    - `roam_transcribe.py` — transcribes `NodeTree` → `VertexTree`; applies `to_commonmark()` to all text fields
+    - `pandoc_rendering.py` — shared Pandoc/Panflute rendering utilities; `vertex_tree_to_pandoc()` builds a Panflute `Doc` from a `VertexTree` (batch-parsing inline CommonMark via a single Pandoc call); `fetch_images()` fetches Cloud Firestore image assets
+    - `md_rendering.py` — renders a `VertexTree` to Markdown: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to CommonMark via Pandoc, writes a plain `.md` or `.mdbundle/` directory
+    - `pdf_rendering.py` — renders a `VertexTree` to PDF: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to PDF via Pandoc + Typst
+    - `filenames.py` — `shell_safe_filename()` normalizes strings to POSIX-safe filenames
     - `rich_rendering.py` — Rich panel/tree rendering for `NodeTree` and `VertexTree`
     - `validation.py` — generic accumulator-pipeline validation framework
   - **Model layer**
@@ -56,7 +57,7 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `roam_node.py` — `RoamNode`, `NodeType`, `node_type`, `NodesByUid`
     - `roam_network.py` — `NodeNetwork` type alias; network validators (`all_children_present`, `all_parents_present`, `has_unique_ids`, `is_acyclic`) and utilities (`all_descendants`, `refs_ids`)
     - `roam_tree.py` — `NodeTree` (factory `build()`, fields `root_node`/`tree_network`/`refs_by_id`), `NodeTreeDFSIterator`, `is_tree`
-    - `graph.py` — `Vertex` union, `VertexTree`, `VertexTreeDFSIterator`
+    - `graph.py` — `Vertex` union, `VertexTree`, `VertexTreeDFSIterator`, `root_vertex()`; filter helpers `page_vertices()`, `heading_vertices()`, `text_content_vertices()`, `image_vertices()`, `image_urls()`
     - `roam_schema.py` — Datomic schema model types (`RoamNamespace`, etc.)
     - `roam_asset.py` — Cloud Firestore asset model
   - **API / fetching**
@@ -67,6 +68,7 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `roam_asset_fetch.py` — fetches Firestore assets via Local API
   - **Infrastructure**
     - `logging_config.py` — colorized logging (`configure_logging()`); reads `LOG_LEVEL` env var
+- `src/templates/` — Typst/Pandoc PDF templates (see `src/templates/README.md`)
 - `scripts/` — shell wrapper scripts (`dump-roam-tree.sh`, `export-roam-tree.sh`) and maintenance scripts (`regen_article0_fixtures.py` — regenerates all test fixtures derived from "Test Article 0" from the live graph)
 - `tests/fixtures/` — sample markdown, images, JSON, YAML for tests
 
