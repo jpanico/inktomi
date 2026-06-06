@@ -27,6 +27,14 @@ The `.typ` and `.typst` files in this directory are the **Bergfink** Pandoc/Typs
 | `toc.typ` | Table of contents layout |
 | `yamltable.typ` | Helper for rendering YAML-defined tables |
 
+### Font Requirements
+
+The default configuration in `base_cfg.typ` uses **Noto Sans** (body, headings, headers/footers) and **Noto Sans Mono** (code blocks). Both must be installed on the system as **static** fonts (not variable fonts — Typst does not currently support variable fonts).
+
+On macOS, download the static variants from Google Fonts: open the family page, click *Download family*, and install only the files from the `static/` subfolder via Font Book. Variable font files are identifiable by `[wght]` or `[wdth]` in their filename — do not install those.
+
+To avoid this requirement entirely, override the font keys in `user_cfg.typ` with fonts already present on the system (e.g. `Helvetica Neue` and `Menlo` on macOS).
+
 ### Customization
 
 Edit `user_cfg.typ` to override any default from `base_cfg.typ`. Define a `#let user_cfg = (...)` dictionary with only the keys you want to change — they are merged on top of the defaults. Do not edit `base_cfg.typ` or `default_styles.typ` directly, as those track the upstream template.

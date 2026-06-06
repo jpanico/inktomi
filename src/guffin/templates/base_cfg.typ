@@ -25,7 +25,7 @@
   // Typography
   font: "noto sans",
   heading-font: "noto sans",
-  code-font: "noto mono",
+  code-font: "noto sans mono",
   header-footer-font: "noto sans",
   fontsize: 11pt,
   leading: 0.65em,
