@@ -19,7 +19,8 @@ from pydantic import Base64Bytes, BaseModel, ConfigDict, Field, validate_call
 
 from guffin.roam_asset import RoamAsset
 from guffin.roam_local_api import ApiEndpoint, Request as LocalApiRequest, Response as LocalApiResponse, invoke_action
-from guffin.roam_primitives import MediaType, Url
+from guffin.media_type import MediaType
+from guffin.roam_primitives import Url
 
 logger = logging.getLogger(__name__)
 

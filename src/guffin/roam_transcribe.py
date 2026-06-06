@@ -42,7 +42,8 @@ from guffin.roam_md_to_commonmark import to_commonmark
 from guffin.roam_network import min_effective_heading_level
 from guffin.roam_node import RoamNode, effective_heading_level, is_image_node
 from guffin.roam_tree import NodeTree
-from guffin.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, MediaType, Url
+from guffin.media_type import MediaType
+from guffin.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, Url
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
-"""Tests for the roam_primitives module."""
+"""Tests for the media_type module."""
 
-from guffin.roam_primitives import MediaType
+from guffin.media_type import MediaType, is_image_type
 
 
 class TestMediaTypeFromFileName:
@@ -49,3 +49,31 @@ class TestMediaTypeExtension:
     def test_from_extension_unknown_returns_none(self) -> None:
         """An unrecognized file extension returns None from from_extension."""
         assert MediaType.from_extension(".xyz") is None
+
+
+class TestIsImageType:
+    """Tests for is_image_type."""
+
+    def test_jpeg_is_image(self) -> None:
+        """JPEG is an image type."""
+        assert is_image_type(MediaType.JPEG) is True
+
+    def test_png_is_image(self) -> None:
+        """PNG is an image type."""
+        assert is_image_type(MediaType.PNG) is True
+
+    def test_svg_is_image(self) -> None:
+        """SVG is an image type."""
+        assert is_image_type(MediaType.SVG) is True
+
+    def test_pdf_is_not_image(self) -> None:
+        """PDF is not an image type."""
+        assert is_image_type(MediaType.PDF) is False
+
+    def test_mp4_is_not_image(self) -> None:
+        """MP4 is not an image type."""
+        assert is_image_type(MediaType.MP4) is False
+
+    def test_mov_is_not_image(self) -> None:
+        """MOV is not an image type."""
+        assert is_image_type(MediaType.MOV) is False

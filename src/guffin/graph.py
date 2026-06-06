@@ -57,7 +57,8 @@ from typing import Annotated, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
-from guffin.roam_primitives import HeadingLevel, MediaType, Uid, Url
+from guffin.media_type import MediaType
+from guffin.roam_primitives import HeadingLevel, Uid, Url
 
 type VertexChildren = list[Uid]
 """Normalized form of :attr:`~guffin.roam_node.RoamNode.children`.

@@ -1,10 +1,9 @@
 """Foundational Roam Research primitives: type aliases, stub models, and pattern constants.
 
-Public symbols are organized into four groups:
+Public symbols are organized into three groups:
 
 - **Primitive type aliases**: :data:`Uid`, :data:`Id`, :data:`Order`, :data:`HeadingLevel`,
   :data:`PageTitle`, :data:`Url`.
-- **Enums**: :class:`MediaType` — IANA media type (MIME type) for Roam-hosted asset files.
 - **Composite type aliases**: :data:`UidPair`, :data:`RawChildren`, :data:`RawRefs`.
 - **Stub models**: :class:`IdObject`, :class:`LinkObject`.
 - **Pattern constants**: :data:`UID_PATTERN` — raw regex string for a Roam node UID;
@@ -12,15 +11,10 @@ Public symbols are organized into four groups:
   markdown image link whose URL is a Cloud Firestore storage URL.
 """
 
-import enum
-import logging
-import mimetypes
 import re
 from typing import Annotated, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
-
-logger = logging.getLogger(__name__)
 
 UID_PATTERN: Final[str] = r"^[A-Za-z0-9_-]{9}$"
 """Raw regex pattern string for a Roam node UID: exactly 9 alphanumeric/dash/underscore characters."""
@@ -54,75 +48,6 @@ Only present on page entities.
 
 type Url = HttpUrl
 """A validated HTTP/HTTPS URL (e.g. a Cloud Firestore storage URL for a Roam-managed file)."""
-
-
-class MediaType(enum.StrEnum):
-    """IANA media type (MIME type) for Roam-hosted asset files.
-
-    Each member is defined as ``(mime_type, file_extension)``; the enum value
-    (used for string comparison and Pydantic validation) is the MIME type string.
-    Use :attr:`extension` to get the corresponding file extension, or
-    :meth:`from_extension` to look up a member by extension.
-    """
-
-    def __new__(cls, mime: str, ext: str) -> MediaType:
-        """Create a new member whose string value is the MIME type."""
-        obj = str.__new__(cls, mime)
-        obj._value_ = mime
-        return obj
-
-    def __init__(self, mime: str, ext: str) -> None:
-        """Store the file extension alongside the MIME type value."""
-        self._ext: str = ext
-
-    JPEG = "image/jpeg", ".jpg"
-    PNG = "image/png", ".png"
-    GIF = "image/gif", ".gif"
-    WEBP = "image/webp", ".webp"
-    SVG = "image/svg+xml", ".svg"
-    TIFF = "image/tiff", ".tiff"
-    BMP = "image/bmp", ".bmp"
-
-    @property
-    def extension(self) -> str:
-        """Return the canonical file extension for this media type (e.g. ``'.jpg'``)."""
-        return self._ext
-
-    @classmethod
-    def from_extension(cls, ext: str) -> MediaType | None:
-        """Return the :class:`MediaType` for *ext*, or ``None`` if unrecognized.
-
-        Args:
-            ext: A dotted file extension string (e.g. ``'.jpg'``).
-
-        Returns:
-            The matching :class:`MediaType`, or ``None`` if *ext* is not recognized.
-        """
-        return next((m for m in cls if m._ext == ext), None)
-
-    @classmethod
-    def from_file_name(cls, file_name: str) -> MediaType | None:
-        """Return the :class:`MediaType` inferred from *file_name*'s extension, or ``None``.
-
-        Uses :func:`mimetypes.guess_type` to resolve the extension to a MIME type
-        string, then maps that string to a :class:`MediaType` member.  This handles
-        extension variants (e.g. ``'.jpeg'`` and ``'.jpg'`` both resolve to
-        :attr:`JPEG`).
-
-        Args:
-            file_name: A filename string including extension (e.g. ``'photo.jpeg'``).
-
-        Returns:
-            The matching :class:`MediaType`, or ``None`` when the type cannot be
-            determined or is not a recognized Roam asset media type.
-        """
-        guessed, _ = mimetypes.guess_type(file_name)
-        if guessed is None:
-            return None
-        try:
-            return cls(guessed)
-        except ValueError:
-            return None
 
 
 type UidPair = tuple[Literal["uid"], Uid]

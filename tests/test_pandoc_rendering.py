@@ -27,7 +27,7 @@ from guffin.pandoc_rendering import (
 )
 from guffin.roam_asset import RoamAsset
 from guffin.roam_local_api import ApiEndpoint, ApiEndpointURL
-from guffin.roam_primitives import MediaType
+from guffin.media_type import MediaType
 
 from conftest import article0_vertex_tree
 

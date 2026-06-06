@@ -10,7 +10,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from guffin.roam_primitives import MediaType
+from guffin.media_type import MediaType
 
 
 class RoamAsset(BaseModel):

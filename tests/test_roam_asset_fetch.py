@@ -14,7 +14,7 @@ from pydantic import HttpUrl, ValidationError
 from guffin.roam_asset import RoamAsset
 from guffin.roam_asset_fetch import FetchRoamAsset, fetch_and_cache_asset
 from guffin.roam_local_api import ApiEndpoint, ApiEndpointURL
-from guffin.roam_primitives import MediaType
+from guffin.media_type import MediaType
 
 from conftest import FIXTURES_IMAGES_DIR
 
