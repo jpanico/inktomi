@@ -69,6 +69,20 @@ The defaults reproduce Typst's built-in heading appearance, so existing PDFs are
 
 These keys are overridable in `user_cfg.typ` like any other `cfg` key.
 
+#### Image width (`base_cfg.typ`, `default_styles.typ`)
+
+A new `image-width` key was added to the `cfg` dictionary in `base_cfg.typ`:
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `image-width` | length | `100%` | Width of all images as a percentage of the page column |
+
+The default (`100%`) preserves the upstream behavior (images fill the column). In `default_styles.typ`, a new show rule applies the setting to every image element:
+
+```typst
+#show image: set image(width: cfg.image-width)
+```
+
 #### Table of contents controlled by `cfg.toc` (`bergfink.typst`, `toc.typ`)
 
 In the stock template, the TOC is gated by a Pandoc template variable (`$if(toc)$`), which is set only when Pandoc is invoked with `--toc` or `-V toc`. Because `pdf_rendering.py` never passes that flag, setting `toc: true` in `user_cfg.typ` had no effect.

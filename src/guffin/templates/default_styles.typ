@@ -204,6 +204,7 @@
 #show heading.where(level: 3): set block(above: 2em, below: 1em)
 
 // set figure styles
+#show image: set image(width: cfg.image-width)
 #show figure: set block(above: 2em, below: 2em)
 
 #show figure.where(kind: table): set figure.caption(position: top)
