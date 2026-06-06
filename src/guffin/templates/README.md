@@ -69,6 +69,37 @@ The defaults reproduce Typst's built-in heading appearance, so existing PDFs are
 
 These keys are overridable in `user_cfg.typ` like any other `cfg` key.
 
+#### Table of contents controlled by `cfg.toc` (`bergfink.typst`, `toc.typ`)
+
+In the stock template, the TOC is gated by a Pandoc template variable (`$if(toc)$`), which is set only when Pandoc is invoked with `--toc` or `-V toc`. Because `pdf_rendering.py` never passes that flag, setting `toc: true` in `user_cfg.typ` had no effect.
+
+`bergfink.typst` was changed to always include `$toc.typ()$` (removing the `$if(toc)$` guard). `toc.typ` was rewritten to wrap its entire body in `#if cfg.toc { ... }`, so the TOC renders if and only if `cfg.toc` is `true`. Typst's `set page` rule is explicitly not scoped to blocks (unlike other set rules), so TOC page numbering (`cfg.toc-page-numbering`) is still applied correctly when the TOC is enabled.
+
+#### Heading numbering start level (`base_cfg.typ`, `default_styles.typ`)
+
+A new `heading-numbering-start-level` key was added to the `cfg` dictionary in `base_cfg.typ`:
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `heading-numbering-start-level` | int | `1` | Minimum heading level that receives a section number; headings above this level are unnumbered |
+
+The default (`1`) numbers all heading levels, preserving the upstream behavior. Setting it to `2` suppresses numbering on H1 while numbering H2 and deeper, with counters relative to H2 (so the first H2 shows as `1.`, not `1.1.`).
+
+In `default_styles.typ`, the simple `numbering = cfg.section-numbering` assignment was replaced with a function that drops the counter prefix for levels below the start:
+
+```typst
+numbering-fn = (..args) => {
+  let nums = args.pos()
+  if nums.len() < start {
+    none
+  } else {
+    numbering(fmt, ..nums.slice(start - 1))
+  }
+}
+```
+
+This key has no effect unless `number-sections` is also `true`.
+
 ### Updating
 
 To update to a newer upstream commit, re-copy the files from the repository above, update the commit reference in this README, and re-apply the modifications described above.
