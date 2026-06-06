@@ -5,6 +5,8 @@ Public symbols:
 - :class:`NodeType` — ``StrEnum`` of pull-block entity types: ``Page``, ``Block``, ``Embed``.
 - :class:`RoamNode` — raw shape of a pull-block as returned by the Roam Local API.
 - :func:`node_type` — return the :class:`NodeType` of a :class:`RoamNode`.
+- :func:`effective_heading_level` — return the effective heading level for a
+  :class:`RoamNode`, or ``None`` if it is not a heading.
 - :data:`NodesByUid` — ``dict`` mapping each :attr:`~RoamNode.uid` to its :class:`RoamNode`.
 """
 
@@ -200,6 +202,32 @@ class RoamNode(BaseModel):
                 "or an Embed (title='embed'); got title=None, string=None"
             )
         return self
+
+
+def effective_heading_level(node: RoamNode) -> HeadingLevel | None:
+    """Return the effective heading level for *node*, or ``None`` if it is not a heading.
+
+    Checks native heading first (``node.heading``, levels 1–3), then falls back
+    to the Augmented Headings extension (``node.props['ah-level']``, levels 4–6).
+
+    Args:
+        node: The node to inspect.
+
+    Returns:
+        An integer heading level in the range 1–6, or ``None``.
+    """
+    if node.heading is not None:
+        return node.heading
+    if node.props is not None:
+        ah_level = node.props.get("ah-level")
+        if isinstance(ah_level, str) and len(ah_level) == 2 and ah_level[0] == "h":
+            try:
+                level = int(ah_level[1])
+                if 1 <= level <= 6:
+                    return level
+            except ValueError:
+                pass
+    return None
 
 
 type NodesByUid = dict[Uid, RoamNode]

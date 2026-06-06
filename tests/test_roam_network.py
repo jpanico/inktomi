@@ -9,6 +9,7 @@ from guffin.roam_network import (
     direct_refs_nodes,
     has_unique_ids,
     is_acyclic,
+    min_effective_heading_level,
     refs_ids,
 )
 from guffin.roam_node import RoamNode
@@ -1107,3 +1108,129 @@ class TestDirectRefsNodes:
         )
         result = direct_refs_nodes([target, block_a, block_b])
         assert result == [target]
+
+
+class TestMinEffectiveHeadingLevel:
+    """Tests for min_effective_heading_level."""
+
+    def test_empty_network_returns_none(self) -> None:
+        """Test that an empty network returns None."""
+        assert min_effective_heading_level([]) is None
+
+    def test_no_heading_nodes_returns_none(self) -> None:
+        """Test that a network with no heading nodes returns None."""
+        page = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="stub", children=[])
+        block = RoamNode(
+            uid="block0001",
+            id=10,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="plain text",
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        assert min_effective_heading_level([page, block]) is None
+
+    def test_single_heading_returns_its_level(self) -> None:
+        """Test that a network with one heading node returns that heading's level."""
+        page = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="stub", children=[])
+        heading = RoamNode(
+            uid="block0001",
+            id=10,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="Section",
+            heading=2,
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        assert min_effective_heading_level([page, heading]) == 2
+
+    def test_multiple_headings_returns_minimum(self) -> None:
+        """Test that the minimum level is returned when multiple heading nodes are present."""
+        page = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="stub", children=[])
+        h2 = RoamNode(
+            uid="block0001",
+            id=10,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="H2",
+            heading=2,
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        h3 = RoamNode(
+            uid="block0002",
+            id=20,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="H3",
+            heading=3,
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        assert min_effective_heading_level([page, h2, h3]) == 2
+
+    def test_non_heading_nodes_do_not_affect_result(self) -> None:
+        """Test that plain-text and page nodes are ignored when computing the minimum."""
+        page = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="stub", children=[])
+        plain = RoamNode(
+            uid="block0001",
+            id=10,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="plain",
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        h3 = RoamNode(
+            uid="block0002",
+            id=20,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="H3",
+            heading=3,
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        assert min_effective_heading_level([page, plain, h3]) == 3
+
+    def test_augmented_heading_is_included(self) -> None:
+        """Test that an Augmented Headings ah-level property is treated as an effective heading."""
+        page = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="stub", children=[])
+        ah5 = RoamNode(
+            uid="block0001",
+            id=10,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="H5 via AH",
+            props={"ah-level": "h5"},
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        assert min_effective_heading_level([page, ah5]) == 5
+
+    def test_native_and_augmented_headings_minimum_returned(self) -> None:
+        """Test that native and augmented heading levels are compared together."""
+        page = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="stub", children=[])
+        h3 = RoamNode(
+            uid="block0001",
+            id=10,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="H3",
+            heading=3,
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        ah4 = RoamNode(
+            uid="block0002",
+            id=20,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="H4 via AH",
+            props={"ah-level": "h4"},
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        assert min_effective_heading_level([page, h3, ah4]) == 3

@@ -39,7 +39,7 @@ from guffin.graph import (
     VertexType,
 )
 from guffin.roam_md_to_commonmark import to_commonmark
-from guffin.roam_node import RoamNode
+from guffin.roam_node import RoamNode, effective_heading_level
 from guffin.roam_tree import NodeTree
 from guffin.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, MediaType, Url
 
@@ -93,32 +93,6 @@ def _resolve_refs(node: RoamNode, id_map: dict[Id, RoamNode]) -> VertexRefs | No
         return None
     resolved: Final[VertexRefs] = [id_map[r.id].uid for r in node.refs if r.id in id_map]
     return resolved if resolved else None
-
-
-def _effective_heading_level(node: RoamNode) -> HeadingLevel | None:
-    """Return the effective heading level for *node*, or ``None`` if it is not a heading.
-
-    Checks native heading first (``node.heading``, levels 1–3), then falls back
-    to the Augmented Headings extension (``node.props['ah-level']``, levels 4–6).
-
-    Args:
-        node: The node to inspect.
-
-    Returns:
-        An integer heading level in the range 1–6, or ``None``.
-    """
-    if node.heading is not None:
-        return node.heading
-    if node.props is not None:
-        ah_level = node.props.get("ah-level")
-        if isinstance(ah_level, str) and len(ah_level) == 2 and ah_level[0] == "h":
-            try:
-                level = int(ah_level[1])
-                if 1 <= level <= 6:
-                    return level
-            except ValueError:
-                pass
-    return None
 
 
 def _extract_firestore_url(string: str) -> str | None:
@@ -230,7 +204,7 @@ def vertex_type(node: RoamNode) -> VertexType:
         raise ValueError(f"RoamNode uid={node.uid!r} has neither 'title' nor 'string'")
     if is_image_node(node):
         return VertexType.ROAM_IMAGE
-    if _effective_heading_level(node) is not None:
+    if effective_heading_level(node) is not None:
         return VertexType.ROAM_HEADING
     return VertexType.ROAM_TEXT_CONTENT
 
@@ -317,7 +291,7 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> HeadingVert
     logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
     if node.string is None:
         raise ValueError(f"RoamNode uid={node.uid!r} has no 'string'")
-    heading: Final[HeadingLevel | None] = _effective_heading_level(node)
+    heading: Final[HeadingLevel | None] = effective_heading_level(node)
     if heading is None:
         raise ValueError(f"RoamNode uid={node.uid!r} has no effective heading level")
     return HeadingVertex(

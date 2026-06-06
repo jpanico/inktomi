@@ -20,12 +20,14 @@ Public symbols:
   :attr:`~guffin.roam_node.RoamNode.refs` list.
 - :func:`refs_nodes` — return the :data:`NodeNetwork` of all direct-ref target nodes in a
   :data:`NodeNetwork` plus all of their transitive descendants available in that network.
+- :func:`min_effective_heading_level` — return the minimum effective heading level across all
+  nodes in a :data:`NodeNetwork`, or ``None`` if no node is a heading.
 """
 
 from typing import Final
 
-from guffin.roam_node import RoamNode
-from guffin.roam_primitives import Id, Uid
+from guffin.roam_node import RoamNode, effective_heading_level
+from guffin.roam_primitives import HeadingLevel, Id, Uid
 from guffin.validation import ValidationError
 
 type NodeNetwork = list[RoamNode]
@@ -314,3 +316,21 @@ def refs_nodes(network: NodeNetwork) -> NodeNetwork:
                 visited.add(desc.id)
                 result.append(desc)
     return result
+
+
+def min_effective_heading_level(network: NodeNetwork) -> HeadingLevel | None:
+    """Return the minimum effective heading level across all nodes in *network*.
+
+    Applies :func:`~guffin.roam_node.effective_heading_level` to every node,
+    collecting all non-``None`` results, and returns the smallest value.
+    Returns ``None`` when *network* contains no heading nodes.
+
+    Args:
+        network: The collection of nodes to examine.
+
+    Returns:
+        The minimum :data:`~guffin.roam_primitives.HeadingLevel` found across
+        all nodes in *network*, or ``None`` if no node is a heading.
+    """
+    levels: Final[set[HeadingLevel]] = {lvl for node in network if (lvl := effective_heading_level(node)) is not None}
+    return min(levels) if levels else None
