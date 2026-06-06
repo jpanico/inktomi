@@ -1,6 +1,10 @@
 // these values override base values if provided
 
 #let user_cfg = (
+  toc: true,
+  number-sections: true,
+  section-numbering: "1.", // (top level only)
+  heading-numbering-start-level: 2,
   h1-size: 1.8,
   dateformat: "[day].[month].[year]",
   authors: (),

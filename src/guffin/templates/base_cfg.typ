@@ -22,6 +22,7 @@
   page-numbering-both: false,
   number-sections: false,
   section-numbering: "1.1.1.1.1",
+  heading-numbering-start-level: 1,
   // Typography
   font: "noto sans",
   heading-font: "noto sans",

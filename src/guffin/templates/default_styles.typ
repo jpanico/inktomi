@@ -172,12 +172,25 @@
 )
 
 // set heading styles
-#let numbering = none
+#let numbering-fn = none
 #if cfg.number-sections {
-  numbering = cfg.section-numbering
+  let start = cfg.heading-numbering-start-level
+  let fmt = cfg.section-numbering
+  if start <= 1 {
+    numbering-fn = fmt
+  } else {
+    numbering-fn = (..args) => {
+      let nums = args.pos()
+      if nums.len() < start {
+        none
+      } else {
+        numbering(fmt, ..nums.slice(start - 1))
+      }
+    }
+  }
 }
 
-#set heading(numbering: numbering)
+#set heading(numbering: numbering-fn)
 
 #show heading: set text(font: cfg.heading-font)
 
