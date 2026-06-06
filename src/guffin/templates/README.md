@@ -2,7 +2,7 @@
 
 ## Bergfink
 
-The `.typ` and `.typst` files in this directory are the **Bergfink** Pandoc/Typst template, copied verbatim from:
+The `.typ` and `.typst` files in this directory are the **Bergfink** Pandoc/Typst template, based on:
 
 - **Repository**: [andyburri/pandoc-typst-template](https://github.com/andyburri/pandoc-typst-template)
 - **Commit**: [`8abcbc1`](https://github.com/andyburri/pandoc-typst-template/commit/8abcbc177ad2e942ca1cd5ff41163205ac91a62b) (2026-05-18)
@@ -37,8 +37,38 @@ To avoid this requirement entirely, override the font keys in `user_cfg.typ` wit
 
 ### Customization
 
-Edit `user_cfg.typ` to override any default from `base_cfg.typ`. Define a `#let user_cfg = (...)` dictionary with only the keys you want to change — they are merged on top of the defaults. Do not edit `base_cfg.typ` or `default_styles.typ` directly, as those track the upstream template.
+Edit `user_cfg.typ` to override any default from `base_cfg.typ`. Define a `#let user_cfg = (...)` dictionary with only the keys you want to change — they are merged on top of the defaults.
+
+### Modifications from upstream
+
+The following changes have been made to the stock Bergfink distribution. When updating to a newer upstream commit, these modifications must be re-applied.
+
+#### Per-level heading size, weight, and style (`base_cfg.typ`, `default_styles.typ`)
+
+Nine new keys were added to the `cfg` dictionary in `base_cfg.typ`:
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `h1-size` | float | `1.8` | H1 font size as a ratio of `fontsize` |
+| `h2-size` | float | `1.1` | H2 font size as a ratio of `fontsize` |
+| `h3-size` | float | `1.0` | H3 font size as a ratio of `fontsize` |
+| `h1-weight` | string | `"bold"` | H1 font weight (e.g. `"semibold"`, `"extrabold"`, or an integer 100–900) |
+| `h2-weight` | string | `"bold"` | H2 font weight |
+| `h3-weight` | string | `"bold"` | H3 font weight |
+| `h1-style` | string | `"normal"` | H1 font style (`"normal"`, `"italic"`, or `"oblique"`) |
+| `h2-style` | string | `"normal"` | H2 font style |
+| `h3-style` | string | `"normal"` | H3 font style |
+
+The defaults reproduce Typst's built-in heading appearance, so existing PDFs are unaffected. In `default_styles.typ`, the hardcoded size ratios and the H3 `#show` rule (which upstream omits a text rule for) were replaced with rules that read from `cfg`:
+
+```typst
+#show heading.where(level: 1): set text(fontsize * cfg.h1-size, weight: cfg.h1-weight, style: cfg.h1-style)
+#show heading.where(level: 2): set text(fontsize * cfg.h2-size, weight: cfg.h2-weight, style: cfg.h2-style)
+#show heading.where(level: 3): set text(fontsize * cfg.h3-size, weight: cfg.h3-weight, style: cfg.h3-style)
+```
+
+These keys are overridable in `user_cfg.typ` like any other `cfg` key.
 
 ### Updating
 
-To update to a newer upstream commit, re-copy the files from the repository above and update the commit reference in this README.
+To update to a newer upstream commit, re-copy the files from the repository above, update the commit reference in this README, and re-apply the modifications described above.

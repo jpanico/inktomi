@@ -32,6 +32,16 @@
   spacing: 1.2em,
   justify: true,
   smartquote: true,
+  // Per-level heading overrides (size is a ratio multiplied by fontsize)
+  h1-size: 1.8,
+  h2-size: 1.1,
+  h3-size: 1.0,
+  h1-weight: "bold",
+  h2-weight: "bold",
+  h3-weight: "bold",
+  h1-style: "normal",
+  h2-style: "normal",
+  h3-style: "normal",
   // Titlepage
   titlepage-rule: 3pt + black,
   titlepage-bg: white,
