@@ -7,6 +7,8 @@ Public symbols:
 - :func:`node_type` — return the :class:`NodeType` of a :class:`RoamNode`.
 - :func:`effective_heading_level` — return the effective heading level for a
   :class:`RoamNode`, or ``None`` if it is not a heading.
+- :func:`is_image_node` — return ``True`` when a node's string is exactly one
+  Markdown image link and nothing else.
 - :data:`NodesByUid` — ``dict`` mapping each :attr:`~RoamNode.uid` to its :class:`RoamNode`.
 """
 
@@ -14,9 +16,10 @@ import enum
 import logging
 from typing import Final
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator, validate_call
 
 from guffin.roam_primitives import (
+    IMAGE_LINK_RE,
     HeadingLevel,
     Id,
     IdObject,
@@ -228,6 +231,28 @@ def effective_heading_level(node: RoamNode) -> HeadingLevel | None:
             except ValueError:
                 pass
     return None
+
+
+@validate_call
+def is_image_node(node: RoamNode) -> bool:
+    """Return ``True`` if *node* contains exactly one Markdown image link and nothing else.
+
+    Checks that ``node.string``, after stripping leading and trailing whitespace,
+    consists entirely of a single ``![<alt>](<url>)`` link.  Any surrounding text,
+    additional links, or a ``None`` string all return ``False``.
+
+    Args:
+        node: The node to inspect.
+
+    Returns:
+        ``True`` if ``node.string`` is solely a single Markdown image link.
+
+    Raises:
+        ValidationError: If *node* is ``None`` or invalid.
+    """
+    if node.string is None:
+        return False
+    return bool(IMAGE_LINK_RE.fullmatch(node.string.strip()))
 
 
 type NodesByUid = dict[Uid, RoamNode]

@@ -15,9 +15,9 @@ from guffin.graph import (
     VertexType,
     vertex_adapter,
 )
+from guffin.roam_network import min_effective_heading_level
 from guffin.roam_node import RoamNode
 from guffin.roam_transcribe import (
-    is_image_node,
     to_heading_vertex,
     to_image_vertex,
     to_page_vertex,
@@ -119,123 +119,6 @@ def _make_text(
 def _id_map(*nodes: RoamNode) -> dict[Id, RoamNode]:
     """Build an id_map from a sequence of nodes."""
     return {n.id: n for n in nodes}
-
-
-# ---------------------------------------------------------------------------
-# TestIsImageNode
-# ---------------------------------------------------------------------------
-
-
-class TestIsImageNode:
-    """Tests for is_image_node."""
-
-    def test_returns_false_when_string_is_none(self) -> None:
-        """Test that a node with no string (e.g. a page) returns False."""
-        assert is_image_node(_make_page()) is False
-
-    def test_returns_false_for_plain_text(self) -> None:
-        """Test that a plain text block returns False."""
-        assert is_image_node(_make_text()) is False
-
-    def test_returns_true_for_bare_image_link(self) -> None:
-        """Test that a string consisting of exactly one image link returns True."""
-        assert is_image_node(_make_image()) is True
-
-    def test_returns_true_with_leading_trailing_whitespace(self) -> None:
-        """Test that leading and trailing whitespace around the image link is tolerated."""
-        node = RoamNode(
-            uid="imageuid1",
-            id=101,
-            time=STUB_TIME,
-            user=STUB_USER,
-            string=f"  {_IMAGE_STRING}  ",
-            parents=[IdObject(id=99)],
-            page=IdObject(id=99),
-        )
-        assert is_image_node(node) is True
-
-    def test_returns_true_with_newline_in_alt_text(self) -> None:
-        """Test that a newline inside alt text is accepted."""
-        node = RoamNode(
-            uid="imageuid1",
-            id=101,
-            time=STUB_TIME,
-            user=STUB_USER,
-            string=f"![A flower\n        ]({_FIRESTORE_URL})",
-            parents=[IdObject(id=99)],
-            page=IdObject(id=99),
-        )
-        assert is_image_node(node) is True
-
-    def test_returns_true_with_empty_alt_text(self) -> None:
-        """Test that empty alt text is accepted."""
-        node = RoamNode(
-            uid="imageuid1",
-            id=101,
-            time=STUB_TIME,
-            user=STUB_USER,
-            string=f"![]({_FIRESTORE_URL})",
-            parents=[IdObject(id=99)],
-            page=IdObject(id=99),
-        )
-        assert is_image_node(node) is True
-
-    def test_returns_false_for_text_before_image(self) -> None:
-        """Test that any non-whitespace text before the image link returns False."""
-        node = RoamNode(
-            uid="imageuid1",
-            id=101,
-            time=STUB_TIME,
-            user=STUB_USER,
-            string=f"see: {_IMAGE_STRING}",
-            parents=[IdObject(id=99)],
-            page=IdObject(id=99),
-        )
-        assert is_image_node(node) is False
-
-    def test_returns_false_for_text_after_image(self) -> None:
-        """Test that any non-whitespace text after the image link returns False."""
-        node = RoamNode(
-            uid="imageuid1",
-            id=101,
-            time=STUB_TIME,
-            user=STUB_USER,
-            string=f"{_IMAGE_STRING} caption",
-            parents=[IdObject(id=99)],
-            page=IdObject(id=99),
-        )
-        assert is_image_node(node) is False
-
-    def test_returns_false_for_two_consecutive_image_links(self) -> None:
-        """Test that a string containing two image links returns False."""
-        node = RoamNode(
-            uid="imageuid1",
-            id=101,
-            time=STUB_TIME,
-            user=STUB_USER,
-            string=_IMAGE_STRING * 2,
-            parents=[IdObject(id=99)],
-            page=IdObject(id=99),
-        )
-        assert is_image_node(node) is False
-
-    def test_returns_false_for_relative_url(self) -> None:
-        """Test that a Markdown image with a relative URL (no http/https scheme) returns False."""
-        node = RoamNode(
-            uid="imageuid1",
-            id=101,
-            time=STUB_TIME,
-            user=STUB_USER,
-            string="![alt](relative/path.jpg)",
-            parents=[IdObject(id=99)],
-            page=IdObject(id=99),
-        )
-        assert is_image_node(node) is False
-
-    def test_null_node_raises_validation_error(self) -> None:
-        """Test that passing None raises a ValidationError."""
-        with pytest.raises(ValidationError):
-            is_image_node(None)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
@@ -661,10 +544,13 @@ class TestTranscribeArticleFixture:
 
     def test_transcribe_article_nodes_matches_vertex_fixture(self) -> None:
         """Test that transcribing test_article_0_nodes.yaml produces the vertices in test_article_0_vertices.yaml."""
-        nodes = list(article0_node_tree().tree_network)
+        node_tree = article0_node_tree()
+        nodes = list(node_tree.tree_network)
         id_map: dict[Id, RoamNode] = {n.id: n for n in nodes}
+        min_level = min_effective_heading_level(node_tree.tree_network)
+        heading_offset: int = (1 - min_level) if min_level is not None else 0
 
-        actual_vertices: list[Vertex] = [transcribe_node(n, id_map) for n in nodes]
+        actual_vertices: list[Vertex] = [transcribe_node(n, id_map, heading_offset) for n in nodes]
 
         raw_vertices: list[dict[str, object]] = yaml.safe_load(
             (FIXTURES_YAML_DIR / "test_article_0_vertices.yaml").read_text()

@@ -2,8 +2,8 @@
 
 Public symbols:
 
-- :func:`is_image_node` — return ``True`` when a node's string is exactly one
-  Markdown image link and nothing else.
+- :data:`SHOULD_NORMALIZE_HEADING_LEVELS` — whether heading levels should be
+  normalized during transcription.
 - :func:`vertex_type` — classify a :class:`~guffin.roam_node.RoamNode` into a
   :class:`~guffin.graph.VertexType`.
 - :func:`to_page_vertex` — build a :class:`~guffin.graph.PageVertex` from a
@@ -39,11 +39,15 @@ from guffin.graph import (
     VertexType,
 )
 from guffin.roam_md_to_commonmark import to_commonmark
-from guffin.roam_node import RoamNode, effective_heading_level
+from guffin.roam_network import min_effective_heading_level
+from guffin.roam_node import RoamNode, effective_heading_level, is_image_node
 from guffin.roam_tree import NodeTree
 from guffin.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, MediaType, Url
 
 logger = logging.getLogger(__name__)
+
+SHOULD_NORMALIZE_HEADING_LEVELS: Final[bool] = True
+"""Whether heading levels should be normalized during transcription."""
 
 _url_adapter: TypeAdapter[Url] = TypeAdapter(Url)
 """Pydantic :class:`~pydantic.TypeAdapter` for validating and coercing URL strings to.
@@ -151,28 +155,6 @@ def _extract_file_name(firestore_url: str) -> str | None:
 
 
 @validate_call
-def is_image_node(node: RoamNode) -> bool:
-    """Return ``True`` if *node* contains exactly one Markdown image link and nothing else.
-
-    Checks that ``node.string``, after stripping leading and trailing whitespace,
-    consists entirely of a single ``![<alt>](<url>)`` link.  Any surrounding text,
-    additional links, or a ``None`` string all return ``False``.
-
-    Args:
-        node: The node to inspect.
-
-    Returns:
-        ``True`` if ``node.string`` is solely a single Markdown image link.
-
-    Raises:
-        ValidationError: If *node* is ``None`` or invalid.
-    """
-    if node.string is None:
-        return False
-    return bool(IMAGE_LINK_RE.fullmatch(node.string.strip()))
-
-
-@validate_call
 def vertex_type(node: RoamNode) -> VertexType:
     r"""Classify *node* into a :class:`~guffin.graph.VertexType`.
 
@@ -272,7 +254,7 @@ def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
 
 
 @validate_call
-def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> HeadingVertex:
+def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: int = 0) -> HeadingVertex:
     """Build a :class:`~guffin.graph.HeadingVertex` from *node*.
 
     Args:
@@ -280,6 +262,9 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> HeadingVert
             or ``node.props['ah-level']``).
         id_map: Mapping from Datomic entity id to :class:`~guffin.roam_node.RoamNode`,
             used to resolve child and ref stubs to UIDs.
+        heading_offset: Integer offset added to the effective heading level before
+            building the vertex.  Use ``1 − min_level`` to normalize the shallowest
+            heading to level 1; defaults to ``0`` (no adjustment).
 
     Returns:
         A :class:`~guffin.graph.HeadingVertex`.
@@ -288,7 +273,7 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> HeadingVert
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
         ValueError: If ``node.string`` is ``None`` or no effective heading level is found.
     """
-    logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
+    logger.debug("node=%r, id_map keys=%r, heading_offset=%d", node, list(id_map.keys()), heading_offset)
     if node.string is None:
         raise ValueError(f"RoamNode uid={node.uid!r} has no 'string'")
     heading: Final[HeadingLevel | None] = effective_heading_level(node)
@@ -297,7 +282,7 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> HeadingVert
     return HeadingVertex(
         uid=node.uid,
         text=to_commonmark(node.string),
-        heading=heading,
+        heading=heading + heading_offset,
         children=_resolve_children(node, id_map),
         refs=_resolve_refs(node, id_map),
     )
@@ -331,7 +316,7 @@ def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextCo
 
 
 @validate_call
-def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode]) -> Vertex:
+def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: int = 0) -> Vertex:
     r"""Transcribe *node* into a normalized :class:`~guffin.graph.Vertex`.
 
     Determines the :class:`~guffin.graph.VertexType` via :func:`vertex_type`,
@@ -345,6 +330,8 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode]) -> Vertex:
         id_map: Mapping from Datomic entity id to :class:`~guffin.roam_node.RoamNode`,
             used to resolve child and ref stubs to UIDs.  Stubs whose id is absent
             from *id_map* are silently dropped.
+        heading_offset: Integer offset forwarded to :func:`to_heading_vertex` when *node*
+            is a heading block.  Defaults to ``0`` (no adjustment).
 
     Returns:
         A :class:`~guffin.graph.Vertex` representing the normalized node.
@@ -353,14 +340,14 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode]) -> Vertex:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
         ValueError: If *node* has neither a ``title`` nor a ``string`` field set.
     """
-    logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
+    logger.debug("node=%r, id_map keys=%r, heading_offset=%d", node, list(id_map.keys()), heading_offset)
     match vertex_type(node):
         case VertexType.ROAM_PAGE:
             return to_page_vertex(node, id_map)
         case VertexType.ROAM_IMAGE:
             return to_image_vertex(node, id_map)
         case VertexType.ROAM_HEADING:
-            return to_heading_vertex(node, id_map)
+            return to_heading_vertex(node, id_map, heading_offset)
         case VertexType.ROAM_TEXT_CONTENT:
             return to_text_content_vertex(node, id_map)
 
@@ -369,7 +356,11 @@ def transcribe(node_tree: NodeTree) -> VertexTree:
     """Transcribe every node in *node_tree* into a :class:`~guffin.graph.VertexTree`.
 
     Builds an id-map from *node_tree.tree_network*, then applies :func:`transcribe_node`
-    to each node in insertion order.
+    to each node in insertion order.  When :data:`SHOULD_NORMALIZE_HEADING_LEVELS` is
+    ``True``, computes a *heading_offset* equal to ``1 − min effective heading level``
+    across all nodes in the tree, so that the shallowest heading maps to level 1; when
+    no heading nodes are present, or when :data:`SHOULD_NORMALIZE_HEADING_LEVELS` is
+    ``False``, *heading_offset* is 0.
 
     Args:
         node_tree: A validated tree of raw Roam nodes.
@@ -382,4 +373,9 @@ def transcribe(node_tree: NodeTree) -> VertexTree:
         ValueError: If any node has neither a ``title`` nor a ``string`` field set.
     """
     id_map: Final[dict[Id, RoamNode]] = {n.id: n for n in node_tree.tree_network}
-    return VertexTree(vertices=[transcribe_node(n, id_map) for n in node_tree.tree_network])
+    min_level: Final[HeadingLevel | None] = (
+        min_effective_heading_level(node_tree.tree_network) if SHOULD_NORMALIZE_HEADING_LEVELS else None
+    )
+    heading_offset: Final[int] = (1 - min_level) if min_level is not None else 0
+    logger.debug("heading_offset=%d", heading_offset)
+    return VertexTree(vertices=[transcribe_node(n, id_map, heading_offset) for n in node_tree.tree_network])

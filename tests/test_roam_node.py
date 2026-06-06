@@ -1,15 +1,175 @@
 """Tests for the roam_node module."""
 
 import pytest
+from pydantic import ValidationError
 
 from guffin.roam_node import (
     NodeType,
     RoamNode,
+    is_image_node,
     node_type,
 )
 from guffin.roam_primitives import IdObject
 
 from conftest import STUB_TIME, STUB_USER
+
+_FIRESTORE_URL = (
+    "https://firebasestorage.googleapis.com/v0/b/test.appspot.com" "/o/imgs%2Fphoto.jpeg?alt=media&token=abc123"
+)
+_IMAGE_STRING = f"![A flower]({_FIRESTORE_URL})"
+
+
+def _make_page(uid: str = "pageuid01", id: int = 100, title: str = "My Page") -> RoamNode:
+    """Return a minimal page RoamNode."""
+    return RoamNode(uid=uid, id=id, time=STUB_TIME, user=STUB_USER, title=title, children=[])
+
+
+def _make_image(uid: str = "imageuid1", id: int = 101, string: str = _IMAGE_STRING) -> RoamNode:
+    """Return a minimal Firestore image-block RoamNode."""
+    return RoamNode(
+        uid=uid,
+        id=id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=string,
+        parents=[IdObject(id=99)],
+        page=IdObject(id=99),
+    )
+
+
+def _make_text(uid: str = "textuid01", id: int = 104, string: str = "Some plain text") -> RoamNode:
+    """Return a minimal plain-text RoamNode."""
+    return RoamNode(
+        uid=uid,
+        id=id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=string,
+        parents=[IdObject(id=99)],
+        page=IdObject(id=99),
+    )
+
+
+# ---------------------------------------------------------------------------
+# TestIsImageNode
+# ---------------------------------------------------------------------------
+
+
+class TestIsImageNode:
+    """Tests for is_image_node."""
+
+    def test_returns_false_when_string_is_none(self) -> None:
+        """Test that a node with no string (e.g. a page) returns False."""
+        assert is_image_node(_make_page()) is False
+
+    def test_returns_false_for_plain_text(self) -> None:
+        """Test that a plain text block returns False."""
+        assert is_image_node(_make_text()) is False
+
+    def test_returns_true_for_bare_image_link(self) -> None:
+        """Test that a string consisting of exactly one image link returns True."""
+        assert is_image_node(_make_image()) is True
+
+    def test_returns_true_with_leading_trailing_whitespace(self) -> None:
+        """Test that leading and trailing whitespace around the image link is tolerated."""
+        node = RoamNode(
+            uid="imageuid1",
+            id=101,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string=f"  {_IMAGE_STRING}  ",
+            parents=[IdObject(id=99)],
+            page=IdObject(id=99),
+        )
+        assert is_image_node(node) is True
+
+    def test_returns_true_with_newline_in_alt_text(self) -> None:
+        """Test that a newline inside alt text is accepted."""
+        node = RoamNode(
+            uid="imageuid1",
+            id=101,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string=f"![A flower\n        ]({_FIRESTORE_URL})",
+            parents=[IdObject(id=99)],
+            page=IdObject(id=99),
+        )
+        assert is_image_node(node) is True
+
+    def test_returns_true_with_empty_alt_text(self) -> None:
+        """Test that empty alt text is accepted."""
+        node = RoamNode(
+            uid="imageuid1",
+            id=101,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string=f"![]({_FIRESTORE_URL})",
+            parents=[IdObject(id=99)],
+            page=IdObject(id=99),
+        )
+        assert is_image_node(node) is True
+
+    def test_returns_false_for_text_before_image(self) -> None:
+        """Test that any non-whitespace text before the image link returns False."""
+        node = RoamNode(
+            uid="imageuid1",
+            id=101,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string=f"see: {_IMAGE_STRING}",
+            parents=[IdObject(id=99)],
+            page=IdObject(id=99),
+        )
+        assert is_image_node(node) is False
+
+    def test_returns_false_for_text_after_image(self) -> None:
+        """Test that any non-whitespace text after the image link returns False."""
+        node = RoamNode(
+            uid="imageuid1",
+            id=101,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string=f"{_IMAGE_STRING} caption",
+            parents=[IdObject(id=99)],
+            page=IdObject(id=99),
+        )
+        assert is_image_node(node) is False
+
+    def test_returns_false_for_two_consecutive_image_links(self) -> None:
+        """Test that a string containing two image links returns False."""
+        node = RoamNode(
+            uid="imageuid1",
+            id=101,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string=_IMAGE_STRING * 2,
+            parents=[IdObject(id=99)],
+            page=IdObject(id=99),
+        )
+        assert is_image_node(node) is False
+
+    def test_returns_false_for_relative_url(self) -> None:
+        """Test that a Markdown image with a relative URL (no http/https scheme) returns False."""
+        node = RoamNode(
+            uid="imageuid1",
+            id=101,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="![alt](relative/path.jpg)",
+            parents=[IdObject(id=99)],
+            page=IdObject(id=99),
+        )
+        assert is_image_node(node) is False
+
+    def test_null_node_raises_validation_error(self) -> None:
+        """Test that passing None raises a ValidationError."""
+        with pytest.raises(ValidationError):
+            is_image_node(None)  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# TestRoamNodeProps
+# ---------------------------------------------------------------------------
 
 
 class TestRoamNodeProps:

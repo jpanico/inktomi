@@ -469,11 +469,11 @@ class TestVertexTreeToPandocArticleFixture:
         assert len(list(doc.content)) == 12
 
     def test_first_block_is_section_1_header(self) -> None:
-        """The first block is an H2 Header for 'Section 1'."""
+        """The first block is an H1 Header for 'Section 1'."""
         doc = vertex_tree_to_pandoc(article0_vertex_tree(), {})
         first = list(doc.content)[0]
         assert isinstance(first, pf.Header)
-        assert first.level == 2
+        assert first.level == 1
         assert _collect_text(first) == "Section 1"
 
     def test_image_renders_as_fallback_link_when_no_image_files(self) -> None:

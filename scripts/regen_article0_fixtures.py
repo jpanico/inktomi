@@ -12,9 +12,11 @@ Run from the project root with the venv active:
 
 import pathlib
 import sys
+import tempfile
 
 import yaml
 
+from guffin.filenames import shell_safe_filename
 from guffin.graph import VertexTree, vertex_adapter
 from guffin.logging_config import configure_logging
 from guffin.md_rendering import render
@@ -112,8 +114,16 @@ print(f"  wrote {vertices_path}")
 # 5. Render and write expected markdown
 # ---------------------------------------------------------------------------
 md_path = FIXTURES_MD / "test_article_0_expected.md"
-md_content = render(vertex_tree)
-md_path.write_text(md_content, encoding="utf-8")
+with tempfile.TemporaryDirectory() as tmp_dir:
+    render(
+        vertex_tree,
+        filename_stem=PAGE_TITLE,
+        output_dir=pathlib.Path(tmp_dir),
+        api_endpoint=ENDPOINT,
+        bundle=False,
+    )
+    rendered = (pathlib.Path(tmp_dir) / f"{shell_safe_filename(PAGE_TITLE)}.md").read_text(encoding="utf-8")
+md_path.write_text(rendered, encoding="utf-8")
 print(f"  wrote {md_path}")
 
 print("Done.")
