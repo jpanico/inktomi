@@ -1,4 +1,4 @@
-"""Roam Research node transcription to normalized graph vertices.
+"""Transcribe `RoamNode` to `Vertex`.
 
 Public symbols:
 

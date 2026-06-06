@@ -64,9 +64,6 @@ def render(
 
     Pandoc must be installed and on ``PATH``.
 
-    Parallel entry point to :func:`~guffin.pdf_rendering.render` — same
-    signature (plus *bundle*), Markdown output.
-
     Args:
         vertex_tree: The normalized vertex tree to render.
         filename_stem: String used to derive the output filename (e.g. a Roam
@@ -87,9 +84,9 @@ def render(
         bundle_dir.mkdir(parents=True, exist_ok=True)
         logger.info("Created bundle directory: %s", bundle_dir)
 
-        # Fetch images; use relative Path(filename) so Pandoc writes relative
-        # image references in the Markdown output.
-        abs_image_files = fetch_images(vertex_tree, api_endpoint, bundle_dir, cache_dir)
+        # the Paths returned from the fetch are absolute
+        abs_image_files: Final[dict[Uid, Path]] = fetch_images(vertex_tree, api_endpoint, bundle_dir, cache_dir)
+        # Strip to filename-only so Pandoc writes relative image references in the Markdown output.
         image_files: Final[dict[Uid, Path]] = {uid: Path(p.name) for uid, p in abs_image_files.items()}
 
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files, title_in_header=True)
@@ -107,8 +104,9 @@ def render(
         no_bundle_doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, {}, title_in_header=True)
         no_bundle_buf: Final[StringIO] = StringIO()
         pf.dump(no_bundle_doc, output_stream=no_bundle_buf)  # type: ignore[no-untyped-call]
+        json_str: Final[str] = no_bundle_buf.getvalue()
         no_bundle_md: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
-            no_bundle_buf.getvalue(), "commonmark", format="json", extra_args=["--wrap=none"]
+            json_str, "commonmark", format="json", extra_args=["--wrap=none"]
         )
         output_path: Final[Path] = output_dir / f"{stem}.md"
         output_path.write_text(no_bundle_md, encoding="utf-8")

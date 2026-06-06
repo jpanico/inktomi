@@ -47,7 +47,7 @@ Public symbols:
   :class:`~guffin.graph.ImageVertex` assets from a
   :class:`~guffin.graph.VertexTree` to a local directory; return a
   ``{uid: path}`` mapping.
-- :func:`build_blocks` — convert an ordered list of vertex UIDs to Pandoc
+- :func:`build_child_blocks` — convert an ordered list of vertex UIDs to Pandoc
   block elements.
 - :func:`vertex_tree_to_pandoc` — convert a
   :class:`~guffin.graph.VertexTree` to a Panflute :class:`~panflute.Doc`.
@@ -126,7 +126,7 @@ def parse_inline_md(texts: list[str]) -> dict[str, list[pf.Inline]]:
     result: Final[dict[str, list[pf.Inline]]] = {}
     text_idx: int = 0
 
-    for block in doc.content:
+    for block in doc.content:  # `block: pf.Block`
         if text_idx >= len(unique):
             break
         block_inlines: list[pf.Inline] = list(block.content) if hasattr(block, "content") else []
@@ -243,7 +243,7 @@ def _build_list_item(
     """Build a Pandoc :class:`~panflute.ListItem` from a :class:`~guffin.graph.TextContentVertex`.
 
     The item body is a :class:`~panflute.Plain` inline block.  If the vertex
-    has children they are rendered recursively via :func:`build_blocks` and
+    has children they are rendered recursively via :func:`build_child_blocks` and
     appended as nested :class:`~panflute.BulletList` blocks inside the item.
 
     Args:
@@ -261,11 +261,11 @@ def _build_list_item(
     inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
     content: list[pf.Block] = [pf.Plain(*inlines)]
     if vertex.children:
-        content.extend(build_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
+        content.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
     return pf.ListItem(*content)
 
 
-def build_blocks(
+def build_child_blocks(
     child_uids: VertexChildren,
     uid_map: Mapping[Uid, Vertex],
     image_files: dict[Uid, Path],
@@ -336,7 +336,7 @@ def _vertex_to_blocks(
       :class:`~panflute.Para`, followed by children.
     - :class:`~guffin.graph.TextContentVertex` at depth > 1: wrapped in a
       single-item :class:`~panflute.BulletList` (normally reached only from
-      :func:`build_blocks` which handles sibling grouping).
+      :func:`build_child_blocks` which handles sibling grouping).
     - :class:`~guffin.graph.ImageVertex`: a :class:`~panflute.Para`
       containing a :class:`~panflute.Image` (local path) if the asset was
       fetched, or a :class:`~panflute.Link` fallback otherwise.
@@ -355,19 +355,19 @@ def _vertex_to_blocks(
     """
     match vertex:
         case PageVertex():
-            return build_blocks(vertex.children or [], uid_map, image_files, inline_map, 1)
+            return build_child_blocks(vertex.children or [], uid_map, image_files, inline_map, 1)
         case HeadingVertex():
             inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
             blocks: list[pf.Block] = [pf.Header(*inlines, level=vertex.heading)]
             if vertex.children:
-                blocks.extend(build_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
+                blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
             return blocks
         case TextContentVertex():
             text_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
             if depth <= 1:
                 para_blocks: list[pf.Block] = [pf.Para(*text_inlines)]
                 if vertex.children:
-                    para_blocks.extend(build_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
+                    para_blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
                 return para_blocks
             else:
                 return [pf.BulletList(_build_list_item(vertex, uid_map, image_files, inline_map, depth))]
@@ -457,7 +457,7 @@ def vertex_tree_to_pandoc(
             blocks.append(pf.Header(*title_inlines, level=1))
         else:
             metadata["title"] = pf.MetaInlines(*title_inlines)
-        blocks.extend(build_blocks(root.children or [], uid_map, image_files, inline_map, depth=1))
+        blocks.extend(build_child_blocks(root.children or [], uid_map, image_files, inline_map, depth=1))
     else:
         blocks.extend(_vertex_to_blocks(root, uid_map, image_files, inline_map, depth=0))
 
