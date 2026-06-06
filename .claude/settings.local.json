@@ -47,7 +47,8 @@
       "Bash(lsof *)",
       "Bash(code --version)",
       "Skill(update-config)",
-      "Skill(update-config:*)"
+      "Skill(update-config:*)",
+      "Bash(gh api *)"
     ]
   }
 }
