@@ -1,6 +1,7 @@
 // these values override base values if provided
 
 #let user_cfg = (
+  h1-size: 1.8,
   dateformat: "[day].[month].[year]",
   authors: (),
   keywords: "",

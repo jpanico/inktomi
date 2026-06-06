@@ -33,7 +33,7 @@
   justify: true,
   smartquote: true,
   // Per-level heading overrides (size is a ratio multiplied by fontsize)
-  h1-size: 1.8,
+  h1-size: 1.3,
   h2-size: 1.1,
   h3-size: 1.0,
   h1-weight: "bold",

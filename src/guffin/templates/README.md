@@ -49,7 +49,7 @@ Nine new keys were added to the `cfg` dictionary in `base_cfg.typ`:
 
 | Key | Type | Default | Description |
 |---|---|---|---|
-| `h1-size` | float | `1.8` | H1 font size as a ratio of `fontsize` |
+| `h1-size` | float | `1.3` | H1 font size as a ratio of `fontsize` |
 | `h2-size` | float | `1.1` | H2 font size as a ratio of `fontsize` |
 | `h3-size` | float | `1.0` | H3 font size as a ratio of `fontsize` |
 | `h1-weight` | string | `"bold"` | H1 font weight (e.g. `"semibold"`, `"extrabold"`, or an integer 100–900) |
