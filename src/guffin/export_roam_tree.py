@@ -20,8 +20,10 @@ result in one of two output formats controlled by ``--format``:
   the :class:`~guffin.graph.VertexTree` via
   :func:`~guffin.pdf_rendering.render_pdf` and writes
   ``<output_dir>/<target>.pdf``.  The ``--bundle/--no-bundle`` and
-  ``--cache-dir`` options do not apply and are ignored.  Requires Pandoc
-  and a PDF engine (e.g. ``pdflatex``) to be installed.
+  ``--cache-dir`` options do not apply and are ignored.  Pass
+  ``--template-dir`` to supply a directory containing a ``user_cfg.typ``
+  override for the bundled Bergfink Typst template.  Requires Pandoc and
+  Typst to be installed.
 
 ``TARGET`` is interpreted as a **node UID** if it matches
 :data:`~guffin.roam_primitives.UID_PATTERN` (exactly 9 alphanumeric/dash/underscore
@@ -44,6 +46,7 @@ Example::
 
     export-roam-tree "Test Article" -p 3333 -g SCFH -t tok -o ~/docs
     export-roam-tree "Test Article" -p 3333 -g SCFH -t tok -o ~/docs --format pdf
+    export-roam-tree "Test Article" -p 3333 -g SCFH -t tok -o ~/docs --format pdf --template-dir ~/mytheme
     export-roam-tree "Test Article" -p 3333 -g SCFH -t tok -o ~/docs --no-bundle
     export-roam-tree wdMgyBiP9 -p 3333 -g SCFH -t tok -o ~/docs
     export-roam-tree "Test Article"  # reads all options from env vars
@@ -167,6 +170,17 @@ def main(
             ),
         ),
     ] = None,
+    template_dir: Annotated[
+        pathlib.Path | None,
+        typer.Option(
+            "--template-dir",
+            envvar="ROAM_PDF_TEMPLATE_DIR",
+            help=(
+                "PDF only. Directory containing a user_cfg.typ file that overrides the "
+                "bundled Bergfink Typst template styling. Ignored when --format markdown."
+            ),
+        ),
+    ] = None,
 ) -> None:
     """Export a Roam Research page or node subtree to Markdown or PDF.
 
@@ -178,11 +192,14 @@ def main(
     ``<target>.mdbundle/`` directory with images; ``--no-bundle`` writes a
     plain ``<target>.md`` file.
 
-    With ``--format pdf``: writes ``<target>.pdf`` via Pandoc. The
-    ``--bundle/--no-bundle`` and ``--cache-dir`` options are ignored.
+    With ``--format pdf``: writes ``<target>.pdf`` via Pandoc + Typst using
+    the bundled Bergfink template.  Pass ``--template-dir`` to a directory
+    containing ``user_cfg.typ`` to override the default styling.  The
+    ``--bundle/--no-bundle`` options are ignored.
     """
     logger.debug(
-        "target=%r, local_api_port=%r, graph_name=%r, output_dir=%r, " "output_format=%r, bundle=%r, cache_dir=%r",
+        "target=%r, local_api_port=%r, graph_name=%r, output_dir=%r, "
+        "output_format=%r, bundle=%r, cache_dir=%r, template_dir=%r",
         target,
         local_api_port,
         graph_name,
@@ -190,6 +207,7 @@ def main(
         output_format,
         bundle,
         cache_dir,
+        template_dir,
     )
 
     api_endpoint: Final[ApiEndpoint] = ApiEndpoint.from_parts(
@@ -208,7 +226,7 @@ def main(
 
     if output_format is OutputFormat.PDF:
         try:
-            render_pdf(vertex_tree, target, output_dir, api_endpoint, cache_dir)
+            render_pdf(vertex_tree, target, output_dir, api_endpoint, cache_dir, template_dir)
         except Exception as e:
             logger.error("Error rendering PDF for %r: %s", target, e)
             raise typer.Exit(code=1)

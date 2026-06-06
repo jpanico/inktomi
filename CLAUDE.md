@@ -19,9 +19,10 @@ pip install -e ".[dev]"
 ## Key Commands
 ```bash
 dump-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> [-v/-V] [-n/-N] [-r/-R] [--node-props <props>]
-export-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> -o <output_dir> [--format markdown|pdf] [--bundle|--no-bundle] [--cache-dir <dir>]
+export-roam-tree <page_title_or_node_uid> -p <port> -g <graph> -t <token> -o <output_dir> [--format markdown|pdf] [--bundle|--no-bundle] [--cache-dir <dir>] [--template-dir <dir>]
 # --format markdown (default): writes <target>.mdbundle/ (--bundle) or <target>.md (--no-bundle)
 # --format pdf: writes <target>.pdf via Pandoc + Typst; requires typst on PATH
+# --template-dir: directory containing user_cfg.typ overrides for PDF styling (pdf only)
 
 # Run the full check pipeline (format + lint + type check + tests) in one shot:
 hatch run check
@@ -68,7 +69,8 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `roam_asset_fetch.py` — fetches Firestore assets via Local API
   - **Infrastructure**
     - `logging_config.py` — colorized logging (`configure_logging()`); reads `LOG_LEVEL` env var
-- `src/templates/` — Typst/Pandoc PDF templates (see `src/templates/README.md`)
+  - **Templates**
+    - `templates/` — Bergfink Typst/Pandoc PDF template (package data; see `src/guffin/templates/README.md`); `user_cfg.typ` is the intended customization point
 - `scripts/` — shell wrapper scripts (`dump-roam-tree.sh`, `export-roam-tree.sh`) and maintenance scripts (`regen_article0_fixtures.py` — regenerates all test fixtures derived from "Test Article 0" from the live graph)
 - `tests/fixtures/` — sample markdown, images, JSON, YAML for tests
 
@@ -113,4 +115,5 @@ All code written or modified by Claude MUST follow these conventions — no exce
 - `ROAM_API_TOKEN` — bearer token for auth (all CLI tools)
 - `ROAM_EXPORT_DIR` — output directory for `export-roam-tree`
 - `ROAM_CACHE_DIR` — directory for caching downloaded Cloud Firestore assets (`export-roam-tree`)
+- `ROAM_PDF_TEMPLATE_DIR` — directory containing a `user_cfg.typ` override for PDF styling (`export-roam-tree --format pdf`)
 - `ROAM_LIVE_TESTS` — set to any non-empty value to enable live tests (e.g. `ROAM_LIVE_TESTS=1`); requires Roam Desktop running locally

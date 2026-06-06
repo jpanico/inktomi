@@ -48,7 +48,9 @@
       "Bash(code --version)",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "Bash(gh api *)"
+      "Bash(gh api *)",
+      "Bash(bash -c 'if jq -r '\"'\"'.tool_input.command // \"\"'\"'\"' | grep -q '\"'\"'&&'\"'\"'; then echo \"Chained && commands are not allowed — use separate Bash tool calls\"; exit 2; fi')",
+      "Bash(typst fonts *)"
     ]
   }
 }

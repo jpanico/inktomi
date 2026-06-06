@@ -12,6 +12,11 @@ directory, and embedded in the PDF as local-path
 :class:`~panflute.Image` elements.  An optional *cache_dir* avoids
 re-downloading unchanged assets across runs.
 
+The Bergfink Pandoc/Typst template (bundled as package data under
+``guffin/templates/``) is used by default.  Pass *template_dir* to point at a
+directory containing a ``user_cfg.typ`` override; Bergfink's ``$if(user-config)$``
+mechanism will load it in place of the bundled default.
+
 Public symbols:
 
 - :func:`render` — fetch image assets, build the Pandoc object model,
@@ -23,6 +28,7 @@ Public symbols:
 # The four suppressed rules are triggered entirely by that Unknown propagation — disabling them
 # here avoids dozens of cascading false-positive errors without relaxing any other strict checks.
 
+import importlib.resources
 from io import StringIO
 import logging
 import tempfile
@@ -39,6 +45,18 @@ from guffin.roam_local_api import ApiEndpoint
 
 logger = logging.getLogger(__name__)
 
+_TEMPLATE_PACKAGE: Final[str] = "guffin.templates"
+_TEMPLATE_ENTRY: Final[str] = "bergfink.typst"
+_USER_CFG_FILENAME: Final[str] = "user_cfg.typ"
+
+
+def _bundled_templates_dir() -> Path:
+    """Return the absolute path to the bundled ``guffin/templates/`` directory."""
+    pkg_files = importlib.resources.files(_TEMPLATE_PACKAGE)
+    # ``as_file`` gives a real filesystem path even for zipped wheels.
+    with importlib.resources.as_file(pkg_files) as templates_path:
+        return templates_path
+
 
 def render(
     vertex_tree: VertexTree,
@@ -46,6 +64,7 @@ def render(
     output_dir: Path,
     api_endpoint: ApiEndpoint,
     cache_dir: Path | None = None,
+    template_dir: Path | None = None,
 ) -> None:
     """Render *vertex_tree* to a PDF file inside *output_dir*.
 
@@ -56,9 +75,9 @@ def render(
     :func:`~guffin.pandoc_rendering.fetch_images`, builds a Panflute
     :class:`~panflute.Doc` via
     :func:`~guffin.pandoc_rendering.vertex_tree_to_pandoc`, serializes it
-    to Pandoc JSON, and invokes Pandoc (with the Typst PDF engine) via
-    :mod:`pypandoc` to produce the PDF.  The temporary image directory is
-    removed after Pandoc completes.
+    to Pandoc JSON, and invokes Pandoc (with the Typst PDF engine and the
+    bundled Bergfink template) via :mod:`pypandoc` to produce the PDF.  The
+    temporary image directory is removed after Pandoc completes.
 
     Pandoc and Typst must be installed and on ``PATH``.
 
@@ -72,13 +91,37 @@ def render(
         cache_dir: Optional directory for caching downloaded image assets
             across runs.  Uses a SHA-256 hash of the Cloud Firestore URL as
             the cache key.
+        template_dir: Optional directory containing a ``user_cfg.typ`` file
+            that overrides the bundled Bergfink default styling.  When
+            supplied, Pandoc receives ``-V user-config=<template_dir>/user_cfg.typ``
+            so Bergfink loads the user-supplied config in place of the
+            bundled one.  All other template files are always sourced from
+            the bundled package data.
 
     Raises:
         RuntimeError: If Pandoc or Typst is not found, or if the Pandoc
             conversion fails.
+        FileNotFoundError: If *template_dir* is supplied but does not contain
+            ``user_cfg.typ``.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path: Final[Path] = output_dir / f"{shell_safe_filename(filename_stem)}.pdf"
+
+    bundled_dir: Final[Path] = _bundled_templates_dir()
+    template_path: Final[Path] = bundled_dir / _TEMPLATE_ENTRY
+
+    extra_args: list[str] = [
+        "--pdf-engine=typst",
+        f"--template={template_path}",
+        f"--resource-path={bundled_dir}",
+    ]
+
+    if template_dir is not None:
+        user_cfg_path: Final[Path] = template_dir / _USER_CFG_FILENAME
+        if not user_cfg_path.is_file():
+            raise FileNotFoundError(f"template_dir={template_dir!r} does not contain {_USER_CFG_FILENAME!r}")
+        extra_args.extend(["-V", f"user-config={user_cfg_path}"])
+        logger.debug("using user_cfg override: %s", user_cfg_path)
 
     with tempfile.TemporaryDirectory() as tmp:
         image_files = fetch_images(vertex_tree, api_endpoint, Path(tmp), cache_dir)
@@ -89,7 +132,7 @@ def render(
         logger.debug("pandoc JSON length=%d bytes, output_path=%s", len(json_str), output_path)
 
         pypandoc.convert_text(  # type: ignore[no-untyped-call]
-            json_str, "pdf", format="json", outputfile=str(output_path), extra_args=["--pdf-engine=typst"]
+            json_str, "pdf", format="json", outputfile=str(output_path), extra_args=extra_args
         )
 
     logger.info("Wrote PDF to %s", output_path)

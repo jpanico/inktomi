@@ -2,8 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(hatch run check *)",
-      "Bash(hatch run pytest *)",
-      "Bash(source .venv/bin/activate && hatch run check *)"
+      "Bash(hatch run pytest *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if jq -r '.tool_input.command // \"\"' | grep -q '&&'; then echo 'Chained && commands are not allowed — use separate Bash tool calls'; exit 2; fi"
+          }
+        ]
+      }
     ]
   }
 }
