@@ -9,6 +9,8 @@ Public symbols:
 import enum
 import mimetypes
 
+from pydantic import validate_call
+
 
 class MediaType(enum.StrEnum):
     """IANA media type (MIME type) for Roam-hosted asset files.
@@ -82,6 +84,7 @@ class MediaType(enum.StrEnum):
             return None
 
 
+@validate_call
 def is_image_type(media_type: MediaType) -> bool:
     """Return ``True`` if *media_type* is an image MIME type (``image/*``).
 

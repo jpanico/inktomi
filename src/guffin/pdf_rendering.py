@@ -36,6 +36,7 @@ from typing import Final
 
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
+from pydantic import validate_call
 
 from guffin.filenames import shell_safe_filename
 from guffin.graph import VertexTree
@@ -57,6 +58,7 @@ def _bundled_templates_dir() -> Path:
         return templates_path
 
 
+@validate_call
 def render(
     vertex_tree: VertexTree,
     filename_stem: str,

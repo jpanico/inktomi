@@ -19,7 +19,7 @@ Public symbols:
 import enum
 from typing import Final
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator, validate_call
 
 from guffin.roam_network import NodeNetwork
 from guffin.roam_node import NodesByUid, RoamNode
@@ -247,6 +247,7 @@ type NodeFetchResult_Placeholder = NodeNetwork
 """Flat list of :class:`~guffin.roam_node.RoamNode` records returned by all public fetch methods."""
 
 
+@validate_call
 def anchor_node(network: NodeNetwork, anchor: NodeFetchAnchor) -> RoamNode:
     """Return the node in *network* that matches *anchor*.
 
@@ -273,6 +274,7 @@ def anchor_node(network: NodeNetwork, anchor: NodeFetchAnchor) -> RoamNode:
     return found
 
 
+@validate_call
 def anchor_tree(network: NodeNetwork, anchor: NodeFetchAnchor) -> NodeNetwork:
     """Return all nodes in *network* reachable from the anchor node via :attr:`~guffin.roam_node.RoamNode.children`.
 

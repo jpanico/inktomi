@@ -55,7 +55,7 @@ from collections.abc import Iterator
 from enum import StrEnum
 from typing import Annotated, Final, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, validate_call
 
 from guffin.media_type import MediaType
 from guffin.roam_primitives import HeadingLevel, Uid, Url
@@ -345,31 +345,37 @@ class VertexTreeDFSIterator(Iterator[Vertex]):
         return vertex
 
 
+@validate_call
 def page_vertices(tree: VertexTree) -> list[PageVertex]:
     """Return all :class:`PageVertex` instances in *tree*, in insertion order."""
     return [v for v in tree.vertices if isinstance(v, PageVertex)]
 
 
+@validate_call
 def heading_vertices(tree: VertexTree) -> list[HeadingVertex]:
     """Return all :class:`HeadingVertex` instances in *tree*, in insertion order."""
     return [v for v in tree.vertices if isinstance(v, HeadingVertex)]
 
 
+@validate_call
 def text_content_vertices(tree: VertexTree) -> list[TextContentVertex]:
     """Return all :class:`TextContentVertex` instances in *tree*, in insertion order."""
     return [v for v in tree.vertices if isinstance(v, TextContentVertex)]
 
 
+@validate_call
 def image_vertices(tree: VertexTree) -> list[ImageVertex]:
     """Return all :class:`ImageVertex` instances in *tree*, in insertion order."""
     return [v for v in tree.vertices if isinstance(v, ImageVertex)]
 
 
+@validate_call
 def image_urls(tree: VertexTree) -> list[Url]:
     """Return the Cloud Firestore URL of every :class:`ImageVertex` in *tree*, in insertion order."""
     return [v.source for v in image_vertices(tree)]
 
 
+@validate_call
 def root_vertex(tree: VertexTree) -> Vertex:
     """Return the single root :data:`Vertex` of *tree*.
 

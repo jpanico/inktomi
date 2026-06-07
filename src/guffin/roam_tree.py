@@ -20,7 +20,7 @@ import logging
 from collections.abc import Iterator
 from typing import ClassVar, Final
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, validate_call
 
 from guffin.roam_network import (
     NodeNetwork,
@@ -289,6 +289,7 @@ class NodeTreeDFSIterator(Iterator[RoamNode]):
         return node
 
 
+@validate_call
 def is_tree(root_node: RoamNode, network: NodeNetwork) -> ValidationResult:
     """Return a :class:`~guffin.validation.ValidationResult` for all tree invariants on *network*.
 

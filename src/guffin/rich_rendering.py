@@ -21,6 +21,8 @@ import logging
 import re
 from typing import Final, TypeGuard
 
+from pydantic import validate_call
+
 from rich.console import Group
 from rich.panel import Panel
 from rich.table import Table
@@ -108,6 +110,7 @@ def _format_node_prop(node: RoamNode, prop: str) -> str:
             return f"{prop}=?"
 
 
+@validate_call
 def make_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS) -> Panel:
     """Render *node* as a Rich Panel for display in a terminal tree.
 
@@ -147,6 +150,7 @@ def make_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS)
     return Panel(Text(content), title=title, expand=False)
 
 
+@validate_call
 def build_rich_node_tree(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PROPS) -> RichTree:
     """Build a Rich tree from *tree* using a depth-first traversal.
 
@@ -175,6 +179,7 @@ def build_rich_node_tree(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_P
     return root_rich
 
 
+@validate_call
 def build_rich_refs_box(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PROPS) -> Panel | None:
     """Build a Rich :class:`~rich.panel.Panel` summarising the back-reference nodes in *tree*.
 
@@ -214,6 +219,7 @@ def build_rich_refs_box(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PR
     return Panel(Group(*ref_rows), title="refs")
 
 
+@validate_call
 def make_vertex_panel(vertex: Vertex) -> Panel:
     """Render *vertex* as a Rich Panel for display in a terminal tree.
 
@@ -249,6 +255,7 @@ def make_vertex_panel(vertex: Vertex) -> Panel:
     return Panel(Text(content), title=title, expand=False)
 
 
+@validate_call
 def build_rich_vertex_tree(vertex_tree: VertexTree) -> RichTree:
     """Build a Rich tree from *vertex_tree* using a depth-first traversal.
 
@@ -386,6 +393,7 @@ def _truncate_urls_in_cell(cell: str) -> str:
     return _URL_RE.sub(_shorten, cell)
 
 
+@validate_call
 def build_rich_raw_table(fetch_result: NodeFetchResult) -> Table:
     """Build and return a Rich :class:`~rich.table.Table` of raw Datalog pull-blocks.
 

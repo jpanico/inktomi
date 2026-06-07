@@ -207,6 +207,7 @@ class RoamNode(BaseModel):
         return self
 
 
+@validate_call
 def effective_heading_level(node: RoamNode) -> HeadingLevel | None:
     """Return the effective heading level for *node*, or ``None`` if it is not a heading.
 
@@ -259,6 +260,7 @@ type NodesByUid = dict[Uid, RoamNode]
 """``dict`` mapping each :attr:`~RoamNode.uid` to its :class:`RoamNode`."""
 
 
+@validate_call
 def node_type(node: RoamNode) -> NodeType:
     """Return the :class:`NodeType` of *node*.
 

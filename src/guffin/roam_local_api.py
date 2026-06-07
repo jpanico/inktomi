@@ -17,7 +17,7 @@ Public symbols:
 import logging
 from typing import ClassVar, Final, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, validate_call
 import requests
 
 logger = logging.getLogger(__name__)
@@ -165,6 +165,7 @@ class Response:
         result: Final[object]
 
 
+@validate_call
 def invoke_action(request_payload: Request.Payload, api_endpoint: ApiEndpoint) -> Response.Payload:
     """Invoke a Roam Local API action and return the parsed response.
 

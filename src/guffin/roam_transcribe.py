@@ -353,6 +353,7 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
             return to_text_content_vertex(node, id_map)
 
 
+@validate_call
 def transcribe(node_tree: NodeTree) -> VertexTree:
     """Transcribe every node in *node_tree* into a :class:`~guffin.graph.VertexTree`.
 

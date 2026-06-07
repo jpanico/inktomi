@@ -20,6 +20,8 @@ Public symbols:
 
 import re
 
+from pydantic import validate_call
+
 # ---------------------------------------------------------------------------
 # Module-level compiled patterns
 # ---------------------------------------------------------------------------
@@ -38,6 +40,7 @@ _SQUARE_BRACKET_RE: re.Pattern[str] = re.compile(r"[\[\]]")
 # ---------------------------------------------------------------------------
 
 
+@validate_call
 def to_commonmark(roam_string: str) -> str:
     """Convert a Roam block string to CommonMark by applying all transformations.
 
@@ -58,6 +61,7 @@ def to_commonmark(roam_string: str) -> str:
     return result
 
 
+@validate_call
 def convert_italics(roam_string: str) -> str:
     """Convert Roam italic syntax to CommonMark italic syntax.
 
@@ -74,6 +78,7 @@ def convert_italics(roam_string: str) -> str:
     return _ITALIC_RE.sub(r"*\1*", roam_string)
 
 
+@validate_call
 def strip_square_brackets(roam_string: str) -> str:
     """Remove all square-bracket characters from *roam_string*.
 

@@ -67,6 +67,8 @@ from typing import Final
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
 
+from pydantic import ConfigDict, validate_call
+
 from guffin.graph import (
     HeadingVertex,
     ImageVertex,
@@ -89,6 +91,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
+@validate_call
 def parse_inline_md(texts: list[str]) -> dict[str, list[pf.Inline]]:
     """Batch-parse CommonMark inline text strings into panflute inline element lists.
 
@@ -149,6 +152,7 @@ def parse_inline_md(texts: list[str]) -> dict[str, list[pf.Inline]]:
 # ---------------------------------------------------------------------------
 
 
+@validate_call
 def fetch_images(
     vertex_tree: VertexTree,
     api_endpoint: ApiEndpoint,
@@ -227,6 +231,7 @@ def _build_list_item(
     return pf.ListItem(*content)
 
 
+@validate_call(config=ConfigDict(arbitrary_types_allowed=True))
 def build_child_blocks(
     child_uids: VertexChildren,
     uid_map: Mapping[Uid, Vertex],
@@ -349,11 +354,7 @@ def _vertex_to_blocks(
                 return [pf.Para(link)]
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
-
-
+@validate_call
 def vertex_tree_to_pandoc(
     vertex_tree: VertexTree,
     image_files: dict[Uid, Path],
@@ -426,6 +427,7 @@ def vertex_tree_to_pandoc(
     return pf.Doc(*blocks, metadata=metadata)
 
 
+@validate_call(config=ConfigDict(arbitrary_types_allowed=True))
 def pandoc_to_json(
     doc: pf.Doc,
     dump_pandoc_ast: bool = False,

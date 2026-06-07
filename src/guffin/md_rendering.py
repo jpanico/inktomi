@@ -24,6 +24,7 @@ from typing import Final
 
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
+from pydantic import validate_call
 
 from guffin.filenames import shell_safe_filename
 from guffin.graph import VertexTree
@@ -34,6 +35,7 @@ from guffin.roam_primitives import Uid
 logger = logging.getLogger(__name__)
 
 
+@validate_call
 def render(
     vertex_tree: VertexTree,
     filename_stem: str,

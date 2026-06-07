@@ -26,6 +26,8 @@ Public symbols:
 
 from typing import Final
 
+from pydantic import validate_call
+
 from guffin.roam_node import RoamNode, effective_heading_level
 from guffin.roam_primitives import HeadingLevel, Id, Uid
 from guffin.validation import ValidationError
@@ -40,6 +42,7 @@ values within the collection.
 """
 
 
+@validate_call
 def all_children_present(network: NodeNetwork) -> ValidationError | None:
     """Return ``None`` when every child id referenced in *network* resolves to a node in *network*.
 
@@ -72,6 +75,7 @@ def all_children_present(network: NodeNetwork) -> ValidationError | None:
     )
 
 
+@validate_call
 def all_parents_present(network: NodeNetwork, root_node: RoamNode) -> ValidationError | None:
     """Return ``None`` when every parent id referenced in *network* resolves to a node in *network*.
 
@@ -112,6 +116,7 @@ def all_parents_present(network: NodeNetwork, root_node: RoamNode) -> Validation
     )
 
 
+@validate_call
 def has_unique_ids(network: NodeNetwork) -> ValidationError | None:
     """Return ``None`` when every :attr:`~guffin.roam_node.RoamNode.id` in *network* is unique.
 
@@ -139,6 +144,7 @@ def has_unique_ids(network: NodeNetwork) -> ValidationError | None:
     return ValidationError(message=f"expected unique node ids; found duplicates: {dup_ids}", validator=has_unique_ids)
 
 
+@validate_call
 def is_acyclic(network: NodeNetwork) -> ValidationError | None:
     """Return ``None`` when the child-edge graph of *network* contains no directed cycles.
 
@@ -196,6 +202,7 @@ def is_acyclic(network: NodeNetwork) -> ValidationError | None:
     return None
 
 
+@validate_call
 def all_descendants(ancestor: RoamNode, network: NodeNetwork) -> NodeNetwork:
     """Collect all descendant nodes of *ancestor* reachable via child edges in *network*.
 
@@ -245,6 +252,7 @@ def all_descendants(ancestor: RoamNode, network: NodeNetwork) -> NodeNetwork:
     return result
 
 
+@validate_call
 def refs_ids(network: NodeNetwork) -> set[Id]:
     """Return the set of all :attr:`~guffin.roam_node.RoamNode.refs` ids across every node in *network*.
 
@@ -262,6 +270,7 @@ def refs_ids(network: NodeNetwork) -> set[Id]:
     return {ref.id for n in network if n.refs for ref in n.refs}
 
 
+@validate_call
 def direct_refs_nodes(network: NodeNetwork) -> NodeNetwork:
     """Return the nodes in *network* that are referenced by any node's ``refs`` list.
 
@@ -284,6 +293,7 @@ def direct_refs_nodes(network: NodeNetwork) -> NodeNetwork:
     return [n for n in network if n.id in target_ids]
 
 
+@validate_call
 def refs_nodes(network: NodeNetwork) -> NodeNetwork:
     """Return all direct-ref target nodes from *network* plus all their transitive descendants.
 
@@ -318,6 +328,7 @@ def refs_nodes(network: NodeNetwork) -> NodeNetwork:
     return result
 
 
+@validate_call
 def min_effective_heading_level(network: NodeNetwork) -> HeadingLevel | None:
     """Return the minimum effective heading level across all nodes in *network*.
 

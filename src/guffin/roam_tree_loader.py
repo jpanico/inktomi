@@ -11,6 +11,7 @@ import logging
 from typing import Final
 
 import typer
+from pydantic import validate_call
 
 from guffin.graph import VertexTree
 from guffin.roam_local_api import ApiEndpoint
@@ -22,6 +23,7 @@ from guffin.roam_transcribe import transcribe
 logger = logging.getLogger(__name__)
 
 
+@validate_call
 def fetch_roam_trees(
     fetch_spec: NodeFetchSpec,
     include_vertex_tree: bool,
