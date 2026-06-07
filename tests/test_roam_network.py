@@ -1001,10 +1001,11 @@ class TestRefsIds:
     def test_article_fixture_refs(self) -> None:
         """Test that the article fixture network has the expected :block/refs ids.
 
-        The test_article_0 fixture contains a callout block with [[>]] and [[!INFO]]
-        wikilinks, producing two ref ids.
+        The test_article_0 fixture contains:
+        - The page title "[[Test Article]] 0", producing a ref to the "Test Article" page (id 4223).
+        - A callout block with [[>]] and [[!INFO]] wikilinks, producing two more ref ids (5450, 5462).
         """
-        assert refs_ids(article0_node_tree().tree_network) == {5450, 5462}
+        assert refs_ids(article0_node_tree().tree_network) == {4223, 5450, 5462}
 
 
 class TestDirectRefsNodes:

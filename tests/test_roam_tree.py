@@ -603,7 +603,7 @@ class TestNodeTreeDFSIterator:
         """Test the exact pre-order DFS id sequence for the test_article fixture.
 
         Expected traversal (by Datomic entity id):
-          3327  — root page "Test Article 0"
+          3327  — root page "[[Test Article]] 0"
           11113 — callout block     (order=0, child of root)
           3328  — Section 1         (order=1, child of root)
           3331  — Section 1.1       (order=0, child of 3328)

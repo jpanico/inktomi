@@ -24,7 +24,7 @@ class TestExportRoamTreeNoBundle:
         written .md file matches test_article_0_expected.md.
         """
         fetch_spec: Final[NodeFetchSpec] = NodeFetchSpec(
-            anchor=NodeFetchAnchor(qualifier="Test Article 0"), include_refs=False
+            anchor=NodeFetchAnchor(qualifier="[[Test Article]] 0"), include_refs=False
         )
         mock_result: Final[NodeFetchResult] = NodeFetchResult.from_network(
             article0_node_tree().tree_network, fetch_spec, raw_result=[[{}]]
@@ -45,7 +45,7 @@ class TestExportRoamTreeNoBundle:
                 result = runner.invoke(
                     app,
                     [
-                        "Test Article 0",
+                        "[[Test Article]] 0",
                         "--port",
                         "3333",
                         "--graph",

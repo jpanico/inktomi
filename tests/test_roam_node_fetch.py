@@ -430,7 +430,7 @@ class TestFetchRoamNodesFetchByPageTitle:
         ``seen_by``) are excluded from the comparison because they change with
         normal Roam activity and are not meaningful for structural correctness.
         """
-        page_title = "Test Article 0"
+        page_title = "[[Test Article]] 0"
 
         result: NodeFetchResult = FetchRoamNodes.fetch_by_page_title(
             fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier=page_title), include_refs=False),

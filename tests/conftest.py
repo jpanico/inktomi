@@ -56,7 +56,7 @@ def live_api_endpoint() -> ApiEndpoint:
 
 
 def article0_node_tree() -> NodeTree:
-    """Load and return the ``Test Article 0`` :class:`~guffin.roam_tree.NodeTree` from its YAML fixture."""
+    """Load and return the ``[[Test Article]] 0`` :class:`~guffin.roam_tree.NodeTree` from its YAML fixture."""
     raw: Final[list[dict[str, object]]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_0_nodes.yaml").read_text())
     network: Final[list[RoamNode]] = [RoamNode.model_validate(r) for r in raw]
     root_node: Final[RoamNode] = next(n for n in network if node_type(n) == NodeType.Page)
@@ -64,7 +64,7 @@ def article0_node_tree() -> NodeTree:
 
 
 def article0_vertex_tree() -> VertexTree:
-    """Load and return the ``Test Article 0`` :class:`~guffin.graph.VertexTree` from its YAML fixture."""
+    """Load and return the ``[[Test Article]] 0`` :class:`~guffin.graph.VertexTree` from its YAML fixture."""
     raw: Final[list[dict[str, object]]] = yaml.safe_load(
         (FIXTURES_YAML_DIR / "test_article_0_vertices.yaml").read_text()
     )

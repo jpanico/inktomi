@@ -140,7 +140,7 @@ class TestVertexTreeDFSIterator:
         """Test the exact pre-order DFS uid sequence for the test_article fixture.
 
         Expected traversal (by uid):
-          6olpFWiw1  — root page "Test Article 0"
+          6olpFWiw1  — root page "[[Test Article]] 0"
           cNW8lmXIM  — callout block     (children[0] of root)
           0EgPyHSZi  — Section 1         (children[1] of root)
           3BX-iWc-p  — Section 1.1       (children[0] of Section 1)
