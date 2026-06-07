@@ -27,7 +27,7 @@ import pypandoc  # type: ignore[import-untyped]
 
 from guffin.filenames import shell_safe_filename
 from guffin.graph import VertexTree
-from guffin.pandoc_rendering import doc_to_json, fetch_images, vertex_tree_to_pandoc
+from guffin.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam_local_api import ApiEndpoint
 from guffin.roam_primitives import Uid
 
@@ -95,7 +95,7 @@ def render(
         image_files: Final[dict[Uid, Path]] = {uid: Path(p.name) for uid, p in abs_image_files.items()}
 
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files, title_in_header=True)
-        bundle_json_str: Final[str] = doc_to_json(doc, dump_pandoc_ast, output_dir, stem)
+        bundle_json_str: Final[str] = pandoc_to_json(doc, dump_pandoc_ast, output_dir, stem)
         md_text: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
             bundle_json_str, "commonmark", format="json", extra_args=["--wrap=none"]
         )
@@ -106,7 +106,7 @@ def render(
     else:
         output_dir.mkdir(parents=True, exist_ok=True)
         no_bundle_doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, {}, title_in_header=True)
-        json_str: Final[str] = doc_to_json(no_bundle_doc, dump_pandoc_ast, output_dir, stem)
+        json_str: Final[str] = pandoc_to_json(no_bundle_doc, dump_pandoc_ast, output_dir, stem)
         no_bundle_md: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
             json_str, "commonmark", format="json", extra_args=["--wrap=none"]
         )

@@ -40,9 +40,6 @@ Public symbols:
 
 - :func:`parse_inline_md` — batch-parse CommonMark inline text strings into
   panflute inline element lists via a single Pandoc call.
-- :func:`fetch_and_save_image` — fetch a single Cloud Firestore image via
-  the Roam Local API, write it to a local directory, and return its local
-  filename.
 - :func:`fetch_images` — fetch all
   :class:`~guffin.graph.ImageVertex` assets from a
   :class:`~guffin.graph.VertexTree` to a local directory; return a
@@ -51,7 +48,7 @@ Public symbols:
   block elements.
 - :func:`vertex_tree_to_pandoc` — convert a
   :class:`~guffin.graph.VertexTree` to a Panflute :class:`~panflute.Doc`.
-- :func:`doc_to_json` — serialize a Panflute :class:`~panflute.Doc` to a
+- :func:`pandoc_to_json` — serialize a Panflute :class:`~panflute.Doc` to a
   Pandoc JSON string, optionally writing it to a file for debugging.
 """
 
@@ -69,7 +66,6 @@ from typing import Final
 
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
-from pydantic import HttpUrl, validate_call
 
 from guffin.graph import (
     HeadingVertex,
@@ -151,42 +147,6 @@ def parse_inline_md(texts: list[str]) -> dict[str, list[pf.Inline]]:
 # ---------------------------------------------------------------------------
 # Image fetching
 # ---------------------------------------------------------------------------
-
-
-@validate_call
-def fetch_and_save_image(
-    api_endpoint: ApiEndpoint,
-    firebase_url: HttpUrl,
-    output_dir: Path,
-    cache_dir: Path | None = None,
-) -> tuple[HttpUrl, str]:
-    """Fetch an image from Roam, write it to *output_dir*, and return its local filename.
-
-    Delegates fetching and caching to
-    :func:`~guffin.roam_asset_fetch.fetch_and_cache_asset`.  The asset is
-    saved to *output_dir* under its deterministic ``<sha256>.<ext>`` filename,
-    ensuring consistent filenames across cached and uncached runs.
-
-    Args:
-        api_endpoint: The Roam Local API endpoint (URL + bearer token).
-        firebase_url: The Cloud Firestore storage URL.
-        output_dir: Directory where the image file is written.
-        cache_dir: Optional directory for caching downloaded assets across runs.
-
-    Returns:
-        A ``(firebase_url, local_filename)`` tuple where ``local_filename`` is
-        the name of the saved file within *output_dir*.
-
-    Raises:
-        ValidationError: If ``firebase_url`` or ``api_endpoint`` is ``None`` or invalid.
-        requests.exceptions.ConnectionError: If the Local API is unreachable.
-        requests.exceptions.HTTPError: If the Local API returns a non-200 status.
-    """
-    asset = fetch_and_cache_asset(firebase_url, api_endpoint, cache_dir)
-    output_path: Final[Path] = output_dir / asset.file_name
-    output_path.write_bytes(asset.contents)
-    logger.info("Saved image to: %s", output_path)
-    return (firebase_url, asset.file_name)
 
 
 def fetch_images(
@@ -466,7 +426,7 @@ def vertex_tree_to_pandoc(
     return pf.Doc(*blocks, metadata=metadata)
 
 
-def doc_to_json(
+def pandoc_to_json(
     doc: pf.Doc,
     dump_pandoc_ast: bool = False,
     ast_dump_dir: Path | None = None,

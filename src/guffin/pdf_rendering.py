@@ -39,7 +39,7 @@ import pypandoc  # type: ignore[import-untyped]
 
 from guffin.filenames import shell_safe_filename
 from guffin.graph import VertexTree
-from guffin.pandoc_rendering import doc_to_json, fetch_images, vertex_tree_to_pandoc
+from guffin.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam_local_api import ApiEndpoint
 
 logger = logging.getLogger(__name__)
@@ -132,7 +132,7 @@ def render(
     with tempfile.TemporaryDirectory() as tmp:
         image_files = fetch_images(vertex_tree, api_endpoint, Path(tmp), cache_dir)
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files)
-        json_str: Final[str] = doc_to_json(doc, dump_pandoc_ast, output_dir, stem)
+        json_str: Final[str] = pandoc_to_json(doc, dump_pandoc_ast, output_dir, stem)
         logger.debug("pandoc JSON length=%d bytes, output_path=%s", len(json_str), output_path)
 
         pypandoc.convert_text(  # type: ignore[no-untyped-call]

@@ -4,13 +4,10 @@
 # Rationale: panflute has no type stubs; all six rules are triggered entirely by
 # Unknown propagation from that import — suppressing them here avoids false positives.
 
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import panflute as pf  # type: ignore[import-untyped]
-import pytest
-from pydantic import HttpUrl, ValidationError
+from pydantic import HttpUrl
 
 from guffin.graph import (
     HeadingVertex,
@@ -22,12 +19,8 @@ from guffin.graph import (
 from guffin.pandoc_rendering import (
     parse_inline_md,
     build_child_blocks,
-    fetch_and_save_image,
     vertex_tree_to_pandoc,
 )
-from guffin.roam_asset import RoamAsset
-from guffin.roam_local_api import ApiEndpoint, ApiEndpointURL
-from guffin.media_type import MediaType
 
 from conftest import article0_vertex_tree
 
@@ -114,75 +107,6 @@ class TestParseInlineMd:
         assert "" not in result
         assert "hello" in result
         assert "world" in result
-
-
-# ---------------------------------------------------------------------------
-# TestFetchAndSaveImage
-# ---------------------------------------------------------------------------
-
-
-class TestFetchAndSaveImage:
-    """Tests for fetch_and_save_image()."""
-
-    @patch("guffin.pandoc_rendering.fetch_and_cache_asset")
-    def test_fetches_and_saves_image_successfully(self, mock_fetch_cache: Mock, tmp_path: Path) -> None:
-        """Successful image fetch writes the file and returns (url, filename)."""
-        api_endpoint = ApiEndpoint(
-            url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
-            bearer_token="test-token",
-        )
-        firebase_url = HttpUrl("https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/img.png?token=abc")
-        mock_fetch_cache.return_value = RoamAsset(
-            file_name="abc123.png",
-            last_modified=datetime.now(),
-            media_type=MediaType.PNG,
-            contents=b"fake image data",
-        )
-
-        result_url, result_filename = fetch_and_save_image(api_endpoint, firebase_url, tmp_path)
-
-        assert result_url == firebase_url
-        assert result_filename == "abc123.png"
-        assert (tmp_path / "abc123.png").read_bytes() == b"fake image data"
-        mock_fetch_cache.assert_called_once()
-
-    @patch("guffin.pandoc_rendering.fetch_and_cache_asset")
-    def test_fetch_failure_raises_exception(self, mock_fetch_cache: Mock, tmp_path: Path) -> None:
-        """A fetch failure propagates as an exception."""
-        api_endpoint = ApiEndpoint(
-            url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
-            bearer_token="test-token",
-        )
-        firebase_url = HttpUrl("https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/img.png?token=abc")
-        mock_fetch_cache.side_effect = Exception("Network error")
-
-        with pytest.raises(Exception, match="Network error"):
-            fetch_and_save_image(api_endpoint, firebase_url, tmp_path)
-
-    def test_none_api_endpoint_raises_validation_error(self) -> None:
-        """None api_endpoint raises ValidationError."""
-        firebase_url = HttpUrl("https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/img.png?token=abc")
-        with pytest.raises(ValidationError):
-            fetch_and_save_image(None, firebase_url, Path("/tmp/test"))  # type: ignore[arg-type]
-
-    def test_none_firebase_url_raises_validation_error(self) -> None:
-        """None firebase_url raises ValidationError."""
-        api_endpoint = ApiEndpoint(
-            url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
-            bearer_token="test-token",
-        )
-        with pytest.raises(ValidationError):
-            fetch_and_save_image(api_endpoint, None, Path("/tmp/test"))  # type: ignore[arg-type]
-
-    def test_none_output_dir_raises_validation_error(self) -> None:
-        """None output_dir raises ValidationError."""
-        api_endpoint = ApiEndpoint(
-            url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
-            bearer_token="test-token",
-        )
-        firebase_url = HttpUrl("https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/img.png?token=abc")
-        with pytest.raises(ValidationError):
-            fetch_and_save_image(api_endpoint, firebase_url, None)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
