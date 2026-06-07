@@ -10,7 +10,6 @@ Public symbols:
 import logging
 from typing import Final
 
-import typer
 from pydantic import validate_call
 
 from guffin.graph import VertexTree
@@ -35,7 +34,8 @@ def fetch_roam_trees(
     *api_endpoint*, constructs a :class:`~guffin.roam_tree.NodeTree`, and optionally
     transcribes it to a :class:`~guffin.graph.VertexTree`.
 
-    Exits the CLI with code 1 when the fetch raises an exception or when no nodes are found.
+    Propagates any exception raised during fetching or transcription; callers are
+    responsible for exit behaviour.
 
     Args:
         fetch_spec: The fetch specification carrying the anchor, include_refs flag, and
@@ -49,16 +49,12 @@ def fetch_roam_trees(
         A ``(fetch_result, vertex_tree)`` pair ready for rendering or further processing.
         ``vertex_tree`` is ``None`` when *include_vertex_tree* is ``False``.
     """
-    try:
-        result: Final[NodeFetchResult] = FetchRoamNodes.fetch_roam_nodes(
-            anchor=fetch_spec.anchor,
-            api_endpoint=api_endpoint,
-            include_refs=fetch_spec.include_refs,
-            include_node_tree=fetch_spec.include_node_tree or include_vertex_tree,
-        )
-    except Exception:
-        logger.exception("Error fetching %r", fetch_spec.anchor.qualifier)
-        raise typer.Exit(code=1)
+    result: Final[NodeFetchResult] = FetchRoamNodes.fetch_roam_nodes(
+        anchor=fetch_spec.anchor,
+        api_endpoint=api_endpoint,
+        include_refs=fetch_spec.include_refs,
+        include_node_tree=fetch_spec.include_node_tree or include_vertex_tree,
+    )
 
     if not include_vertex_tree:
         logger.debug("result=%r", result)

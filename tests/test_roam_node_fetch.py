@@ -13,7 +13,7 @@ from pydantic import ValidationError
 from guffin.roam_local_api import ApiEndpoint, Response as LocalApiResponse
 from guffin.roam_primitives import IdObject
 from guffin.roam_node import RoamNode
-from guffin.roam_node_fetch import FetchRoamNodes
+from guffin.roam_node_fetch import FetchRoamNodes, RoamNodeNotFoundError
 from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
 
 from conftest import FIXTURES_YAML_DIR, article0_node_tree
@@ -239,18 +239,17 @@ class TestFetchRoamNodesFetchByPageTitle:
         assert result.network[0].title == "My Page"
         assert result.network[0].uid == "abc123xyz"
 
-    def test_page_not_found_raises_value_error(self, api_endpoint: ApiEndpoint) -> None:
-        """Test that an empty result (page not found) raises ValueError."""
+    def test_page_not_found_raises_not_found_error(self, api_endpoint: ApiEndpoint) -> None:
+        """Test that an empty result (page not found) raises RoamNodeNotFoundError carrying the fetch_spec."""
         mock_response: MagicMock = MagicMock()
         mock_response.status_code = 200
         mock_response.text = json.dumps({"success": True, "result": []})
 
+        spec: Final[NodeFetchSpec] = NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="Nonexistent"), include_refs=False)
         with patch("guffin.roam_local_api.requests.post", return_value=mock_response):
-            with pytest.raises(ValueError):
-                FetchRoamNodes.fetch_by_page_title(
-                    fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="Nonexistent"), include_refs=False),
-                    api_endpoint=api_endpoint,
-                )
+            with pytest.raises(RoamNodeNotFoundError) as exc_info:
+                FetchRoamNodes.fetch_by_page_title(fetch_spec=spec, api_endpoint=api_endpoint)
+        assert exc_info.value.fetch_spec == spec
 
     def test_posts_to_correct_endpoint_url(self, api_endpoint: ApiEndpoint, mock_200_response: MagicMock) -> None:
         """Test that the POST is made to the correct endpoint URL."""
@@ -461,18 +460,17 @@ class TestFetchRoamNodesFetchByNodeUid:
         with pytest.raises(ValidationError):
             FetchRoamNodes.fetch_by_node_uid(fetch_spec=None, api_endpoint=api_endpoint)  # type: ignore[arg-type]
 
-    def test_node_not_found_raises_value_error(self, api_endpoint: ApiEndpoint) -> None:
-        """Test that an empty result (node not found) raises ValueError."""
+    def test_node_not_found_raises_not_found_error(self, api_endpoint: ApiEndpoint) -> None:
+        """Test that an empty result (node not found) raises RoamNodeNotFoundError carrying the fetch_spec."""
         mock_response: MagicMock = MagicMock()
         mock_response.status_code = 200
         mock_response.text = json.dumps({"success": True, "result": []})
 
+        spec: Final[NodeFetchSpec] = NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="wdMgyBiP9"), include_refs=False)
         with patch("guffin.roam_local_api.requests.post", return_value=mock_response):
-            with pytest.raises(ValueError):
-                FetchRoamNodes.fetch_by_node_uid(
-                    fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier="wdMgyBiP9"), include_refs=False),
-                    api_endpoint=api_endpoint,
-                )
+            with pytest.raises(RoamNodeNotFoundError) as exc_info:
+                FetchRoamNodes.fetch_by_node_uid(fetch_spec=spec, api_endpoint=api_endpoint)
+        assert exc_info.value.fetch_spec == spec
 
     @pytest.mark.live
     @pytest.mark.skipif(not os.getenv("ROAM_LIVE_TESTS"), reason="requires Roam Desktop app running locally")

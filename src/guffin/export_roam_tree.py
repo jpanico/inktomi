@@ -64,7 +64,8 @@ from guffin.logging_config import configure_logging
 from guffin.md_rendering import render as render_md
 from guffin.pdf_rendering import render as render_pdf
 from guffin.roam_local_api import ApiEndpoint
-from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
+from guffin.roam_node_fetch import RoamNodeNotFoundError
+from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec, QueryAnchorKind
 from guffin.roam_primitives import UID_PATTERN
 from guffin.roam_tree_loader import fetch_roam_trees
 
@@ -229,9 +230,22 @@ def main(
         bearer_token=api_bearer_token,
     )
 
-    trees: Final[tuple[NodeFetchResult, VertexTree | None]] = fetch_roam_trees(
-        NodeFetchSpec(anchor=NodeFetchAnchor(qualifier=target), include_refs=True), True, api_endpoint
-    )
+    try:
+        trees: Final[tuple[NodeFetchResult, VertexTree | None]] = fetch_roam_trees(
+            NodeFetchSpec(anchor=NodeFetchAnchor(qualifier=target), include_refs=True), True, api_endpoint
+        )
+    except RoamNodeNotFoundError as exc:
+        kind_label: Final[str] = "Page" if exc.fetch_spec.anchor.kind == QueryAnchorKind.PAGE_TITLE else "Node"
+        logger.error(
+            "%s %r not found in Roam graph %r",
+            kind_label,
+            exc.fetch_spec.anchor.qualifier,
+            graph_name,
+        )
+        raise typer.Exit(code=1)
+    except Exception:
+        logger.exception("Error fetching %r from graph %r", target, graph_name)
+        raise typer.Exit(code=1)
     vertex_tree: Final[VertexTree | None] = trees[1]
     if vertex_tree is None:
         logger.error("vertex_tree is None; cannot export without a vertex tree")

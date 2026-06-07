@@ -2,6 +2,8 @@
 
 Public symbols:
 
+- :exc:`RoamNodeNotFoundError` — raised when no Roam nodes match the requested
+  page title or node UID.
 - :class:`FetchRoamNodes` — stateless utility class that fetches all Roam nodes
   by various criteria via the Local API's ``data.q`` action, including
   :meth:`~FetchRoamNodes.fetch_roam_nodes` which auto-detects whether *anchor*
@@ -31,6 +33,15 @@ from guffin.roam_node_fetch_result import (
 from guffin.roam_primitives import Uid
 
 logger = logging.getLogger(__name__)
+
+
+class RoamNodeNotFoundError(Exception):
+    """Raised when no Roam nodes match the requested page title or node UID."""
+
+    def __init__(self, fetch_spec: NodeFetchSpec) -> None:
+        """Store the full fetch specification for inspection by callers."""
+        super().__init__(f"no nodes found for fetch_spec={fetch_spec!r}")
+        self.fetch_spec: NodeFetchSpec = fetch_spec
 
 
 @final
@@ -348,8 +359,8 @@ class FetchRoamNodes:
             the fetched nodes and *fetch_spec*.
 
         Raises:
-            ValueError: If the Datalog query returns no nodes, or if no node in the result
-                matches the anchor in *fetch_spec*.
+            RoamNodeNotFoundError: If the Datalog query returns no nodes.
+            ValueError: If no node in the result matches the anchor in *fetch_spec*.
             requests.exceptions.ConnectionError: If unable to connect to the Local API.
             requests.exceptions.HTTPError: If the Local API returns a non-200 status.
         """
@@ -365,8 +376,7 @@ class FetchRoamNodes:
 
         # Fail fast before expensive RoamNode parsing if the API returned no rows.
         if not raw_result:
-            logger.info("no nodes found for %s", fetch_spec)
-            raise ValueError(f"no nodes found for fetch_spec={fetch_spec!r}")
+            raise RoamNodeNotFoundError(fetch_spec)
 
         if not fetch_spec.include_node_tree:
             logger.debug("include_node_tree=False; returning raw result without RoamNode parsing")

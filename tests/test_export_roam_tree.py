@@ -8,6 +8,7 @@ from unittest.mock import patch
 from typer.testing import CliRunner
 
 from guffin.export_roam_tree import app
+from guffin.roam_node_fetch import RoamNodeNotFoundError
 from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
 
 from conftest import FIXTURES_MD_DIR, article0_node_tree
@@ -65,3 +66,42 @@ class TestExportRoamTreeNoBundle:
         assert output_file.exists()
         expected: str = (FIXTURES_MD_DIR / "test_article_0_expected.md").read_text()
         assert output_file.read_text() == expected
+
+
+class TestExportRoamTreeNotFound:
+    """Tests for export_roam_tree when the target page or node does not exist."""
+
+    def _invoke(self, target: str, tmp_path: pathlib.Path) -> object:
+        """Invoke the CLI with *target* and return the CliRunner result."""
+        not_found_spec: Final[NodeFetchSpec] = NodeFetchSpec(
+            anchor=NodeFetchAnchor(qualifier=target), include_refs=True
+        )
+        runner: CliRunner = CliRunner()
+        with patch(
+            "guffin.roam_tree_loader.FetchRoamNodes.fetch_roam_nodes",
+            side_effect=RoamNodeNotFoundError(not_found_spec),
+        ):
+            saved_handlers = logging.root.handlers[:]
+            logging.root.handlers.clear()
+            try:
+                return runner.invoke(
+                    app,
+                    [target, "--port", "3333", "--graph", "SCFH", "--token", "tok", "--output-dir", str(tmp_path)],
+                )
+            finally:
+                logging.root.handlers = saved_handlers
+
+    def test_missing_page_exits_with_code_1(self, tmp_path: pathlib.Path) -> None:
+        """A page title not present in Roam produces exit code 1."""
+        result = self._invoke("DOES NOT EXIST", tmp_path)
+        assert result.exit_code == 1  # type: ignore[union-attr]
+
+    def test_missing_page_exits_cleanly_no_traceback(self, tmp_path: pathlib.Path) -> None:
+        """Exit is a clean SystemExit, not an unhandled exception with a traceback."""
+        result = self._invoke("DOES NOT EXIST", tmp_path)
+        assert isinstance(result.exception, SystemExit)  # type: ignore[union-attr]
+
+    def test_missing_page_writes_no_output_file(self, tmp_path: pathlib.Path) -> None:
+        """No output file is written when the target page does not exist."""
+        self._invoke("DOES NOT EXIST", tmp_path)
+        assert list(tmp_path.iterdir()) == []

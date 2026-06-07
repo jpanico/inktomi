@@ -58,7 +58,8 @@ from guffin.rich_rendering import (
     build_rich_refs_box,
     build_rich_vertex_tree,
 )
-from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
+from guffin.roam_node_fetch import RoamNodeNotFoundError
+from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec, QueryAnchorKind
 from guffin.roam_tree_loader import fetch_roam_trees
 from guffin.graph import VertexTree
 from guffin.roam_local_api import ApiEndpoint
@@ -301,9 +302,22 @@ def main(
     fetch_spec: Final[NodeFetchSpec] = NodeFetchSpec(
         anchor=NodeFetchAnchor(qualifier=target), include_refs=include_refs, include_node_tree=show_node_tree
     )
-    trees: Final[tuple[NodeFetchResult, VertexTree | None]] = fetch_roam_trees(
-        fetch_spec, show_vertex_tree, api_endpoint
-    )
+    try:
+        trees: Final[tuple[NodeFetchResult, VertexTree | None]] = fetch_roam_trees(
+            fetch_spec, show_vertex_tree, api_endpoint
+        )
+    except RoamNodeNotFoundError as exc:
+        kind_label: Final[str] = "Page" if exc.fetch_spec.anchor.kind == QueryAnchorKind.PAGE_TITLE else "Node"
+        logger.error(
+            "%s %r not found in Roam graph %r",
+            kind_label,
+            exc.fetch_spec.anchor.qualifier,
+            graph_name,
+        )
+        raise typer.Exit(code=1)
+    except Exception:
+        logger.exception("Error fetching %r from graph %r", target, graph_name)
+        raise typer.Exit(code=1)
     fetch_result: Final[NodeFetchResult] = trees[0]
     vertex_tree: Final[VertexTree | None] = trees[1]
     dump_trees(

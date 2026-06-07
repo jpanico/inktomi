@@ -88,6 +88,10 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
 - **`@validate_call`**: decorate every public function and method (non-`_`-prefixed, non-dunder) with `@validate_call`. Exceptions: `@property` methods (technically incompatible), Pydantic model lifecycle methods (`model_*`, field validators, `__init__`), CLI entry-point functions wired by argparse, methods overriding non-Pydantic framework interfaces, generic functions whose type variables cannot be resolved at runtime, and classmethods/staticmethods whose return-type annotation references the class being defined (pydantic eagerly evaluates type hints at decoration time, before the class is added to module globals, causing a `NameError`). For `@staticmethod` and `@classmethod` methods that qualify, `@validate_call` is placed innermost — just above `def`, below the `@staticmethod`/`@classmethod` line. When a function has panflute (or other arbitrary-type) parameters, use `@validate_call(config=ConfigDict(arbitrary_types_allowed=True))` instead of plain `@validate_call`.
 - **Immutable bindings**: all local variables and module-level constants must be annotated `Final[T]` by default (e.g., `x: Final[int] = 1`, `MY_CONST: Final[str] = "value"`); only omit `Final` when the binding genuinely needs to be reassigned. Inside Pydantic models, use `ClassVar[T]` for class-level constants (Pydantic excludes these from model fields).
 
+## Architecture
+- **CLI isolation**: only `export_roam_tree.py` and `dump_roam_tree.py` may import or use the Typer package. All other modules must be front-end agnostic so they can be used outside a CLI context without pulling in CLI dependencies.
+- **Exit-point isolation**: all explicit process-exit calls (`typer.Exit`, `sys.exit`, etc.) must live exclusively in the CLI modules. Library code propagates exceptions; CLIs decide whether and how to exit. This keeps control-flow transparent and makes library code testable without mocking exit behaviour.
+
 ## Modern Python Requirements (Python 3.14)
 All code written or modified by Claude MUST follow these conventions — no exceptions:
 
