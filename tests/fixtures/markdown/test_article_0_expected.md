@@ -5,7 +5,7 @@ Properties:
 - Page is completely self-contained – there are \`no Roam embeds\` of any kind
 - 3 top-level \`headers\`, all H1
 - nested \`headers\` down to H4, via \*Augmented Headings\* extension
-- a node 
+- a node, (Ma5KGUH9O) "AI assistant (Claude Opus 4.6):" that has property: BLOCK_HEADING = 0, which is not a valid Markdown level. It seems that this can happen when first a valid level value (1-6) is assigned, and then the heading level is removed altogether through the Roam UI.
 - a single JPEG \`image\` that has not been resized through the Roam UI
 - this INFO \`Callout box\`, which contains Roma \`page references\` 
 
