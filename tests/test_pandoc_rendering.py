@@ -389,16 +389,16 @@ class TestVertexTreeToPandocArticleFixture:
     def test_block_count(self) -> None:
         """The fixture produces the expected number of top-level blocks."""
         doc = vertex_tree_to_pandoc(article0_vertex_tree(), {})
-        # 3 H2s + 3 H3s + 2 H4s + 1 H5 + 1 Para(Link) + 1 BulletList = 12
-        assert len(list(doc.content)) == 12
+        # 1 Para(callout) + 3 H1s + 4 H2s + 2 H3s + 1 H4 + 1 Para(Link) + 1 BulletList = 13
+        assert len(list(doc.content)) == 13
 
     def test_first_block_is_section_1_header(self) -> None:
-        """The first block is an H1 Header for 'Section 1'."""
+        """The second block is an H1 Header for 'Section 1' (first block is the callout Para)."""
         doc = vertex_tree_to_pandoc(article0_vertex_tree(), {})
-        first = list(doc.content)[0]
-        assert isinstance(first, pf.Header)
-        assert first.level == 1
-        assert _collect_text(first) == "Section 1"
+        second = list(doc.content)[1]
+        assert isinstance(second, pf.Header)
+        assert second.level == 1
+        assert _collect_text(second) == "Section 1"
 
     def test_image_renders_as_fallback_link_when_no_image_files(self) -> None:
         """The ImageVertex in the fixture renders as a pf.Link when image_files is empty."""

@@ -138,20 +138,18 @@ class NodeTree(BaseModel):
 
         Returns:
             A ``dict[Id, RoamNode]`` mapping every resolved ref node and its available transitive
-            descendants.
-
-        Raises:
-            ValueError: If any direct ref id from *tree_network* cannot be resolved within
-                *super_network*.
+            descendants.  Ref ids that cannot be resolved in *super_network* are silently skipped
+            (e.g. when the fetch was run with ``include_refs=False``).
         """
         super_by_id: Final[dict[Id, RoamNode]] = {n.id: n for n in super_network}
         tree_refs_ids: Final[set[Id]] = refs_ids(tree_network)
         direct_refs: Final[dict[Id, RoamNode]] = {n.id: n for n in super_network if n.id in tree_refs_ids}
         unresolvable_refs: Final[set[Id]] = tree_refs_ids - direct_refs.keys()
         if unresolvable_refs:
-            raise ValueError(
-                f"refs id(s) {sorted(unresolvable_refs)!r} referenced in tree_network"
-                " cannot be resolved in super_network"
+            logger.debug(
+                "refs id(s) %r referenced in tree_network not present in super_network; skipping"
+                " (fetch was likely run with include_refs=False)",
+                sorted(unresolvable_refs),
             )
         refs_by_id: Final[dict[Id, RoamNode]] = dict(direct_refs)
         stack: Final[list[RoamNode]] = list(direct_refs.values())

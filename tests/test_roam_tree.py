@@ -603,20 +603,21 @@ class TestNodeTreeDFSIterator:
         """Test the exact pre-order DFS id sequence for the test_article fixture.
 
         Expected traversal (by Datomic entity id):
-          3327  — root page "Test Article"
-          3328  — Section 1         (order=0, child of root)
+          3327  — root page "Test Article 0"
+          11113 — callout block     (order=0, child of root)
+          3328  — Section 1         (order=1, child of root)
           3331  — Section 1.1       (order=0, child of 3328)
           3334  — illustration 1.1  (order=0, child of 3331)
-          3336  — image block       (order=0, child of 3334)
+          11124 — image block       (order=0, child of 3334)
           4758  — AI assistant text (order=1, child of 3328)
-          3329  — Section 2         (order=1, child of root)
+          3329  — Section 2         (order=2, child of root)
           3332  — Section 2.1       (order=0, child of 3329)
           4025  — Section 2.1.1     (order=0, child of 3332)
           4028  — Section 2.1.1.1   (order=0, child of 4025)
           4026  — Section 2.1.2     (order=1, child of 3329)
-          3330  — Section 3         (order=2, child of root)
+          3330  — Section 3         (order=3, child of root)
           3333  — Section 3.1       (order=0, child of 3330)
         """
         tree = article0_node_tree()
-        expected_ids: list[Id] = [3327, 3328, 3331, 3334, 3336, 4758, 3329, 3332, 4025, 4028, 4026, 3330, 3333]
+        expected_ids: list[Id] = [3327, 11113, 3328, 3331, 3334, 11124, 4758, 3329, 3332, 4025, 4028, 4026, 3330, 3333]
         assert [n.id for n in NodeTreeDFSIterator(tree)] == expected_ids

@@ -1,12 +1,21 @@
 # Test Article 0
 
+\> !INFO THIS PAGE IS USED FOR TESTING GUFFIN(https://github.com/jpanico/guffin) – DO NOT REMOVE
+Properties:
+- Page is completely self-contained – there are \`no Roam embeds\` of any kind
+- 3 top-level \`headers\`, all H1
+- nested \`headers\` down to H4, via \*Augmented Headings\* extension
+- a node 
+- a single JPEG \`image\` that has not been resized through the Roam UI
+- this INFO \`Callout box\`, which contains Roma \`page references\` 
+
 # Section 1
 
 ## Section 1.1
 
 ### illustration 1.1
 
-[A flower](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F-9owRBegJ8.jpeg.enc?alt=media&token=9b673aae-8089-4a91-84df-9dac152a7f94)
+[A flower](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F_otAwc2B9g.jpeg.enc?alt=media&token=25c3ac2a-f62e-462e-99b4-99b337a476c0)
 
 - AI assistant (Claude Opus 4.6):
 

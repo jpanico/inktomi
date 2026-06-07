@@ -27,37 +27,13 @@
   props: null
   title: null
   attrs: null
-- uid: mPCzedeKx
-  id: 3336
-  time: 0
-  user:
-    id: 0
-  string: '![A flower](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F-9owRBegJ8.jpeg.enc?alt=media&token=9b673aae-8089-4a91-84df-9dac152a7f94)'
-  order: 0
-  heading: null
-  children: null
-  refs: null
-  page:
-    id: 3327
-  parents:
-  - id: 3327
-  - id: 3328
-  - id: 3331
-  - id: 3334
-  props:
-    image-size:
-      ? https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F-9owRBegJ8.jpeg.enc?alt=media&token=9b673aae-8089-4a91-84df-9dac152a7f94
-      : width: 347
-        height: null
-  title: null
-  attrs: null
 - uid: 0EgPyHSZi
   id: 3328
   time: 0
   user:
     id: 0
   string: Section 1
-  order: 0
+  order: 1
   heading: 1
   children:
   - id: 3331
@@ -76,7 +52,7 @@
   user:
     id: 0
   string: Section 3
-  order: 2
+  order: 3
   heading: 1
   children:
   - id: 3333
@@ -97,7 +73,7 @@
   order: 0
   heading: 3
   children:
-  - id: 3336
+  - id: 11124
   refs: null
   page:
     id: 3327
@@ -132,7 +108,7 @@
   user:
     id: 0
   string: Section 2
-  order: 1
+  order: 2
   heading: 1
   children:
   - id: 3332
@@ -142,6 +118,26 @@
     id: 3327
   parents:
   - id: 3327
+  props: null
+  title: null
+  attrs: null
+- uid: uj8YolCoE
+  id: 11124
+  time: 0
+  user:
+    id: 0
+  string: '![A flower](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F_otAwc2B9g.jpeg.enc?alt=media&token=25c3ac2a-f62e-462e-99b4-99b337a476c0)'
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 3327
+  parents:
+  - id: 3327
+  - id: 3328
+  - id: 3331
+  - id: 3334
   props: null
   title: null
   attrs: null
@@ -204,6 +200,30 @@
   props: null
   title: null
   attrs: null
+- uid: cNW8lmXIM
+  id: 11113
+  time: 0
+  user:
+    id: 0
+  string: "[[>]] [[!INFO]] THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)\
+    \ – DO NOT REMOVE\nProperties:\n- Page is completely self-contained – there are\
+    \ `no Roam embeds` of any kind\n- 3 top-level `headers`, all H1\n- nested `headers`\
+    \ down to H4, via __Augmented Headings__ extension\n- a node \n- a single JPEG\
+    \ `image` that has not been resized through the Roam UI\n- this INFO `Callout\
+    \ box`, which contains Roma `page references` "
+  order: 0
+  heading: null
+  children: null
+  refs:
+  - id: 5450
+  - id: 5462
+  page:
+    id: 3327
+  parents:
+  - id: 3327
+  props: null
+  title: null
+  attrs: null
 - uid: 5f1ahOFdp
   id: 4026
   time: 0
@@ -234,6 +254,7 @@
   - id: 3328
   - id: 3329
   - id: 3330
+  - id: 11113
   refs: null
   page: null
   parents: null

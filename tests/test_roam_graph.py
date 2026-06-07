@@ -140,27 +140,29 @@ class TestVertexTreeDFSIterator:
         """Test the exact pre-order DFS uid sequence for the test_article fixture.
 
         Expected traversal (by uid):
-          6olpFWiw1  — root page "Test Article"
-          0EgPyHSZi  — Section 1         (children[0] of root)
+          6olpFWiw1  — root page "Test Article 0"
+          cNW8lmXIM  — callout block     (children[0] of root)
+          0EgPyHSZi  — Section 1         (children[1] of root)
           3BX-iWc-p  — Section 1.1       (children[0] of Section 1)
           TaN67WqnA  — illustration 1.1  (children[0] of Section 1.1)
-          mPCzedeKx  — image block       (children[0] of illustration 1.1)
+          uj8YolCoE  — image block       (children[0] of illustration 1.1)
           Ma5KGUH9O  — AI assistant      (children[1] of Section 1)
-          wdMgyBiP9  — Section 2         (children[1] of root)
+          wdMgyBiP9  — Section 2         (children[2] of root)
           drtANJYTg  — Section 2.1       (children[0] of Section 2)
           yFUau9Cpg  — Section 2.1.1     (children[0] of Section 2.1)
           bxkcECGwN  — Section 2.1.1.1   (children[0] of Section 2.1.1)
           5f1ahOFdp  — Section 2.1.2     (children[1] of Section 2)
-          40bvW14UU  — Section 3         (children[2] of root)
+          40bvW14UU  — Section 3         (children[3] of root)
           JW5PswS6v  — Section 3.1       (children[0] of Section 3)
         """
         tree = article0_vertex_tree()
         expected_uids: list[Uid] = [
             "6olpFWiw1",
+            "cNW8lmXIM",
             "0EgPyHSZi",
             "3BX-iWc-p",
             "TaN67WqnA",
-            "mPCzedeKx",
+            "uj8YolCoE",
             "Ma5KGUH9O",
             "wdMgyBiP9",
             "drtANJYTg",

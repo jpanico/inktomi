@@ -998,13 +998,13 @@ class TestRefsIds:
         )
         assert refs_ids([block]) == set()
 
-    def test_article_fixture_has_no_refs(self) -> None:
-        """Test that the article fixture network contains no :block/refs ids.
+    def test_article_fixture_refs(self) -> None:
+        """Test that the article fixture network has the expected :block/refs ids.
 
-        The test_article_0 fixture has no wikilinks, so every node's refs field
-        is None and refs_ids should return an empty set.
+        The test_article_0 fixture contains a callout block with [[>]] and [[!INFO]]
+        wikilinks, producing two ref ids.
         """
-        assert refs_ids(article0_node_tree().tree_network) == set()
+        assert refs_ids(article0_node_tree().tree_network) == {5450, 5462}
 
 
 class TestDirectRefsNodes:

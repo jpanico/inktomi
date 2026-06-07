@@ -8,11 +8,6 @@
   - bxkcECGwN
   text: Section 2.1.1
   heading: 3
-- vertex_type: roam/image
-  uid: mPCzedeKx
-  source: https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F-9owRBegJ8.jpeg.enc?alt=media&token=9b673aae-8089-4a91-84df-9dac152a7f94
-  alt_text: A flower
-  file_name: -9owRBegJ8.jpeg.enc
 - vertex_type: roam/heading
   uid: 0EgPyHSZi
   children:
@@ -29,7 +24,7 @@
 - vertex_type: roam/heading
   uid: TaN67WqnA
   children:
-  - mPCzedeKx
+  - uj8YolCoE
   text: illustration 1.1
   heading: 3
 - vertex_type: roam/text-content
@@ -42,6 +37,11 @@
   - 5f1ahOFdp
   text: Section 2
   heading: 1
+- vertex_type: roam/image
+  uid: uj8YolCoE
+  source: https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F_otAwc2B9g.jpeg.enc?alt=media&token=25c3ac2a-f62e-462e-99b4-99b337a476c0
+  alt_text: A flower
+  file_name: _otAwc2B9g.jpeg.enc
 - vertex_type: roam/heading
   uid: 3BX-iWc-p
   children:
@@ -58,6 +58,14 @@
   - yFUau9Cpg
   text: Section 2.1
   heading: 2
+- vertex_type: roam/text-content
+  uid: cNW8lmXIM
+  text: "> !INFO THIS PAGE IS USED FOR TESTING GUFFIN(https://github.com/jpanico/guffin)\
+    \ – DO NOT REMOVE\nProperties:\n- Page is completely self-contained – there are\
+    \ `no Roam embeds` of any kind\n- 3 top-level `headers`, all H1\n- nested `headers`\
+    \ down to H4, via *Augmented Headings* extension\n- a node \n- a single JPEG `image`\
+    \ that has not been resized through the Roam UI\n- this INFO `Callout box`, which\
+    \ contains Roma `page references` "
 - vertex_type: roam/heading
   uid: 5f1ahOFdp
   text: Section 2.2
@@ -65,6 +73,7 @@
 - vertex_type: roam/page
   uid: 6olpFWiw1
   children:
+  - cNW8lmXIM
   - 0EgPyHSZi
   - wdMgyBiP9
   - 40bvW14UU
