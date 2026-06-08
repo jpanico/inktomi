@@ -12,7 +12,7 @@ from guffin.graph import (
 )
 from guffin.roam_primitives import Uid
 
-from conftest import article0_vertex_tree
+from conftest import article1_vertex_tree
 
 
 class TestVertexTreeDFSIterator:
@@ -110,21 +110,21 @@ class TestVertexTreeDFSIterator:
 
     def test_article_fixture_root_is_first(self) -> None:
         """Test that the root vertex (not a child of anything) is yielded first."""
-        tree = article0_vertex_tree()
+        tree = article1_vertex_tree()
         first: Vertex = next(iter(VertexTreeDFSIterator(tree)))
         child_uids: set[Uid] = {uid for v in tree.vertices if v.children for uid in v.children}
         assert first.uid not in child_uids
 
     def test_article_fixture_yields_all_vertices(self) -> None:
         """Test that the iterator yields every vertex in the article fixture exactly once."""
-        tree = article0_vertex_tree()
+        tree = article1_vertex_tree()
         yielded: list[Vertex] = list(VertexTreeDFSIterator(tree))
         assert len(yielded) == len(tree.vertices)
         assert {v.uid for v in yielded} == {v.uid for v in tree.vertices}
 
     def test_article_fixture_parent_always_precedes_children(self) -> None:
         """Test that every parent vertex appears before all of its children in the traversal."""
-        tree = article0_vertex_tree()
+        tree = article1_vertex_tree()
         yielded: list[Vertex] = list(VertexTreeDFSIterator(tree))
         position: dict[Uid, int] = {v.uid: i for i, v in enumerate(yielded)}
         for vertex in tree.vertices:
@@ -140,7 +140,7 @@ class TestVertexTreeDFSIterator:
         """Test the exact pre-order DFS uid sequence for the test_article fixture.
 
         Expected traversal (by uid):
-          6olpFWiw1  — root page "[[Test Article]] 0"
+          6olpFWiw1  — root page "[[Test Article]] 1"
           cNW8lmXIM  — callout block     (children[0] of root)
           0EgPyHSZi  — Section 1         (children[1] of root)
           3BX-iWc-p  — Section 1.1       (children[0] of Section 1)
@@ -155,7 +155,7 @@ class TestVertexTreeDFSIterator:
           40bvW14UU  — Section 3         (children[3] of root)
           JW5PswS6v  — Section 3.1       (children[0] of Section 3)
         """
-        tree = article0_vertex_tree()
+        tree = article1_vertex_tree()
         expected_uids: list[Uid] = [
             "6olpFWiw1",
             "cNW8lmXIM",

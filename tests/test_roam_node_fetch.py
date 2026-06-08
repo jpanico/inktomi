@@ -16,7 +16,7 @@ from guffin.roam_node import RoamNode
 from guffin.roam_node_fetch import FetchRoamNodes, RoamNodeNotFoundError
 from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
 
-from conftest import FIXTURES_YAML_DIR, article0_node_tree
+from conftest import FIXTURES_YAML_DIR, article1_node_tree
 
 logger = logging.getLogger(__name__)
 
@@ -422,14 +422,14 @@ class TestFetchRoamNodesFetchByPageTitle:
 
     @pytest.mark.live
     @pytest.mark.skipif(not os.getenv("ROAM_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
-    def test_fetch_testarticle0(self, live_api_endpoint: ApiEndpoint) -> None:
+    def test_fetch_testarticle1(self, live_api_endpoint: ApiEndpoint) -> None:
         """Live test: fetch all descendant blocks of a page and compare with fixture.
 
         Transient fields (``time``, ``user``, ``open``, ``sidebar``, ``lookup``,
         ``seen_by``) are excluded from the comparison because they change with
         normal Roam activity and are not meaningful for structural correctness.
         """
-        page_title = "[[Test Article]] 0"
+        page_title = "[[Test Article]] 1"
 
         result: NodeFetchResult = FetchRoamNodes.fetch_by_page_title(
             fetch_spec=NodeFetchSpec(anchor=NodeFetchAnchor(qualifier=page_title), include_refs=False),
@@ -437,7 +437,7 @@ class TestFetchRoamNodesFetchByPageTitle:
         )
         logger.debug("result: %s", result)
 
-        fixture_nodes = article0_node_tree().tree_network
+        fixture_nodes = article1_node_tree().tree_network
 
         assert [_stable_node_dict(n) for n in sorted(result.network, key=lambda n: n.uid)] == [
             _stable_node_dict(n) for n in sorted(fixture_nodes, key=lambda n: n.uid)
@@ -478,7 +478,7 @@ class TestFetchRoamNodesFetchByNodeUid:
         """Live test: fetch the wdMgyBiP9 subtree and compare with the fixture hierarchy.
 
         The ``wdMgyBiP9`` node (Section 2) has four descendants in the
-        ``test_article_0_nodes.yaml`` fixture: Section 2.1 (``drtANJYTg``),
+        ``test_article_1_nodes.yaml`` fixture: Section 2.1 (``drtANJYTg``),
         Section 2.1.1 (``yFUau9Cpg``), Section 2.1.1.1 (``bxkcECGwN``), and
         Section 2.2 (``5f1ahOFdp``).  Transient fields are excluded from the
         comparison.
@@ -486,7 +486,7 @@ class TestFetchRoamNodesFetchByNodeUid:
         node_uid = "wdMgyBiP9"
         section2_uids: set[str] = {"wdMgyBiP9", "drtANJYTg", "5f1ahOFdp", "yFUau9Cpg", "bxkcECGwN"}
 
-        all_fixture_nodes = article0_node_tree().tree_network
+        all_fixture_nodes = article1_node_tree().tree_network
         expected_nodes: list[RoamNode] = [n for n in all_fixture_nodes if n.uid in section2_uids]
 
         result: NodeFetchResult = FetchRoamNodes.fetch_by_node_uid(
@@ -503,7 +503,7 @@ class TestFetchRoamNodesFetchByNodeUid:
     def test_fetch_by_node_uid_returns_node_and_descendants(self, api_endpoint: ApiEndpoint) -> None:
         """Test that fetch_by_node_uid returns the root node and all its descendants.
 
-        Uses the test_article_0_nodes.yaml fixture, fetching for node_uid ``'wdMgyBiP9'``
+        Uses the test_article_1_nodes.yaml fixture, fetching for node_uid ``'wdMgyBiP9'``
         (Section 2).  Expects the root node plus its four descendant blocks: Section 2.1
         (``drtANJYTg``), Section 2.1.1 (``yFUau9Cpg``), Section 2.1.1.1 (``bxkcECGwN``),
         and Section 2.2 (``5f1ahOFdp``).
@@ -511,7 +511,7 @@ class TestFetchRoamNodesFetchByNodeUid:
         # UIDs in the Section 2 subtree: root + all descendants
         section2_uids: set[str] = {"wdMgyBiP9", "drtANJYTg", "5f1ahOFdp", "yFUau9Cpg", "bxkcECGwN"}
 
-        all_fixture_nodes = article0_node_tree().tree_network
+        all_fixture_nodes = article1_node_tree().tree_network
         expected_nodes: list[RoamNode] = [n for n in all_fixture_nodes if n.uid in section2_uids]
 
         mock_response: MagicMock = MagicMock()
@@ -535,29 +535,29 @@ class TestFetchRoamNodesFetchByNodeUid:
         ]
 
 
-class TestFetchTestarticle1WithRefs:
-    """Unit tests for FetchRoamNodes._fetch with ``[[Test Article]] 1`` and ``include_refs=True``.
+class TestFetchTestarticle2WithRefs:
+    """Unit tests for FetchRoamNodes._fetch with ``[[Test Article]] 2`` and ``include_refs=True``.
 
-    Replays the ``test_article_1_raw_result.yaml`` fixture through :meth:`FetchRoamNodes._fetch`
+    Replays the ``test_article_2_raw_result.yaml`` fixture through :meth:`FetchRoamNodes._fetch`
     by patching :func:`~guffin.roam_local_api.invoke_action` so that no live Roam Desktop
     connection is required, then asserts the produced :class:`~guffin.roam_node_fetch_result.NodeFetchResult`
-    matches the ``test_article_1_anchor_tree.yaml`` and ``test_article_1_nodes_by_uid.yaml`` fixtures.
+    matches the ``test_article_2_anchor_tree.yaml`` and ``test_article_2_nodes_by_uid.yaml`` fixtures.
     """
 
-    _PAGE_TITLE: Final[str] = "[[Test Article]] 1"
+    _PAGE_TITLE: Final[str] = "[[Test Article]] 2"
 
     @pytest.fixture
     def fetch_result(self, api_endpoint: ApiEndpoint) -> NodeFetchResult:
         """Invoke ``_fetch`` with a mocked ``invoke_action`` replaying the raw-result fixture.
 
-        Loads ``test_article_1_raw_result.yaml``, wraps it in a
+        Loads ``test_article_2_raw_result.yaml``, wraps it in a
         :class:`~guffin.roam_local_api.Response.Payload`, patches
         :func:`~guffin.roam_local_api.invoke_action` to return that payload, then calls
         :meth:`FetchRoamNodes._fetch` and returns the resulting
         :class:`~guffin.roam_node_fetch_result.NodeFetchResult`.
         """
         raw_result: list[list[dict[str, object]]] = yaml.safe_load(
-            (FIXTURES_YAML_DIR / "test_article_1_raw_result.yaml").read_text()
+            (FIXTURES_YAML_DIR / "test_article_2_raw_result.yaml").read_text()
         )
         mock_payload: LocalApiResponse.Payload = LocalApiResponse.Payload(success=True, result=raw_result)
         fetch_spec: NodeFetchSpec = NodeFetchSpec(
@@ -570,17 +570,17 @@ class TestFetchTestarticle1WithRefs:
             return FetchRoamNodes._fetch(request_payload, api_endpoint, fetch_spec)  # type: ignore[misc]
 
     def test_anchor_tree_matches_fixture(self, fetch_result: NodeFetchResult) -> None:
-        """Anchor tree produced by ``_fetch`` must match ``test_article_1_anchor_tree.yaml``."""
+        """Anchor tree produced by ``_fetch`` must match ``test_article_2_anchor_tree.yaml``."""
         expected: dict[str, object] = yaml.safe_load(
-            (FIXTURES_YAML_DIR / "test_article_1_anchor_tree.yaml").read_text()
+            (FIXTURES_YAML_DIR / "test_article_2_anchor_tree.yaml").read_text()
         )
         assert fetch_result.anchor_tree is not None
         assert fetch_result.anchor_tree.model_dump(mode="json") == expected
 
     def test_nodes_by_uid_matches_fixture(self, fetch_result: NodeFetchResult) -> None:
-        """``nodes_by_uid`` produced by ``_fetch`` must match ``test_article_1_nodes_by_uid.yaml``."""
+        """``nodes_by_uid`` produced by ``_fetch`` must match ``test_article_2_nodes_by_uid.yaml``."""
         expected: dict[str, object] = yaml.safe_load(
-            (FIXTURES_YAML_DIR / "test_article_1_nodes_by_uid.yaml").read_text()
+            (FIXTURES_YAML_DIR / "test_article_2_nodes_by_uid.yaml").read_text()
         )
         assert fetch_result.nodes_by_uid is not None
         actual: dict[str, object] = {

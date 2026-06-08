@@ -13,7 +13,7 @@ from guffin.roam_primitives import Id, IdObject
 from guffin.roam_tree import NodeTree, NodeTreeDFSIterator, is_tree
 from guffin.validation import ValidationError
 
-from conftest import STUB_TIME, STUB_USER, article0_node_tree
+from conftest import STUB_TIME, STUB_USER, article1_node_tree
 
 
 class TestIsTree:
@@ -213,8 +213,8 @@ class TestNodeTree:
     """Tests for NodeTree."""
 
     def test_article_fixture_is_valid_tree(self) -> None:
-        """Test that test_article_0_nodes.yaml constructs a valid NodeTree without raising."""
-        node_tree = article0_node_tree()
+        """Test that test_article_1_nodes.yaml constructs a valid NodeTree without raising."""
+        node_tree = article1_node_tree()
         assert node_tree.tree_network
 
     def test_direct_construction_raises(self) -> None:
@@ -240,7 +240,7 @@ class TestNodeTreeNodeIds:
 
     def test_article_fixture_node_ids_matches_network(self) -> None:
         """Test that node_ids() equals {n.id for n in tree.tree_network} for the article fixture."""
-        tree = article0_node_tree()
+        tree = article1_node_tree()
         assert tree.node_ids() == {n.id for n in tree.tree_network}
 
 
@@ -414,17 +414,17 @@ class TestNodeTreeExternalRefsIds:
 
     def test_article_fixture_external_refs_are_subset_of_refs_ids(self) -> None:
         """Test that external_refs_ids is always a subset of node_refs_ids for the article fixture."""
-        tree = article0_node_tree()
+        tree = article1_node_tree()
         assert tree.external_refs_ids() <= tree.node_refs_ids()
 
     def test_article_fixture_external_refs_disjoint_from_node_ids(self) -> None:
         """Test that external_refs_ids has no overlap with node_ids for the article fixture."""
-        tree = article0_node_tree()
+        tree = article1_node_tree()
         assert tree.external_refs_ids().isdisjoint(tree.node_ids())
 
     def test_article_fixture_external_refs_equals_set_difference(self) -> None:
         """Test that external_refs_ids equals node_refs_ids minus node_ids for the article fixture."""
-        tree = article0_node_tree()
+        tree = article1_node_tree()
         assert tree.external_refs_ids() == tree.node_refs_ids() - tree.node_ids()
 
 
@@ -582,14 +582,14 @@ class TestNodeTreeDFSIterator:
 
     def test_article_fixture_yields_all_nodes(self) -> None:
         """Test that the iterator yields every node in the article fixture exactly once."""
-        tree = article0_node_tree()
+        tree = article1_node_tree()
         yielded: list[RoamNode] = list(NodeTreeDFSIterator(tree))
         assert len(yielded) == len(tree.tree_network)
         assert {n.uid for n in yielded} == {n.uid for n in tree.tree_network}
 
     def test_article_fixture_parent_always_precedes_children(self) -> None:
         """Test that every parent node appears before all of its children in the traversal."""
-        tree = article0_node_tree()
+        tree = article1_node_tree()
         id_map: dict[Id, RoamNode] = {n.id: n for n in tree.tree_network}
         yielded: list[RoamNode] = list(NodeTreeDFSIterator(tree))
         position: dict[str, int] = {n.uid: i for i, n in enumerate(yielded)}
@@ -603,7 +603,7 @@ class TestNodeTreeDFSIterator:
         """Test the exact pre-order DFS id sequence for the test_article fixture.
 
         Expected traversal (by Datomic entity id):
-          3327  — root page "[[Test Article]] 0"
+          3327  — root page "[[Test Article]] 1"
           11113 — callout block     (order=0, child of root)
           3328  — Section 1         (order=1, child of root)
           3331  — Section 1.1       (order=0, child of 3328)
@@ -618,6 +618,6 @@ class TestNodeTreeDFSIterator:
           3330  — Section 3         (order=3, child of root)
           3333  — Section 3.1       (order=0, child of 3330)
         """
-        tree = article0_node_tree()
+        tree = article1_node_tree()
         expected_ids: list[Id] = [3327, 11113, 3328, 3331, 3334, 11124, 4758, 3329, 3332, 4025, 4028, 4026, 3330, 3333]
         assert [n.id for n in NodeTreeDFSIterator(tree)] == expected_ids

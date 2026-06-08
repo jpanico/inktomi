@@ -2,7 +2,7 @@
 
 from guffin.graph import ImageVertex, PageVertex, TextContentVertex, VertexTree, image_urls, image_vertices, root_vertex
 
-from conftest import article0_vertex_tree
+from conftest import article1_vertex_tree
 
 _URL_A = "https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/imgs%2Fa.jpeg?alt=media&token=aaa"
 _URL_B = "https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/imgs%2Fb.jpeg?alt=media&token=bbb"
@@ -52,8 +52,8 @@ class TestImageVertices:
         assert [v.uid for v in result] == ["imguid001", "imguid002"]
 
     def test_article_fixture_has_one_image_vertex(self) -> None:
-        """Test Article 0 fixture contains exactly one image vertex."""
-        result = image_vertices(article0_vertex_tree())
+        """Test Article 1 fixture contains exactly one image vertex."""
+        result = image_vertices(article1_vertex_tree())
         assert len(result) == 1
         assert isinstance(result[0], ImageVertex)
 
@@ -78,8 +78,8 @@ class TestImageUrls:
         assert image_urls(tree) == []
 
     def test_article_fixture_image_url(self) -> None:
-        """Test Article 0 fixture image URL matches the known fixture value."""
-        urls = image_urls(article0_vertex_tree())
+        """Test Article 1 fixture image URL matches the known fixture value."""
+        urls = image_urls(article1_vertex_tree())
         assert len(urls) == 1
         assert str(urls[0]) == _ARTICLE_IMAGE_URL
 
@@ -100,7 +100,6 @@ class TestRootVertex:
 
     def test_returns_vertex_with_no_parent(self) -> None:
         """Root is the vertex whose uid does not appear in any children list."""
-        page = _page(uid="pageuid01")
         child = _text(uid="textuid01")
         tree = VertexTree(vertices=[PageVertex(uid="pageuid01", title="Page", children=["textuid01"]), child])
         assert root_vertex(tree).uid == "pageuid01"
@@ -113,5 +112,5 @@ class TestRootVertex:
         assert root_vertex(tree).uid != "textuid01"
 
     def test_article_fixture_root_is_page_vertex(self) -> None:
-        """Test Article 0 fixture root is a PageVertex."""
-        assert isinstance(root_vertex(article0_vertex_tree()), PageVertex)
+        """Test Article 1 fixture root is a PageVertex."""
+        assert isinstance(root_vertex(article1_vertex_tree()), PageVertex)

@@ -71,8 +71,44 @@ ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `logging_config.py` — colorized logging (`configure_logging()`); reads `LOG_LEVEL` env var
   - **Templates**
     - `templates/` — Bergfink Typst/Pandoc PDF template (package data; see `src/guffin/templates/README.md`); `user_cfg.typ` is the intended customization point
-- `scripts/` — shell wrapper scripts (`dump-roam-tree.sh`, `export-roam-tree.sh`) and maintenance scripts (`regen_article0_fixtures.py` — regenerates all test fixtures derived from "Test Article 0" from the live graph)
+- `scripts/` — shell wrapper scripts (`dump-roam-tree.sh`, `export-roam-tree.sh`)
 - `tests/fixtures/` — sample markdown, images, JSON, YAML for tests
+- `tests/regen_fixtures.py` — developer script; regenerates all six fixture files for a given Roam page title or node UID (see **Test Fixtures** below)
+
+## Test Fixtures
+
+Two live Roam pages serve as the primary test sources: `[[Test Article]] 1` and
+`[[Test Article]] 2`.  For each source, `tests/regen_fixtures.py` generates six
+fixture files that capture different stages and views of the data pipeline.
+
+### No-refs fixture set (`include_refs=False`) — a linear pipeline
+
+Three fixtures representing successive stages of the export pipeline applied to
+the anchor subtree alone, with no referenced pages included:
+
+| Fixture | What it captures |
+|---|---|
+| `<prefix>_nodes.yaml` | The Roam nodes (page + blocks) as parsed `RoamNode` model objects |
+| `<prefix>_vertices.yaml` | The same subtree transcribed into the export model (`VertexTree`) |
+| `<prefix>_expected.md` | The fully rendered CommonMark output |
+
+### With-refs fixture set (`include_refs=True`) — three views of the same fetch
+
+Three fixtures derived from a single API call that pulls the anchor subtree
+together with every page and block it references.  Rather than a pipeline, they
+are three different lenses on the same underlying data:
+
+| Fixture | What it captures |
+|---|---|
+| `<prefix>_raw_result.yaml` | The raw Datalog wire response before any `RoamNode` parsing |
+| `<prefix>_anchor_tree.yaml` | The `NodeTree` of the anchor subtree itself (within the broader refs fetch) |
+| `<prefix>_nodes_by_uid.yaml` | All fetched nodes — anchor subtree plus every referenced page/block — keyed by UID |
+
+To regenerate fixtures from the live Roam graph (requires Roam Desktop running):
+```bash
+python tests/regen_fixtures.py "[[Test Article]] 1" --prefix test_article_1
+python tests/regen_fixtures.py "[[Test Article]] 2" --prefix test_article_2
+```
 
 ## Git
 - **Never commit or push without explicit instructions**: do not run `git commit` or `git push` unless the user explicitly asks. This applies even after completing a task — finish the work, then wait for the user to request a commit/push.

@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+"""Regenerate all six test fixture files for a given Roam page title or node UID.
+
+Writes to tests/fixtures/yaml/ and tests/fixtures/markdown/:
+
+  No-refs path (include_refs=False):
+    <prefix>_nodes.yaml      — serialised NodeNetwork
+    <prefix>_vertices.yaml   — serialised VertexTree
+    <prefix>_expected.md     — rendered CommonMark
+
+  With-refs path (include_refs=True):
+    <prefix>_raw_result.yaml    — raw Datalog result before RoamNode parsing
+    <prefix>_anchor_tree.yaml   — serialised NodeTree (anchor subtree)
+    <prefix>_nodes_by_uid.yaml  — serialised NodesByUid mapping
+
+Run from the project root with the venv active:
+  python tests/regen_fixtures.py "[[Test Article]] 1" --prefix test_article_1
+  python tests/regen_fixtures.py "[[Test Article]] 2" --prefix test_article_2
+
+Credentials are read from CLI flags first, then env vars, then hard-coded defaults:
+  --port   $ROAM_LOCAL_API_PORT  (default 3333)
+  --graph  $ROAM_GRAPH_NAME      (default SCFH)
+  --token  $ROAM_API_TOKEN
+"""
+
+import argparse
+import os
+import pathlib
+import sys
+import tempfile
+from typing import Final
+
+import yaml
+
+from guffin.filenames import shell_safe_filename
+from guffin.graph import VertexTree, vertex_adapter
+from guffin.logging_config import configure_logging
+from guffin.md_rendering import render
+from guffin.roam_local_api import ApiEndpoint
+from guffin.roam_node import RoamNode
+from guffin.roam_node_fetch import FetchRoamNodes
+from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, anchor_node
+from guffin.roam_transcribe import transcribe
+from guffin.roam_tree import NodeTree
+
+configure_logging()
+
+FIXTURES_YAML: Final[pathlib.Path] = pathlib.Path("tests/fixtures/yaml")
+FIXTURES_MD: Final[pathlib.Path] = pathlib.Path("tests/fixtures/markdown")
+
+_TRANSIENT_FIELDS: Final[frozenset[str]] = frozenset({"open", "sidebar", "lookup", "seen_by"})
+
+_DEFAULT_PORT: Final[str] = "3333"
+_DEFAULT_GRAPH: Final[str] = "SCFH"
+_DEFAULT_TOKEN: Final[str] = "roam-graph-local-token-OR3s0AcJn5rwxPJ6MYaqnIyjNi7ai"
+
+
+def _stub_node_dict(node: RoamNode) -> dict[str, object]:
+    """Serialise *node* with transient fields stubbed/omitted for fixture storage."""
+    d: Final[dict[str, object]] = node.model_dump(mode="json")
+    d["time"] = 0
+    d["user"] = {"id": 0}
+    for key in _TRANSIENT_FIELDS:
+        d.pop(key, None)
+    return d
+
+
+def main() -> None:
+    """Parse arguments and regenerate all six fixture files."""
+    parser = argparse.ArgumentParser(
+        description="Regenerate all six test fixture files for a Roam page or node.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  python tests/regen_fixtures.py \"[[Test Article]] 1\" --prefix test_article_1\n"
+            "  python tests/regen_fixtures.py \"[[Test Article]] 2\" --prefix test_article_2\n"
+        ),
+    )
+    parser.add_argument("qualifier", help="Roam page title or 9-char node UID.")
+    parser.add_argument(
+        "--prefix",
+        required=True,
+        metavar="PREFIX",
+        help="Output file name prefix, e.g. 'test_article_1'.",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.getenv("ROAM_LOCAL_API_PORT", _DEFAULT_PORT)),
+        help="Roam Local API port (default: $ROAM_LOCAL_API_PORT or %(default)s).",
+    )
+    parser.add_argument(
+        "--graph",
+        default=os.getenv("ROAM_GRAPH_NAME", _DEFAULT_GRAPH),
+        help="Roam graph name (default: $ROAM_GRAPH_NAME or %(default)s).",
+    )
+    parser.add_argument(
+        "--token",
+        default=os.getenv("ROAM_API_TOKEN", _DEFAULT_TOKEN),
+        help="Roam Local API bearer token (default: $ROAM_API_TOKEN).",
+    )
+    args = parser.parse_args()
+
+    qualifier: Final[str] = args.qualifier
+    prefix: Final[str] = args.prefix
+    endpoint: Final[ApiEndpoint] = ApiEndpoint.from_parts(
+        local_api_port=args.port,
+        graph_name=args.graph,
+        bearer_token=args.token,
+    )
+    anchor: Final[NodeFetchAnchor] = NodeFetchAnchor(qualifier=qualifier)
+
+    # -------------------------------------------------------------------------
+    # Path A: include_refs=False  →  nodes, vertices, expected markdown
+    # -------------------------------------------------------------------------
+    print(f"Fetching '{qualifier}' (include_refs=False) …")
+    result_no_refs: Final[NodeFetchResult] = FetchRoamNodes.fetch_roam_nodes(
+        anchor=anchor, api_endpoint=endpoint, include_refs=False
+    )
+    nodes: Final[list[RoamNode]] = list(result_no_refs.network)
+    print(f"  fetched {len(nodes)} node(s)")
+
+    # Fixture 1: nodes YAML
+    nodes_path: Final[pathlib.Path] = FIXTURES_YAML / f"{prefix}_nodes.yaml"
+    node_dicts: Final[list[dict[str, object]]] = [_stub_node_dict(n) for n in nodes]
+    nodes_header: Final[str] = (
+        f"# YAML fixture for '{qualifier}' NodeNetwork.\n"
+        "# Regenerated by tests/regen_fixtures.py.\n"
+        "# Serialised with model_dump(mode='json') and yaml.dump(\n"
+        "#   default_flow_style=False, allow_unicode=True, sort_keys=False).\n"
+        "#\n"
+        "# Transient fields (time, user, open, sidebar, lookup, seen_by) are excluded\n"
+        "# from live-test comparisons and are set to stub values here (time: 0,\n"
+        "# user: {id: 0}); the nullable ones (open, sidebar, lookup, seen_by) are\n"
+        "# omitted entirely so they default to None on model_validate.\n"
+    )
+    nodes_path.write_text(
+        nodes_header + yaml.dump(node_dicts, default_flow_style=False, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+    print(f"  wrote {nodes_path}")
+
+    # Intermediate: build NodeTree and transcribe to VertexTree
+    root_node: Final[RoamNode] = anchor_node(nodes, anchor)
+    node_tree: Final[NodeTree] = NodeTree.build(super_network=nodes, root_node=root_node)
+    vertex_tree: Final[VertexTree] = transcribe(node_tree)
+    print(f"  transcribed {len(vertex_tree.vertices)} vertex/vertices")
+
+    # Fixture 2: vertices YAML
+    vertices_path: Final[pathlib.Path] = FIXTURES_YAML / f"{prefix}_vertices.yaml"
+    vertices_header: Final[str] = (
+        f"# YAML fixture for '{qualifier}' VertexTree.\n"
+        "# Regenerated by tests/regen_fixtures.py.\n"
+        "# Serialised with model_dump(mode='json', exclude_none=True) and yaml.dump(\n"
+        "#   default_flow_style=False, allow_unicode=True, sort_keys=False).\n"
+    )
+    vertices_path.write_text(
+        vertices_header
+        + yaml.dump(
+            [vertex_adapter.dump_python(v, mode="json", exclude_none=True) for v in vertex_tree.vertices],
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    print(f"  wrote {vertices_path}")
+
+    # Fixture 3: expected markdown
+    md_path: Final[pathlib.Path] = FIXTURES_MD / f"{prefix}_expected.md"
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        render(
+            vertex_tree,
+            filename_stem=qualifier,
+            output_dir=pathlib.Path(tmp_dir),
+            api_endpoint=endpoint,
+            bundle=False,
+        )
+        rendered: Final[str] = (
+            pathlib.Path(tmp_dir) / f"{shell_safe_filename(qualifier)}.md"
+        ).read_text(encoding="utf-8")
+    md_path.write_text(rendered, encoding="utf-8")
+    print(f"  wrote {md_path}")
+
+    # -------------------------------------------------------------------------
+    # Path B: include_refs=True  →  raw_result, anchor_tree, nodes_by_uid
+    # -------------------------------------------------------------------------
+    print(f"Fetching '{qualifier}' (include_refs=True) …")
+    result_with_refs: Final[NodeFetchResult] = FetchRoamNodes.fetch_roam_nodes(
+        anchor=anchor, api_endpoint=endpoint, include_refs=True
+    )
+    print(f"  fetched {len(result_with_refs.network)} node(s) (with refs)")
+
+    # Fixture 4: raw_result YAML
+    raw_result_path: Final[pathlib.Path] = FIXTURES_YAML / f"{prefix}_raw_result.yaml"
+    raw_result_path.write_text(
+        yaml.dump(result_with_refs.raw_result, default_flow_style=False, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+    print(f"  wrote {raw_result_path}")
+
+    # Fixture 5: anchor_tree YAML
+    anchor_tree_path: Final[pathlib.Path] = FIXTURES_YAML / f"{prefix}_anchor_tree.yaml"
+    assert result_with_refs.anchor_tree is not None
+    anchor_tree_path.write_text(
+        yaml.dump(
+            result_with_refs.anchor_tree.model_dump(mode="json"),
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    print(f"  wrote {anchor_tree_path}")
+
+    # Fixture 6: nodes_by_uid YAML
+    nodes_by_uid_path: Final[pathlib.Path] = FIXTURES_YAML / f"{prefix}_nodes_by_uid.yaml"
+    assert result_with_refs.nodes_by_uid is not None
+    nodes_by_uid_path.write_text(
+        yaml.dump(
+            {uid: node.model_dump(mode="json") for uid, node in result_with_refs.nodes_by_uid.items()},
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    print(f"  wrote {nodes_by_uid_path}")
+
+    print("Done.")
+
+
+if __name__ == "__main__":
+    main()
+    sys.exit(0)

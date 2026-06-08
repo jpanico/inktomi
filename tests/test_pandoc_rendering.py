@@ -22,7 +22,7 @@ from guffin.pandoc_rendering import (
     vertex_tree_to_pandoc,
 )
 
-from conftest import article0_vertex_tree
+from conftest import article1_vertex_tree
 
 _IMAGE_URL: HttpUrl = HttpUrl("https://example.com/imgs/photo.jpeg")
 
@@ -379,22 +379,22 @@ class TestBuildBlocksCoalescing:
 
 
 class TestVertexTreeToPandocArticleFixture:
-    """Integration tests for vertex_tree_to_pandoc() using the Test Article 0 fixture."""
+    """Integration tests for vertex_tree_to_pandoc() using the Test Article 1 fixture."""
 
-    def test_metadata_title_is_test_article_0(self) -> None:
+    def test_metadata_title_is_test_article_1(self) -> None:
         """Doc metadata title matches the page title from the fixture."""
-        doc = vertex_tree_to_pandoc(article0_vertex_tree(), {})
-        assert _collect_text(doc.metadata["title"]) == "Test Article 0"
+        doc = vertex_tree_to_pandoc(article1_vertex_tree(), {})
+        assert _collect_text(doc.metadata["title"]) == "Test Article 1"
 
     def test_block_count(self) -> None:
         """The fixture produces the expected number of top-level blocks."""
-        doc = vertex_tree_to_pandoc(article0_vertex_tree(), {})
+        doc = vertex_tree_to_pandoc(article1_vertex_tree(), {})
         # 1 Para(callout) + 3 H1s + 4 H2s + 2 H3s + 1 H4 + 1 Para(Link) + 1 BulletList = 13
         assert len(list(doc.content)) == 13
 
     def test_first_block_is_section_1_header(self) -> None:
         """The second block is an H1 Header for 'Section 1' (first block is the callout Para)."""
-        doc = vertex_tree_to_pandoc(article0_vertex_tree(), {})
+        doc = vertex_tree_to_pandoc(article1_vertex_tree(), {})
         second = list(doc.content)[1]
         assert isinstance(second, pf.Header)
         assert second.level == 1
@@ -402,7 +402,7 @@ class TestVertexTreeToPandocArticleFixture:
 
     def test_image_renders_as_fallback_link_when_no_image_files(self) -> None:
         """The ImageVertex in the fixture renders as a pf.Link when image_files is empty."""
-        doc = vertex_tree_to_pandoc(article0_vertex_tree(), {})
+        doc = vertex_tree_to_pandoc(article1_vertex_tree(), {})
         blocks = list(doc.content)
         image_para = next(
             (b for b in blocks if isinstance(b, pf.Para) and isinstance(list(b.content)[0], pf.Link)), None
@@ -411,7 +411,7 @@ class TestVertexTreeToPandocArticleFixture:
 
     def test_text_content_vertex_renders_as_bullet_list(self) -> None:
         """The TextContentVertex ('AI assistant') renders as a BulletList."""
-        doc = vertex_tree_to_pandoc(article0_vertex_tree(), {})
+        doc = vertex_tree_to_pandoc(article1_vertex_tree(), {})
         blocks = list(doc.content)
         bullet_lists = [b for b in blocks if isinstance(b, pf.BulletList)]
         assert len(bullet_lists) == 1
