@@ -40,7 +40,7 @@ from guffin.graph import (
 )
 from guffin.roam_md_to_pandoc_md import to_pandoc_md
 from guffin.roam_network import min_effective_heading_level
-from guffin.roam_node import RoamNode, effective_heading_level, is_image_node
+from guffin.roam_node import NodeType, RoamNode, effective_heading_level, node_type
 from guffin.roam_tree import NodeTree
 from guffin.media_type import MediaType
 from guffin.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, Url
@@ -165,7 +165,8 @@ def vertex_type(node: RoamNode) -> VertexType:
     Classification order:
 
     1. ``node.title`` is set → :attr:`~guffin.graph.VertexType.ROAM_PAGE`
-    2. ``node.string`` contains a Firestore URL → :attr:`~guffin.graph.VertexType.ROAM_IMAGE`
+    2. :func:`~guffin.roam_node.node_type` is :attr:`~guffin.roam_node.NodeType.Image`
+       → :attr:`~guffin.graph.VertexType.ROAM_IMAGE`
     3. Effective heading level is non-\ ``None`` → :attr:`~guffin.graph.VertexType.ROAM_HEADING`
     4. Otherwise → :attr:`~guffin.graph.VertexType.ROAM_TEXT_CONTENT`
 
@@ -185,7 +186,7 @@ def vertex_type(node: RoamNode) -> VertexType:
     string: Final[str | None] = node.string
     if string is None:
         raise ValueError(f"RoamNode uid={node.uid!r} has neither 'title' nor 'string'")
-    if is_image_node(node):
+    if node_type(node) is NodeType.Image:
         return VertexType.ROAM_IMAGE
     if effective_heading_level(node) is not None:
         return VertexType.ROAM_HEADING

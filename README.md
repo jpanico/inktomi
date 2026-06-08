@@ -13,7 +13,7 @@ Python 3.14 toolkit for exporting Roam Research graph sub-trees to self-containe
 - Git
 - [Pandoc](https://pandoc.org/installing.html) — required for all export formats (`brew install pandoc`)
 - [Typst](https://typst.app) — PDF engine used by Pandoc (`brew install typst`)
-- **Noto Sans** and **Noto Sans Mono** (static, not variable) — required for PDF rendering with the default Bergfink template; install the static variants from Google Fonts via Font Book, or override the fonts in `src/guffin/templates/user_cfg.typ`
+- **Noto Sans** and **Noto Sans Mono** (static, not variable) _fonts_ — required for PDF rendering with the default Bergfink template; install the static variants from Google Fonts via Font Book, or override the fonts in `src/guffin/templates/user_cfg.typ`
 
 ### Initial Setup
 

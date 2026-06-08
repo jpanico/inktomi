@@ -2,13 +2,11 @@
 
 Public symbols:
 
-- :class:`NodeType` — ``StrEnum`` of pull-block entity types: ``Page``, ``Block``, ``Embed``.
+- :class:`NodeType` — ``StrEnum`` of pull-block entity types: ``Page``, ``Block``, ``Embed``, ``Image``.
 - :class:`RoamNode` — raw shape of a pull-block as returned by the Roam Local API.
 - :func:`node_type` — return the :class:`NodeType` of a :class:`RoamNode`.
 - :func:`effective_heading_level` — return the effective heading level for a
   :class:`RoamNode`, or ``None`` if it is not a heading.
-- :func:`is_image_node` — return ``True`` when a node's string is exactly one
-  Markdown image link and nothing else.
 - :data:`NodesByUid` — ``dict`` mapping each :attr:`~RoamNode.uid` to its :class:`RoamNode`.
 """
 
@@ -36,16 +34,19 @@ logger = logging.getLogger(__name__)
 
 
 class NodeType(enum.StrEnum):
-    """Entity type of a Roam pull-block, discriminated by ``title`` value and ``string`` presence.
+    """Entity type of a Roam pull-block.
 
     - **Page**: ``title`` is a non-``"embed"`` string, ``string`` is ``None``.
-    - **Block**: ``string`` is set, ``title`` is ``None``.
+    - **Block**: ``string`` is set, ``title`` is ``None``, content is plain text or a heading.
     - **Embed**: ``title`` is the literal ``"embed"``, ``string`` is ``None``, ``children`` is ``None``.
+    - **Image**: ``string`` consists solely of a single Markdown image link to a Cloud Firestore URL.
+      Produced by drag-and-drop into the Roam UI; supports image-resize properties via ``props``.
     """
 
     Page = "Page"
     Block = "Block"
     Embed = "Embed"
+    Image = "Image"
 
 
 class RoamNode(BaseModel):
@@ -234,28 +235,6 @@ def effective_heading_level(node: RoamNode) -> HeadingLevel | None:
     return None
 
 
-@validate_call
-def is_image_node(node: RoamNode) -> bool:
-    """Return ``True`` if *node* contains exactly one Markdown image link and nothing else.
-
-    Checks that ``node.string``, after stripping leading and trailing whitespace,
-    consists entirely of a single ``![<alt>](<url>)`` link.  Any surrounding text,
-    additional links, or a ``None`` string all return ``False``.
-
-    Args:
-        node: The node to inspect.
-
-    Returns:
-        ``True`` if ``node.string`` is solely a single Markdown image link.
-
-    Raises:
-        ValidationError: If *node* is ``None`` or invalid.
-    """
-    if node.string is None:
-        return False
-    return bool(IMAGE_LINK_RE.fullmatch(node.string.strip()))
-
-
 type NodesByUid = dict[Uid, RoamNode]
 """``dict`` mapping each :attr:`~RoamNode.uid` to its :class:`RoamNode`."""
 
@@ -264,12 +243,12 @@ type NodesByUid = dict[Uid, RoamNode]
 def node_type(node: RoamNode) -> NodeType:
     """Return the :class:`NodeType` of *node*.
 
-    Discriminates first on :attr:`~RoamNode.title` value: returns
-    :attr:`NodeType.Embed` when ``title`` is the literal ``"embed"``,
-    :attr:`NodeType.Page` when ``title`` is any other non-``None`` string, and
-    :attr:`NodeType.Block` when ``title`` is ``None``.  The
-    :meth:`~RoamNode._validate_entity_type` validator guarantees that every
-    :class:`RoamNode` instance satisfies exactly one of these cases.
+    Discriminates first on :attr:`~RoamNode.title`: returns :attr:`NodeType.Embed`
+    when ``title`` is the literal ``"embed"``, :attr:`NodeType.Page` when ``title``
+    is any other non-``None`` string.  For title-less nodes (blocks), returns
+    :attr:`NodeType.Image` when ``string`` consists solely of a single Markdown image
+    link (as matched by :data:`~guffin.roam_primitives.IMAGE_LINK_RE`), and
+    :attr:`NodeType.Block` otherwise.
 
     Args:
         node: The node whose entity type to determine.
@@ -277,8 +256,13 @@ def node_type(node: RoamNode) -> NodeType:
     Returns:
         :attr:`NodeType.Embed` if ``title == "embed"``;
         :attr:`NodeType.Page` if ``title`` is set (and not ``"embed"``);
+        :attr:`NodeType.Image` if ``string`` is solely a single Markdown image link;
         :attr:`NodeType.Block` otherwise.
     """
     if node.title == "embed":
         return NodeType.Embed
-    return NodeType.Page if node.title is not None else NodeType.Block
+    if node.title is not None:
+        return NodeType.Page
+    if node.string is not None and IMAGE_LINK_RE.fullmatch(node.string.strip()):
+        return NodeType.Image
+    return NodeType.Block
