@@ -3,7 +3,7 @@
 Public symbols:
 
 - :class:`NodeType` — ``StrEnum`` of pull-block entity types: ``ROAM_PAGE``, ``ROAM_PLAIN_BLOCK``,
-  ``ROAM_EMBED_BLOCK``, ``ROAM_IMAGE_BLOCK``, ``ROAM_HEADING_BLOCK``.
+  ``ROAM_EMBED_BLOCK``, ``ROAM_IMAGE_BLOCK``, ``ROAM_HEADING_BLOCK``, ``ROAM_CALLOUT_BLOCK``.
 - :class:`RoamNode` — raw shape of a pull-block as returned by the Roam Local API.
 - :func:`node_type` — return the :class:`NodeType` of a :class:`RoamNode`.
 - :func:`effective_heading_level` — return the effective heading level for a
@@ -13,6 +13,7 @@ Public symbols:
 
 import enum
 import logging
+import re
 from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator, validate_call
@@ -33,6 +34,19 @@ from guffin.roam_schema import RoamAttribute
 
 logger = logging.getLogger(__name__)
 
+_CALLOUT_PREFIX: Final[str] = "[[>]]"
+"""String prefix that identifies a potential Roam callout block."""
+
+_CALLOUT_RE: Final[re.Pattern[str]] = re.compile(
+    r"\[\[>\]\] \[\[!(?:INFO|QUOTE|EXAMPLE|NOTE|WARNING|DANGER|TIP|SUMMARY|SUCCESS|QUESTION|FAILURE|BUG)\]\]"
+)
+"""Compiled regex matching a valid Roam callout marker at the start of a block string.
+
+Matches ``[[>]] [[!<TYPE>]]`` where ``<TYPE>`` is one of the twelve recognised callout
+type keywords.  Used both for model validation (rejecting malformed ``[[>]]``-prefixed
+strings) and for node-type detection in :func:`node_type`.
+"""
+
 
 class NodeType(enum.StrEnum):
     """Entity type of a Roam pull-block.
@@ -44,6 +58,9 @@ class NodeType(enum.StrEnum):
     - **ROAM_IMAGE_BLOCK**: ``string`` consists solely of a single Markdown image link to a Cloud Firestore URL.
       Produced by drag-and-drop into the Roam UI; supports image-resize properties via ``props``.
     - **ROAM_EMBED_BLOCK**: ``title`` is the literal ``"embed"``, ``string`` is ``None``, ``children`` is ``None``.
+    - **ROAM_CALLOUT_BLOCK**: ``string`` starts with ``[[>]] [[!<TYPE>]]`` where ``<TYPE>`` is one of the twelve
+      recognised callout type keywords (``INFO``, ``QUOTE``, ``EXAMPLE``, ``NOTE``, ``WARNING``, ``DANGER``,
+      ``TIP``, ``SUMMARY``, ``SUCCESS``, ``QUESTION``, ``FAILURE``, ``BUG``).
     """
 
     ROAM_PAGE = "roam/page"
@@ -51,6 +68,7 @@ class NodeType(enum.StrEnum):
     ROAM_HEADING_BLOCK = "roam/heading-block"
     ROAM_IMAGE_BLOCK = "roam/image-block"
     ROAM_EMBED_BLOCK = "roam/embed-block"
+    ROAM_CALLOUT_BLOCK = "roam/callout-block"
 
 
 class RoamNode(BaseModel):
@@ -156,6 +174,17 @@ class RoamNode(BaseModel):
         default=None, description=f"{RoamAttribute.EDIT_SEEN_BY} — users who have seen this block (purpose unclear)"
     )
 
+    @field_validator("string", mode="after")
+    @classmethod
+    def _validate_callout_string(cls, v: str | None) -> str | None:
+        if v is not None and v.startswith(_CALLOUT_PREFIX):
+            if not _CALLOUT_RE.match(v):
+                raise ValueError(
+                    f"block string starts with '[[>]]' but does not match callout marker "
+                    f"'[[>]] [[!<TYPE>]]' with a valid callout type; got {v!r}"
+                )
+        return v
+
     @field_validator("heading", mode="before")
     @classmethod
     def _coerce_zero_heading(cls, v: object) -> object:
@@ -253,6 +282,8 @@ def node_type(node: RoamNode) -> NodeType:
     :attr:`NodeType.ROAM_IMAGE_BLOCK` when ``string`` consists solely of a single Markdown image
     link (as matched by :data:`~guffin.roam_primitives.IMAGE_LINK_RE`),
     :attr:`NodeType.ROAM_HEADING_BLOCK` when :func:`effective_heading_level` is non-``None``,
+    :attr:`NodeType.ROAM_CALLOUT_BLOCK` when ``string`` starts with a valid callout marker
+    (as matched by the module-private ``_CALLOUT_RE``),
     and :attr:`NodeType.ROAM_PLAIN_BLOCK` otherwise.
 
     Args:
@@ -263,6 +294,7 @@ def node_type(node: RoamNode) -> NodeType:
         :attr:`NodeType.ROAM_PAGE` if ``title`` is set (and not ``"embed"``);
         :attr:`NodeType.ROAM_IMAGE_BLOCK` if ``string`` is solely a single Markdown image link;
         :attr:`NodeType.ROAM_HEADING_BLOCK` if ``heading`` or ``props['ah-level']`` is set;
+        :attr:`NodeType.ROAM_CALLOUT_BLOCK` if ``string`` starts with ``[[>]] [[!<TYPE>]]``;
         :attr:`NodeType.ROAM_PLAIN_BLOCK` otherwise.
     """
     if node.title == "embed":
@@ -273,4 +305,6 @@ def node_type(node: RoamNode) -> NodeType:
         return NodeType.ROAM_IMAGE_BLOCK
     if effective_heading_level(node) is not None:
         return NodeType.ROAM_HEADING_BLOCK
+    if node.string is not None and _CALLOUT_RE.match(node.string):
+        return NodeType.ROAM_CALLOUT_BLOCK
     return NodeType.ROAM_PLAIN_BLOCK

@@ -1,6 +1,7 @@
 """Tests for the roam_node module."""
 
 import pytest
+from pydantic import ValidationError
 
 from guffin.roam_node import (
     NodeType,
@@ -39,6 +40,19 @@ def _make_heading(uid: str = "headnguid", id: int = 102, string: str = "Section 
         user=STUB_USER,
         string=string,
         heading=level,
+        parents=[IdObject(id=99)],
+        page=IdObject(id=99),
+    )
+
+
+def _make_callout(uid: str = "callutuid", id: int = 105, callout_type: str = "INFO", suffix: str = "") -> RoamNode:
+    """Return a minimal callout RoamNode with the given callout type."""
+    return RoamNode(
+        uid=uid,
+        id=id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=f"[[>]] [[!{callout_type}]]{suffix}",
         parents=[IdObject(id=99)],
         page=IdObject(id=99),
     )
@@ -181,14 +195,19 @@ class TestNodeType:
         """Test that NodeType.ROAM_HEADING_BLOCK has string value 'roam/heading-block'."""
         assert NodeType.ROAM_HEADING_BLOCK == "roam/heading-block"
 
-    def test_exactly_five_members(self) -> None:
-        """Test that NodeType has exactly five members."""
+    def test_callout_value(self) -> None:
+        """Test that NodeType.ROAM_CALLOUT_BLOCK has string value 'roam/callout-block'."""
+        assert NodeType.ROAM_CALLOUT_BLOCK == "roam/callout-block"
+
+    def test_exactly_six_members(self) -> None:
+        """Test that NodeType has exactly six members."""
         assert set(NodeType) == {
             NodeType.ROAM_PAGE,
             NodeType.ROAM_PLAIN_BLOCK,
             NodeType.ROAM_EMBED_BLOCK,
             NodeType.ROAM_IMAGE_BLOCK,
             NodeType.ROAM_HEADING_BLOCK,
+            NodeType.ROAM_CALLOUT_BLOCK,
         }
 
 
@@ -358,9 +377,100 @@ class TestNodeTypeFunction:
         """Test that a plain text block does not return NodeType.ROAM_HEADING_BLOCK."""
         assert node_type(_make_text()) is not NodeType.ROAM_HEADING_BLOCK
 
+    def test_callout_node_returns_callout(self) -> None:
+        """Test that a block with a valid callout marker returns NodeType.ROAM_CALLOUT_BLOCK."""
+        assert node_type(_make_callout()) is NodeType.ROAM_CALLOUT_BLOCK
+
+    def test_callout_node_is_not_plain_block(self) -> None:
+        """Test that a callout node does not return NodeType.ROAM_PLAIN_BLOCK."""
+        assert node_type(_make_callout()) is not NodeType.ROAM_PLAIN_BLOCK
+
+    def test_callout_with_suffix_content_returns_callout(self) -> None:
+        """Test that a callout marker with trailing content still returns NodeType.ROAM_CALLOUT_BLOCK."""
+        assert node_type(_make_callout(suffix=" some callout body")) is NodeType.ROAM_CALLOUT_BLOCK
+
+    def test_all_callout_types_return_callout(self) -> None:
+        """Test that each of the twelve valid callout types returns NodeType.ROAM_CALLOUT_BLOCK."""
+        valid_types = [
+            "INFO",
+            "QUOTE",
+            "EXAMPLE",
+            "NOTE",
+            "WARNING",
+            "DANGER",
+            "TIP",
+            "SUMMARY",
+            "SUCCESS",
+            "QUESTION",
+            "FAILURE",
+            "BUG",
+        ]
+        for callout_type in valid_types:
+            assert node_type(_make_callout(callout_type=callout_type)) is NodeType.ROAM_CALLOUT_BLOCK
+
     def test_result_is_str_enum(self) -> None:
         """Test that the returned value is a NodeType StrEnum member."""
         node = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="My Page", children=[])
         result = node_type(node)
         assert isinstance(result, NodeType)
         assert isinstance(result, str)
+
+
+# ---------------------------------------------------------------------------
+# TestRoamNodeCalloutValidation
+# ---------------------------------------------------------------------------
+
+
+class TestRoamNodeCalloutValidation:
+    """Tests for RoamNode validation of callout block strings."""
+
+    def _make_block(self, string: str) -> RoamNode:
+        return RoamNode(
+            uid="callutuid",
+            id=105,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string=string,
+            parents=[IdObject(id=99)],
+            page=IdObject(id=99),
+        )
+
+    def test_valid_callout_string_accepted(self) -> None:
+        """Test that a well-formed callout marker string is accepted."""
+        node = self._make_block("[[>]] [[!INFO]]")
+        assert node.string == "[[>]] [[!INFO]]"
+
+    def test_valid_callout_with_body_accepted(self) -> None:
+        """Test that a callout marker followed by body text is accepted."""
+        node = self._make_block("[[>]] [[!WARNING]] Watch out!")
+        assert node.string == "[[>]] [[!WARNING]] Watch out!"
+
+    def test_invalid_callout_type_raises(self) -> None:
+        """Test that an unrecognised callout type raises ValidationError."""
+        with pytest.raises(ValidationError):
+            self._make_block("[[>]] [[!INVALID]]")
+
+    def test_missing_type_raises(self) -> None:
+        """Test that '[[>]]' with no type marker raises ValidationError."""
+        with pytest.raises(ValidationError):
+            self._make_block("[[>]]")
+
+    def test_bare_prefix_with_space_raises(self) -> None:
+        """Test that '[[>]] ' with no type block raises ValidationError."""
+        with pytest.raises(ValidationError):
+            self._make_block("[[>]] some text without type")
+
+    def test_lowercase_callout_type_raises(self) -> None:
+        """Test that a lowercase callout type (e.g. 'info') raises ValidationError."""
+        with pytest.raises(ValidationError):
+            self._make_block("[[>]] [[!info]]")
+
+    def test_partial_type_block_raises(self) -> None:
+        """Test that a malformed type block like '[[!INFO' raises ValidationError."""
+        with pytest.raises(ValidationError):
+            self._make_block("[[>]] [[!INFO")
+
+    def test_string_without_prefix_accepted(self) -> None:
+        """Test that a plain block string with no '[[>]]' prefix is not affected."""
+        node = self._make_block("just some text")
+        assert node.string == "just some text"

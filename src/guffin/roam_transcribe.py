@@ -182,6 +182,8 @@ def vertex_type(node: RoamNode) -> VertexType:
             return VertexType.GUFFIN_HEADING
         case NodeType.ROAM_IMAGE_BLOCK:
             return VertexType.GUFFIN_IMAGE
+        case NodeType.ROAM_CALLOUT_BLOCK:
+            return VertexType.GUFFIN_TEXT_CONTENT
         case NodeType.ROAM_EMBED_BLOCK:
             raise NotImplementedError(f"RoamNode uid={node.uid!r}: ROAM_EMBED_BLOCK transcription is not supported")
 
