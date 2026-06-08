@@ -68,7 +68,7 @@ pytest tests/test_roam_asset_fetch.py
 Some tests require the Roam Desktop app to be running locally. These are marked with `@pytest.mark.live` and are skipped by default. To enable them:
 
 ```bash
-ROAM_LIVE_TESTS=1 ROAM_LOCAL_API_PORT=3333 ROAM_GRAPH_NAME=<graph> ROAM_API_TOKEN=<token> pytest -m live -v
+GUFFIN_LIVE_TESTS=1 GUFFIN_ROAM_LOCAL_API_PORT=3333 GUFFIN_ROAM_GRAPH_NAME=<graph> GUFFIN_ROAM_API_TOKEN=<token> pytest -m live -v
 ```
 
 ### Code Formatting
@@ -232,11 +232,11 @@ The `--bundle/--no-bundle` flags are ignored with `--format pdf`. The `--cache-d
 All options can be supplied via environment variables:
 
 ```bash
-export ROAM_LOCAL_API_PORT=3333
-export ROAM_GRAPH_NAME=SCFH
-export ROAM_API_TOKEN=<your-bearer-token>
-export ROAM_EXPORT_DIR=~/docs
-export ROAM_CACHE_DIR=~/.cache/roam   # optional: skip re-downloading unchanged images
+export GUFFIN_ROAM_LOCAL_API_PORT=3333
+export GUFFIN_ROAM_GRAPH_NAME=SCFH
+export GUFFIN_ROAM_API_TOKEN=<your-bearer-token>
+export GUFFIN_EXPORT_DIR=~/docs
+export GUFFIN_CACHE_DIR=~/.cache/roam   # optional: skip re-downloading unchanged images
 
 export-roam-tree "Test Article"                      # Markdown bundle (default)
 export-roam-tree "Test Article" --format pdf         # PDF

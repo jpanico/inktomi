@@ -7,9 +7,9 @@
 # --mode controls which tree(s) are printed: v=vertex (default), n=node, vn=both
 #
 # Environment variables (may be set instead of CLI flags):
-#   ROAM_LOCAL_API_PORT  — port for Roam Local API
-#   ROAM_GRAPH_NAME      — name of the Roam graph
-#   ROAM_API_TOKEN       — bearer token for Roam Local API authentication
+#   GUFFIN_ROAM_LOCAL_API_PORT  — port for Roam Local API
+#   GUFFIN_ROAM_GRAPH_NAME      — name of the Roam graph
+#   GUFFIN_ROAM_API_TOKEN       — bearer token for Roam Local API authentication
 
 # Get the repo root (one level above this script's directory)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

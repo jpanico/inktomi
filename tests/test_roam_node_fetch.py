@@ -421,7 +421,7 @@ class TestFetchRoamNodesFetchByPageTitle:
         assert by_uid["plain0001"].props is None
 
     @pytest.mark.live
-    @pytest.mark.skipif(not os.getenv("ROAM_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
+    @pytest.mark.skipif(not os.getenv("GUFFIN_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
     def test_fetch_testarticle1(self, live_api_endpoint: ApiEndpoint) -> None:
         """Live test: fetch all descendant blocks of a page and compare with fixture.
 
@@ -473,7 +473,7 @@ class TestFetchRoamNodesFetchByNodeUid:
         assert exc_info.value.fetch_spec == spec
 
     @pytest.mark.live
-    @pytest.mark.skipif(not os.getenv("ROAM_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
+    @pytest.mark.skipif(not os.getenv("GUFFIN_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
     def test_live_fetch_by_node_uid(self, live_api_endpoint: ApiEndpoint) -> None:
         """Live test: fetch the wdMgyBiP9 subtree and compare with the fixture hierarchy.
 

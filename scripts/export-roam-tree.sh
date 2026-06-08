@@ -5,11 +5,11 @@
 #                              [--output-dir <dir>] [--bundle|--no-bundle] [--cache-dir <dir>]
 #
 # Environment variables (may be set instead of CLI flags):
-#   ROAM_LOCAL_API_PORT  — port for Roam Local API
-#   ROAM_GRAPH_NAME      — name of the Roam graph
-#   ROAM_API_TOKEN       — bearer token for Roam Local API authentication
-#   ROAM_EXPORT_DIR      — output directory for the exported document
-#   ROAM_CACHE_DIR       — directory for caching downloaded Cloud Firestore assets
+#   GUFFIN_ROAM_LOCAL_API_PORT  — port for Roam Local API
+#   GUFFIN_ROAM_GRAPH_NAME      — name of the Roam graph
+#   GUFFIN_ROAM_API_TOKEN       — bearer token for Roam Local API authentication
+#   GUFFIN_EXPORT_DIR           — output directory for the exported document
+#   GUFFIN_CACHE_DIR            — directory for caching downloaded Cloud Firestore assets
 
 # Get the repo root (one level above this script's directory)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

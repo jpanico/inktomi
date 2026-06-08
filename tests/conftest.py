@@ -45,13 +45,13 @@ def api_endpoint() -> ApiEndpoint:
 def live_api_endpoint() -> ApiEndpoint:
     """Return a live :class:`~guffin.roam_local_api.ApiEndpoint` built from env vars.
 
-    Requires ``ROAM_LOCAL_API_PORT``, ``ROAM_GRAPH_NAME``, and ``ROAM_API_TOKEN``
+    Requires ``GUFFIN_ROAM_LOCAL_API_PORT``, ``GUFFIN_ROAM_GRAPH_NAME``, and ``GUFFIN_ROAM_API_TOKEN``
     to be set in the environment.  Intended for use in tests marked ``@pytest.mark.live``.
     """
     return ApiEndpoint.from_parts(
-        local_api_port=int(os.environ["ROAM_LOCAL_API_PORT"]),
-        graph_name=os.environ["ROAM_GRAPH_NAME"],
-        bearer_token=os.environ["ROAM_API_TOKEN"],
+        local_api_port=int(os.environ["GUFFIN_ROAM_LOCAL_API_PORT"]),
+        graph_name=os.environ["GUFFIN_ROAM_GRAPH_NAME"],
+        bearer_token=os.environ["GUFFIN_ROAM_API_TOKEN"],
     )
 
 

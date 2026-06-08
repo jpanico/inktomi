@@ -35,7 +35,7 @@ pyright                           # type check (strict)
 pytest                            # run tests (excludes live tests)
 
 # Live tests — NOT part of the check pipeline; must be explicitly requested:
-ROAM_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
+GUFFIN_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
 ```
 
 ## Project Structure
@@ -151,11 +151,11 @@ All code written or modified by Claude MUST follow these conventions — no exce
 - `docs/processing_pipeline.md` — high-level overview of the core data processing pipeline
 
 ## Environment Variables
-- `ROAM_LOCAL_API_PORT` — port for Roam Local API (all CLI tools)
-- `ROAM_GRAPH_NAME` — Roam graph name (all CLI tools)
-- `ROAM_API_TOKEN` — bearer token for auth (all CLI tools)
-- `ROAM_EXPORT_DIR` — output directory for `export-roam-tree`
-- `ROAM_CACHE_DIR` — directory for caching downloaded Cloud Firestore assets (`export-roam-tree`)
-- `ROAM_PDF_TEMPLATE_DIR` — directory containing a `user_cfg.typ` override for PDF styling (`export-roam-tree --format pdf`)
-- `ROAM_DUMP_PANDOC_AST` — set to any non-empty value to dump the Pandoc JSON AST to `<output-dir>/<target>.pandoc.json` before the Pandoc conversion step (`export-roam-tree`, both formats)
-- `ROAM_LIVE_TESTS` — set to any non-empty value to enable live tests (e.g. `ROAM_LIVE_TESTS=1`); requires Roam Desktop running locally
+- `GUFFIN_ROAM_LOCAL_API_PORT` — port for Roam Local API (all CLI tools)
+- `GUFFIN_ROAM_GRAPH_NAME` — Roam graph name (all CLI tools)
+- `GUFFIN_ROAM_API_TOKEN` — bearer token for auth (all CLI tools)
+- `GUFFIN_EXPORT_DIR` — output directory for `export-roam-tree`
+- `GUFFIN_CACHE_DIR` — directory for caching downloaded Cloud Firestore assets (`export-roam-tree`)
+- `GUFFIN_PDF_TEMPLATE_DIR` — directory containing a `user_cfg.typ` override for PDF styling (`export-roam-tree --format pdf`)
+- `GUFFIN_DUMP_PANDOC_AST` — set to any non-empty value to dump the Pandoc JSON AST to `<output-dir>/<target>.pandoc.json` before the Pandoc conversion step (`export-roam-tree`, both formats)
+- `GUFFIN_LIVE_TESTS` — set to any non-empty value to enable live tests (e.g. `GUFFIN_LIVE_TESTS=1`); requires Roam Desktop running locally

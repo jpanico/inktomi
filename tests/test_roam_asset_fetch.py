@@ -250,7 +250,7 @@ class TestFetchRoamAssetFetch:
             FetchRoamAsset.fetch(api_endpoint=endpoint, firebase_url=None)  # type: ignore[arg-type]
 
     @pytest.mark.live
-    @pytest.mark.skipif(not os.getenv("ROAM_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
+    @pytest.mark.skipif(not os.getenv("GUFFIN_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
     def test_live(self, live_api_endpoint: ApiEndpoint) -> None:
         """Fetch a Cloud Firestore asset and verify the returned RoamAsset is well-formed."""
         url: HttpUrl = HttpUrl(

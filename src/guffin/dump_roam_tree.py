@@ -199,7 +199,7 @@ def main(
         typer.Option(
             "--port",
             "-p",
-            envvar="ROAM_LOCAL_API_PORT",
+            envvar="GUFFIN_ROAM_LOCAL_API_PORT",
             help="Port for Roam Local API",
         ),
     ],
@@ -208,7 +208,7 @@ def main(
         typer.Option(
             "--graph",
             "-g",
-            envvar="ROAM_GRAPH_NAME",
+            envvar="GUFFIN_ROAM_GRAPH_NAME",
             help="Name of the Roam graph",
         ),
     ],
@@ -217,7 +217,7 @@ def main(
         typer.Option(
             "--token",
             "-t",
-            envvar="ROAM_API_TOKEN",
+            envvar="GUFFIN_ROAM_API_TOKEN",
             help="Bearer token for Roam Local API authentication",
         ),
     ],

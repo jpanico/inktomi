@@ -174,7 +174,7 @@ class TestFetchRoamSchemaFetch:
         assert posted_json["action"] == "data.q"
 
     @pytest.mark.live
-    @pytest.mark.skipif(not os.getenv("ROAM_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
+    @pytest.mark.skipif(not os.getenv("GUFFIN_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
     def test_live_schema_matches_enum(self, live_api_endpoint: ApiEndpoint) -> None:
         """Live test: fetched schema must exactly match the RoamAttribute enum.
 
@@ -207,7 +207,7 @@ class TestFetchRoamSchemaFetch:
         assert not diffs, "\n".join(diffs)
 
     @pytest.mark.live
-    @pytest.mark.skipif(not os.getenv("ROAM_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
+    @pytest.mark.skipif(not os.getenv("GUFFIN_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
     def test_live_fetch(self, live_api_endpoint: ApiEndpoint) -> None:
         """Live test: fetch the real Datomic schema from a running Roam graph."""
         schema: RoamSchema = FetchRoamSchema.fetch(live_api_endpoint)

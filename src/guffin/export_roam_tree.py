@@ -105,7 +105,7 @@ def main(
         typer.Option(
             "--port",
             "-p",
-            envvar="ROAM_LOCAL_API_PORT",
+            envvar="GUFFIN_ROAM_LOCAL_API_PORT",
             help="Port for Roam Local API",
         ),
     ],
@@ -114,7 +114,7 @@ def main(
         typer.Option(
             "--graph",
             "-g",
-            envvar="ROAM_GRAPH_NAME",
+            envvar="GUFFIN_ROAM_GRAPH_NAME",
             help="Name of the Roam graph",
         ),
     ],
@@ -123,7 +123,7 @@ def main(
         typer.Option(
             "--token",
             "-t",
-            envvar="ROAM_API_TOKEN",
+            envvar="GUFFIN_ROAM_API_TOKEN",
             help="Bearer token for Roam Local API authentication",
         ),
     ],
@@ -132,7 +132,7 @@ def main(
         typer.Option(
             "--output-dir",
             "-o",
-            envvar="ROAM_EXPORT_DIR",
+            envvar="GUFFIN_EXPORT_DIR",
             help="Directory to write the exported document into.",
         ),
     ],
@@ -164,7 +164,7 @@ def main(
         typer.Option(
             "--cache-dir",
             "-c",
-            envvar="ROAM_CACHE_DIR",
+            envvar="GUFFIN_CACHE_DIR",
             help=(
                 "Directory for caching downloaded Cloud Firestore assets across runs. "
                 "Applies to both --format markdown (bundle mode) and --format pdf."
@@ -175,7 +175,7 @@ def main(
         pathlib.Path | None,
         typer.Option(
             "--template-dir",
-            envvar="ROAM_PDF_TEMPLATE_DIR",
+            envvar="GUFFIN_PDF_TEMPLATE_DIR",
             help=(
                 "PDF only. Directory containing a user_cfg.typ file that overrides the "
                 "bundled Bergfink Typst template styling. Ignored when --format markdown."
@@ -186,7 +186,7 @@ def main(
         bool,
         typer.Option(
             "--dump-pandoc-ast/--no-dump-pandoc-ast",
-            envvar="ROAM_DUMP_PANDOC_AST",
+            envvar="GUFFIN_DUMP_PANDOC_AST",
             help=(
                 "When enabled, writes the Pandoc JSON AST (serialized Panflute Doc) to "
                 "<output-dir>/<target>.pandoc.json before the Pandoc conversion step. "

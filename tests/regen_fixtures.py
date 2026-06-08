@@ -18,9 +18,9 @@ Run from the project root with the venv active:
   python tests/regen_fixtures.py "[[Test Article]] 2" --prefix test_article_2
 
 Credentials are read from CLI flags first, then env vars, then hard-coded defaults:
-  --port   $ROAM_LOCAL_API_PORT  (default 3333)
-  --graph  $ROAM_GRAPH_NAME      (default SCFH)
-  --token  $ROAM_API_TOKEN
+  --port   $GUFFIN_ROAM_LOCAL_API_PORT  (default 3333)
+  --graph  $GUFFIN_ROAM_GRAPH_NAME      (default SCFH)
+  --token  $GUFFIN_ROAM_API_TOKEN
 """
 
 import argparse
@@ -130,18 +130,18 @@ def main() -> None:
     parser.add_argument(
         "--port",
         type=int,
-        default=int(os.getenv("ROAM_LOCAL_API_PORT", _DEFAULT_PORT)),
-        help="Roam Local API port (default: $ROAM_LOCAL_API_PORT or %(default)s).",
+        default=int(os.getenv("GUFFIN_ROAM_LOCAL_API_PORT", _DEFAULT_PORT)),
+        help="Roam Local API port (default: $GUFFIN_ROAM_LOCAL_API_PORT or %(default)s).",
     )
     parser.add_argument(
         "--graph",
-        default=os.getenv("ROAM_GRAPH_NAME", _DEFAULT_GRAPH),
-        help="Roam graph name (default: $ROAM_GRAPH_NAME or %(default)s).",
+        default=os.getenv("GUFFIN_ROAM_GRAPH_NAME", _DEFAULT_GRAPH),
+        help="Roam graph name (default: $GUFFIN_ROAM_GRAPH_NAME or %(default)s).",
     )
     parser.add_argument(
         "--token",
-        default=os.getenv("ROAM_API_TOKEN", _DEFAULT_TOKEN),
-        help="Roam Local API bearer token (default: $ROAM_API_TOKEN).",
+        default=os.getenv("GUFFIN_ROAM_API_TOKEN", _DEFAULT_TOKEN),
+        help="Roam Local API bearer token (default: $GUFFIN_ROAM_API_TOKEN).",
     )
     args = parser.parse_args()
 
