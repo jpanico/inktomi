@@ -24,7 +24,7 @@ from guffin.roam.roam_local_api import (
     Response as LocalApiResponse,
     invoke_action,
 )
-from guffin.media_type import MediaType
+from guffin.common.media_type import MediaType
 from guffin.roam.roam_primitives import Url
 
 logger = logging.getLogger(__name__)

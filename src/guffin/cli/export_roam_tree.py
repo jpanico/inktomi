@@ -6,19 +6,19 @@ transcribes them into a :class:`~guffin.graph.VertexTree`, and writes the
 result in one of two output formats controlled by ``--format``:
 
 - **Markdown** (default, ``--format markdown``) — renders the tree to
-  CommonMark via :func:`~guffin.md_rendering.vertex_tree_to_md`, then writes in one
+  CommonMark via :func:`~guffin.render.md_rendering.vertex_tree_to_md`, then writes in one
   of two bundle modes:
 
   - **Bundle mode** (default, ``--bundle``) — fetches Cloud Firestore images
     and writes a self-contained ``<output_dir>/<target>.mdbundle/`` directory
-    via :func:`~guffin.md_rendering.bundle_md_document`.  Pass
+    via :func:`~guffin.render.md_rendering.bundle_md_document`.  Pass
     ``--cache-dir`` to avoid re-downloading unchanged assets across runs.
   - **Plain mode** (``--no-bundle``) — writes the CommonMark text directly
     to ``<output_dir>/<target>.md``.
 
 - **PDF** (``--format pdf``) — builds a Pandoc object model directly from
   the :class:`~guffin.graph.VertexTree` via
-  :func:`~guffin.pdf_rendering.render_pdf` and writes
+  :func:`~guffin.render.pdf_rendering.render_pdf` and writes
   ``<output_dir>/<target>.pdf``.  The ``--bundle/--no-bundle`` and
   ``--cache-dir`` options do not apply and are ignored.  Pass
   ``--template-dir`` to supply a directory containing a ``user_cfg.typ``
@@ -60,14 +60,14 @@ from typing import Annotated, Final
 import typer
 
 from guffin.graph import VertexTree
-from guffin.logging_config import configure_logging
-from guffin.md_rendering import render as render_md
-from guffin.pdf_rendering import render as render_pdf
+from guffin.cli.logging_config import configure_logging
+from guffin.render.md_rendering import render as render_md
+from guffin.render.pdf_rendering import render as render_pdf
 from guffin.roam.roam_local_api import ApiEndpoint
 from guffin.roam.roam_node_fetch import RoamNodeNotFoundError
 from guffin.roam.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec, QueryAnchorKind
 from guffin.roam.roam_primitives import UID_PATTERN
-from guffin.roam.roam_tree_loader import fetch_roam_trees
+from guffin.roam_tree_loader import fetch_roam_trees
 
 configure_logging()
 logger = logging.getLogger(__name__)

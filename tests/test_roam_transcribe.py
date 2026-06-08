@@ -17,7 +17,7 @@ from guffin.graph import (
 )
 from guffin.roam.roam_network import min_effective_heading_level
 from guffin.roam.roam_node import RoamNode
-from guffin.roam.roam_transcribe import (
+from guffin.roam_transcribe import (
     to_heading_vertex,
     to_image_vertex,
     to_page_vertex,

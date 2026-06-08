@@ -1,6 +1,6 @@
-"""Tests for guffin.filenames."""
+"""Tests for guffin.common.filenames."""
 
-from guffin.filenames import shell_safe_filename
+from guffin.common.filenames import shell_safe_filename
 
 
 class TestShellSafeFilename:

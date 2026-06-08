@@ -32,15 +32,15 @@ from typing import Final
 
 import yaml
 
-from guffin.filenames import shell_safe_filename
+from guffin.common.filenames import shell_safe_filename
 from guffin.graph import VertexTree, vertex_adapter
-from guffin.logging_config import configure_logging
-from guffin.md_rendering import render
+from guffin.cli.logging_config import configure_logging
+from guffin.render.md_rendering import render
 from guffin.roam.roam_local_api import ApiEndpoint
 from guffin.roam.roam_node import RoamNode
 from guffin.roam.roam_node_fetch import FetchRoamNodes
 from guffin.roam.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, anchor_node
-from guffin.roam.roam_transcribe import transcribe
+from guffin.roam_transcribe import transcribe
 from guffin.roam.roam_tree import NodeTree
 
 configure_logging()

@@ -1,4 +1,4 @@
-"""Unit tests for guffin.export_roam_tree."""
+"""Unit tests for guffin.cli.export_roam_tree."""
 
 import logging
 import pathlib
@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from typer.testing import CliRunner
 
-from guffin.export_roam_tree import app
+from guffin.cli.export_roam_tree import app
 from guffin.roam.roam_node_fetch import RoamNodeNotFoundError
 from guffin.roam.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
 
@@ -33,7 +33,7 @@ class TestExportRoamTreeNoBundle:
         runner: CliRunner = CliRunner()
 
         with patch(
-            "guffin.roam.roam_tree_loader.FetchRoamNodes.fetch_roam_nodes",
+            "guffin.roam_tree_loader.FetchRoamNodes.fetch_roam_nodes",
             return_value=mock_result,
         ):
             # configure_logging() runs at import time and installs a StreamHandler
@@ -78,7 +78,7 @@ class TestExportRoamTreeNotFound:
         )
         runner: CliRunner = CliRunner()
         with patch(
-            "guffin.roam.roam_tree_loader.FetchRoamNodes.fetch_roam_nodes",
+            "guffin.roam_tree_loader.FetchRoamNodes.fetch_roam_nodes",
             side_effect=RoamNodeNotFoundError(not_found_spec),
         ):
             saved_handlers = logging.root.handlers[:]

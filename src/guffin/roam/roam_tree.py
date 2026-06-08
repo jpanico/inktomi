@@ -14,7 +14,7 @@ Public symbols:
 - :class:`NodeTreeDFSIterator` — pre-order depth-first iterator over a :class:`NodeTree`.
 - :func:`is_tree` — validate all tree invariants for a :class:`~guffin.roam.roam_node.RoamNode` root
   and its :data:`~guffin.roam.roam_network.NodeNetwork`; returns a
-  :class:`~guffin.validation.ValidationResult`.
+  :class:`~guffin.common.validation.ValidationResult`.
 """
 
 import logging
@@ -34,7 +34,7 @@ from guffin.roam.roam_network import (
 )
 from guffin.roam.roam_node import RoamNode
 from guffin.roam.roam_primitives import Id
-from guffin.validation import ValidationError, ValidationResult, validate_all
+from guffin.common.validation import ValidationError, ValidationResult, validate_all
 
 logger = logging.getLogger(__name__)
 
@@ -186,7 +186,7 @@ class NodeTree(BaseModel):
 
         Raises:
             ValueError: If *network* violates any tree invariant; the message lists every
-                :class:`~guffin.validation.ValidationError` found.
+                :class:`~guffin.common.validation.ValidationError` found.
         """
         result: Final[ValidationResult] = is_tree(self.root_node, self.tree_network)
         if not result.is_valid:
@@ -290,13 +290,13 @@ class NodeTreeDFSIterator(Iterator[RoamNode]):
 
 @validate_call
 def is_tree(root_node: RoamNode, network: NodeNetwork) -> ValidationResult:
-    """Return a :class:`~guffin.validation.ValidationResult` for all tree invariants on *network*.
+    """Return a :class:`~guffin.common.validation.ValidationResult` for all tree invariants on *network*.
 
     Runs every tree-invariant validator — :func:`~guffin.roam.roam_network.has_unique_ids`,
     :func:`~guffin.roam.roam_network.all_children_present`,
     :func:`~guffin.roam.roam_network.all_parents_present`, and
     :func:`~guffin.roam.roam_network.is_acyclic` — via
-    :func:`~guffin.validation.validate_all`.  All validators run regardless of prior failures;
+    :func:`~guffin.common.validation.validate_all`.  All validators run regardless of prior failures;
     the result accumulates every error found.
 
     Args:
@@ -304,8 +304,8 @@ def is_tree(root_node: RoamNode, network: NodeNetwork) -> ValidationResult:
         network: The collection of nodes to validate.
 
     Returns:
-        A :class:`~guffin.validation.ValidationResult` that is valid when *network* satisfies
-        every tree invariant, or contains one :class:`~guffin.validation.ValidationError` per
+        A :class:`~guffin.common.validation.ValidationResult` that is valid when *network* satisfies
+        every tree invariant, or contains one :class:`~guffin.common.validation.ValidationError` per
         failed validator otherwise.
     """
     logger.debug("root_node=%r, network=%r", root_node, network)

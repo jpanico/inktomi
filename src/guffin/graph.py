@@ -15,9 +15,9 @@ Normalization (transcription) means:
 - Each node is classified into a :class:`VertexType`.
 - The result is self-contained and portable — no Datomic dependencies remain.
 
-Normalization is performed by :func:`~guffin.roam.roam_transcribe.transcribe` (for a full
+Normalization is performed by :func:`~guffin.roam_transcribe.transcribe` (for a full
 :class:`~guffin.roam.roam_tree.NodeTree`) or
-:func:`~guffin.roam.roam_transcribe.transcribe_node` (for a single
+:func:`~guffin.roam_transcribe.transcribe_node` (for a single
 :class:`~guffin.roam.roam_node.RoamNode`).
 
 Public symbols:
@@ -57,7 +57,7 @@ from typing import Annotated, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, validate_call
 
-from guffin.media_type import MediaType
+from guffin.common.media_type import MediaType
 from guffin.roam.roam_primitives import HeadingLevel, Uid, Url
 
 type VertexChildren = list[Uid]
@@ -266,8 +266,8 @@ Example::
 class VertexTree(BaseModel):
     """Normalized (transcribed) form of a :class:`~guffin.roam.roam_tree.NodeTree`.
 
-    Produced by :func:`~guffin.roam.roam_transcribe.transcribe`, which applies
-    :func:`~guffin.roam.roam_transcribe.transcribe_node` to every node in the source
+    Produced by :func:`~guffin.roam_transcribe.transcribe`, which applies
+    :func:`~guffin.roam_transcribe.transcribe_node` to every node in the source
     :class:`~guffin.roam.roam_tree.NodeTree` and collects the results here in the
     same insertion order.  The resulting collection is guaranteed to have exactly
     one :data:`Vertex` per source :class:`~guffin.roam.roam_node.RoamNode` and

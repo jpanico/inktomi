@@ -1,7 +1,7 @@
 """Render a :class:`~guffin.graph.VertexTree` to CommonMark and write Markdown exports to disk.
 
 Converts the normalized vertex tree produced by
-:func:`~guffin.roam.roam_transcribe.transcribe` to a CommonMark document via the
+:func:`~guffin.roam_transcribe.transcribe` to a CommonMark document via the
 Pandoc object model (see :mod:`~guffin.pandoc_rendering`), and writes the
 result to disk as either a plain ``.md`` file or a self-contained
 ``.mdbundle`` directory that embeds downloaded Cloud Firestore images.
@@ -10,7 +10,7 @@ Public symbols:
 
 - :func:`render` — end-to-end: render a :class:`~guffin.graph.VertexTree` to
   a ``.mdbundle`` directory or plain ``.md`` file (parallel entry point to
-  :func:`~guffin.pdf_rendering.render`).
+  :func:`~guffin.render.pdf_rendering.render`).
 """
 
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownParameterType=false, reportUnknownArgumentType=false
@@ -26,9 +26,9 @@ import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
 from pydantic import validate_call
 
-from guffin.filenames import shell_safe_filename
+from guffin.common.filenames import shell_safe_filename
 from guffin.graph import VertexTree
-from guffin.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
+from guffin.render.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam.roam_local_api import ApiEndpoint
 from guffin.roam.roam_primitives import Uid
 
@@ -48,13 +48,13 @@ def render(
     """Render *vertex_tree* to a Markdown file or bundle inside *output_dir*.
 
     Converts *vertex_tree* to a Panflute :class:`~panflute.Doc` via
-    :func:`~guffin.pandoc_rendering.vertex_tree_to_pandoc` (with the page
+    :func:`~guffin.render.pandoc_rendering.vertex_tree_to_pandoc` (with the page
     title rendered as an H1 header), then invokes Pandoc to produce
     CommonMark output.  Writes the result in one of two modes controlled by
     *bundle*:
 
     - ``bundle=True`` (default) — fetches Cloud Firestore image assets via
-      :func:`~guffin.pandoc_rendering.fetch_images`, places them in the
+      :func:`~guffin.render.pandoc_rendering.fetch_images`, places them in the
       bundle directory, and writes a self-contained
       ``<normalized_filename_stem>.mdbundle/`` directory containing the
       Markdown file and all images.  Image links in the Markdown reference

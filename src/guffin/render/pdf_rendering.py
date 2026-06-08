@@ -1,13 +1,13 @@
 """Render a :class:`~guffin.graph.VertexTree` to a PDF via the Pandoc object model.
 
 Converts the normalized vertex tree produced by
-:func:`~guffin.roam.roam_transcribe.transcribe` into a Panflute
-:class:`~panflute.Doc` via :func:`~guffin.pandoc_rendering.vertex_tree_to_pandoc`,
+:func:`~guffin.roam_transcribe.transcribe` into a Panflute
+:class:`~panflute.Doc` via :func:`~guffin.render.pandoc_rendering.vertex_tree_to_pandoc`,
 then exports the document to PDF by serializing the Doc to Pandoc JSON and
 invoking Pandoc via :mod:`pypandoc`.
 
 Cloud Firestore image assets are fetched via
-:func:`~guffin.pandoc_rendering.fetch_images`, written to a temporary
+:func:`~guffin.render.pandoc_rendering.fetch_images`, written to a temporary
 directory, and embedded in the PDF as local-path
 :class:`~panflute.Image` elements.  An optional *cache_dir* avoids
 re-downloading unchanged assets across runs.
@@ -38,9 +38,9 @@ import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
 from pydantic import validate_call
 
-from guffin.filenames import shell_safe_filename
+from guffin.common.filenames import shell_safe_filename
 from guffin.graph import VertexTree
-from guffin.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
+from guffin.render.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam.roam_local_api import ApiEndpoint
 
 logger = logging.getLogger(__name__)
@@ -71,12 +71,12 @@ def render(
     """Render *vertex_tree* to a PDF file inside *output_dir*.
 
     Derives the output filename from *filename_stem* via
-    :func:`~guffin.filenames.shell_safe_filename`, creating
+    :func:`~guffin.common.filenames.shell_safe_filename`, creating
     ``<output_dir>/<normalized_filename_stem>.pdf``.  Fetches all Cloud
     Firestore image assets into a temporary directory via
-    :func:`~guffin.pandoc_rendering.fetch_images`, builds a Panflute
+    :func:`~guffin.render.pandoc_rendering.fetch_images`, builds a Panflute
     :class:`~panflute.Doc` via
-    :func:`~guffin.pandoc_rendering.vertex_tree_to_pandoc`, serializes it
+    :func:`~guffin.render.pandoc_rendering.vertex_tree_to_pandoc`, serializes it
     to Pandoc JSON, and invokes Pandoc (with the Typst PDF engine and the
     bundled Bergfink template) via :mod:`pypandoc` to produce the PDF.  The
     temporary image directory is removed after Pandoc completes.

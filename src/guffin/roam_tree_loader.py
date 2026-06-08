@@ -17,7 +17,7 @@ from guffin.roam.roam_local_api import ApiEndpoint
 from guffin.roam.roam_node_fetch import FetchRoamNodes
 from guffin.roam.roam_node_fetch_result import NodeFetchResult, NodeFetchSpec
 from guffin.roam.roam_tree import NodeTree
-from guffin.roam.roam_transcribe import transcribe
+from guffin.roam_transcribe import transcribe
 
 logger = logging.getLogger(__name__)
 

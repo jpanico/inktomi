@@ -40,20 +40,24 @@ GUFFIN_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
 
 ## Project Structure
 - `src/guffin/` — main package
-  - **CLI entry points**
+  - **`cli/` sub-package** (`src/guffin/cli/`) — CLI entry points and supporting infrastructure
     - `dump_roam_tree.py` — dumps a Roam page or node subtree as a Rich tree to the terminal; supports `--vertex-tree`/`--node-tree`/`--raw-results` flags (`dump-roam-tree`)
     - `export_roam_tree.py` — exports a Roam page or node subtree; `--format markdown` (default) writes a `.mdbundle` or plain `.md`; `--format pdf` writes a PDF via Panflute + Pandoc + Typst; target is a page title or node UID (`export-roam-tree`)
-  - **Core logic**
+    - `logging_config.py` — colorized logging (`configure_logging()`); reads `LOG_LEVEL` env var
+  - **Core pipeline**
+    - `roam_transcribe.py` — transcribes `NodeTree` → `VertexTree`; applies `to_pandoc_md()` to all text fields
+    - `roam_md_to_pandoc_md.py` — converts Roam-flavored Markdown strings to Pandoc Markdown; `to_pandoc_md()` is the main entry point
+    - `roam_tree_loader.py` — shared tree-loading pipeline; `fetch_roam_trees` resolves a target, fetches nodes, and returns a `(NodeFetchResult, VertexTree | None)` pair
+    - `graph.py` — `Vertex` union, `VertexTree`, `VertexTreeDFSIterator`, `root_vertex()`; filter helpers `page_vertices()`, `heading_vertices()`, `text_content_vertices()`, `image_vertices()`, `image_urls()`
+  - **`render/` sub-package** (`src/guffin/render/`) — rendering pipeline modules
     - `pandoc_rendering.py` — shared Pandoc/Panflute rendering utilities; `vertex_tree_to_pandoc()` builds a Panflute `Doc` from a `VertexTree` (batch-parsing inline Pandoc Markdown via a single Pandoc call); `fetch_images()` fetches Cloud Firestore image assets
     - `md_rendering.py` — renders a `VertexTree` to Markdown: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to CommonMark via Pandoc, writes a plain `.md` or `.mdbundle/` directory
     - `pdf_rendering.py` — renders a `VertexTree` to PDF: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to PDF via Pandoc + Typst
-    - `filenames.py` — `shell_safe_filename()` normalizes strings to POSIX-safe filenames
     - `rich_rendering.py` — Rich panel/tree rendering for `NodeTree` and `VertexTree`
+  - **`common/` sub-package** (`src/guffin/common/`) — cross-cutting helpers shared across the package
+    - `filenames.py` — `shell_safe_filename()` normalizes strings to POSIX-safe filenames
+    - `media_type.py` — `MediaType` enum; MIME type detection from file names
     - `validation.py` — generic accumulator-pipeline validation framework
-  - **Model layer**
-    - `graph.py` — `Vertex` union, `VertexTree`, `VertexTreeDFSIterator`, `root_vertex()`; filter helpers `page_vertices()`, `heading_vertices()`, `text_content_vertices()`, `image_vertices()`, `image_urls()`
-  - **Infrastructure**
-    - `logging_config.py` — colorized logging (`configure_logging()`); reads `LOG_LEVEL` env var
   - **Templates**
     - `templates/` — Bergfink Typst/Pandoc PDF template (package data; see `src/guffin/templates/README.md`); `user_cfg.typ` is the intended customization point
   - **`roam/` sub-package** (`src/guffin/roam/`) — all Roam Research data model, API, and processing modules
@@ -68,9 +72,6 @@ GUFFIN_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `roam_node_fetch.py` — fetches `RoamNode` records via Local API; `fetch_roam_nodes` dispatches on page title vs. node UID
     - `roam_schema_fetch.py` — fetches Datomic schema via Local API
     - `roam_asset_fetch.py` — fetches Firestore assets via Local API
-    - `roam_md_to_pandoc_md.py` — converts Roam-flavored Markdown strings to Pandoc Markdown; `to_pandoc_md()` is the main entry point
-    - `roam_transcribe.py` — transcribes `NodeTree` → `VertexTree`; applies `to_pandoc_md()` to all text fields
-    - `roam_tree_loader.py` — shared tree-loading pipeline; `fetch_roam_trees` resolves a target, fetches nodes, and returns a `(NodeFetchResult, VertexTree | None)` pair
 - `scripts/` — shell wrapper scripts (`dump-roam-tree.sh`, `export-roam-tree.sh`)
 - `tests/fixtures/` — sample markdown, images, JSON, YAML for tests
 - `tests/regen_fixtures.py` — developer script; regenerates all six fixture files for a given Roam page title or node UID (see **Test Fixtures** below)
@@ -128,6 +129,18 @@ python tests/regen_fixtures.py "[[Test Article]] 2" --prefix test_article_2
 ## Architecture
 - **CLI isolation**: only `export_roam_tree.py` and `dump_roam_tree.py` may import or use the Typer package. All other modules must be front-end agnostic so they can be used outside a CLI context without pulling in CLI dependencies.
 - **Exit-point isolation**: all explicit process-exit calls (`typer.Exit`, `sys.exit`, etc.) must live exclusively in the CLI modules. Library code propagates exceptions; CLIs decide whether and how to exit. This keeps control-flow transparent and makes library code testable without mocking exit behaviour.
+
+### Sub-package dependency rules
+
+| Package | May depend on | May NOT depend on |
+|---|---|---|
+| `common/` | stdlib, third-party only | any `guffin` package |
+| `roam/` | `common/` | `guffin` root modules, `render/`, `cli/` |
+| `guffin` (root modules) | `roam/`, `common/` | `render/`, `cli/` |
+| `render/` | `common/`, `roam/`, `guffin` root modules | `cli/` |
+| `cli/` | `common/`, `roam/`, `guffin` root modules, `render/` | — |
+
+No package may take a dependency on `cli/`.
 
 ## Modern Python Requirements (Python 3.14)
 All code written or modified by Claude MUST follow these conventions — no exceptions:

@@ -11,7 +11,7 @@ from guffin.roam.roam_network import (
 from guffin.roam.roam_node import RoamNode
 from guffin.roam.roam_primitives import Id, IdObject
 from guffin.roam.roam_tree import NodeTree, NodeTreeDFSIterator, is_tree
-from guffin.validation import ValidationError
+from guffin.common.validation import ValidationError
 
 from conftest import STUB_TIME, STUB_USER, article1_node_tree
 

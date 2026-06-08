@@ -38,11 +38,11 @@ from guffin.graph import (
     VertexTree,
     VertexType,
 )
-from guffin.roam.roam_md_to_pandoc_md import to_pandoc_md
+from guffin.roam_md_to_pandoc_md import to_pandoc_md
 from guffin.roam.roam_network import min_effective_heading_level
 from guffin.roam.roam_node import NodeType, RoamNode, effective_heading_level, node_type
 from guffin.roam.roam_tree import NodeTree
-from guffin.media_type import MediaType
+from guffin.common.media_type import MediaType
 from guffin.roam.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, Url
 
 logger = logging.getLogger(__name__)

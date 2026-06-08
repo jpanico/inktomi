@@ -3,15 +3,15 @@
 Public symbols:
 
 - :data:`NodeNetwork` — a collection of :class:`~guffin.roam.roam_node.RoamNode` instances.
-- :func:`all_children_present` — :data:`~guffin.validation.Validator` requiring all child ids in a
+- :func:`all_children_present` — :data:`~guffin.common.validation.Validator` requiring all child ids in a
   :data:`NodeNetwork` to resolve to member nodes.
 - :func:`all_descendants` — collect all nodes reachable from an ancestor via child edges.
 - :func:`all_parents_present` — validator function requiring all non-root parent ids in a
   :data:`NodeNetwork` to resolve to member nodes; accepts a *root_node* argument whose own
   parent ids are exempt from the check.
-- :func:`has_unique_ids` — :data:`~guffin.validation.Validator` requiring every
+- :func:`has_unique_ids` — :data:`~guffin.common.validation.Validator` requiring every
   :attr:`~guffin.roam.roam_node.RoamNode.id` in a :data:`NodeNetwork` to be unique.
-- :func:`is_acyclic` — :data:`~guffin.validation.Validator` requiring the child-edge graph of a
+- :func:`is_acyclic` — :data:`~guffin.common.validation.Validator` requiring the child-edge graph of a
   :data:`NodeNetwork` to be cycle-free.
 - :func:`refs_ids` — return the set of all :attr:`~guffin.roam.roam_node.RoamNode.refs` ids across every
   node in a :data:`NodeNetwork`.
@@ -30,7 +30,7 @@ from pydantic import validate_call
 
 from guffin.roam.roam_node import RoamNode, effective_heading_level
 from guffin.roam.roam_primitives import HeadingLevel, Id, Uid
-from guffin.validation import ValidationError
+from guffin.common.validation import ValidationError
 
 type NodeNetwork = list[RoamNode]
 """A collection of :class:`~guffin.roam.roam_node.RoamNode` instances.
@@ -58,7 +58,7 @@ def all_children_present(network: NodeNetwork) -> ValidationError | None:
 
     Returns:
         ``None`` if every child id in *network* resolves to a node in *network*;
-        a :class:`~guffin.validation.ValidationError` listing the sorted
+        a :class:`~guffin.common.validation.ValidationError` listing the sorted
         absent child ids and the sorted ids of the nodes that referenced them otherwise.
     """
     network_ids: Final[set[Id]] = {n.id for n in network}
@@ -94,7 +94,7 @@ def all_parents_present(network: NodeNetwork, root_node: RoamNode) -> Validation
 
     Returns:
         ``None`` if every applicable parent id in *network* resolves to a node in
-        *network*; a :class:`~guffin.validation.ValidationError` listing the sorted
+        *network*; a :class:`~guffin.common.validation.ValidationError` listing the sorted
         absent parent ids and the sorted ids of the nodes that referenced them otherwise.
     """
     network_ids: Final[set[Id]] = {n.id for n in network}
@@ -128,7 +128,7 @@ def has_unique_ids(network: NodeNetwork) -> ValidationError | None:
 
     Returns:
         ``None`` if all node ids in *network* are distinct; a
-        :class:`~guffin.validation.ValidationError` listing the sorted
+        :class:`~guffin.common.validation.ValidationError` listing the sorted
         duplicate ids otherwise.
     """
     ids: Final[list[Id]] = [n.id for n in network]
@@ -164,7 +164,7 @@ def is_acyclic(network: NodeNetwork) -> ValidationError | None:
 
     Returns:
         ``None`` if *network* contains no directed cycles; a
-        :class:`~guffin.validation.ValidationError` naming the uid of the
+        :class:`~guffin.common.validation.ValidationError` naming the uid of the
         cycle-involved node otherwise.
     """
     id_to_node: Final[dict[Id, RoamNode]] = {n.id: n for n in network}

@@ -1,6 +1,6 @@
 """Tests for the media_type module."""
 
-from guffin.media_type import MediaType, is_image_type
+from guffin.common.media_type import MediaType, is_image_type
 
 
 class TestMediaTypeFromFileName:

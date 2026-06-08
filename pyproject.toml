@@ -29,8 +29,8 @@ dev = [
 ]
 
 [project.scripts]
-dump-roam-tree = "guffin.dump_roam_tree:app"
-export-roam-tree = "guffin.export_roam_tree:app"
+dump-roam-tree = "guffin.cli.dump_roam_tree:app"
+export-roam-tree = "guffin.cli.export_roam_tree:app"
 
 [tool.hatch.envs.default]
 features = ["dev"]

@@ -1,11 +1,11 @@
-"""Unit tests for guffin.md_rendering."""
+"""Unit tests for guffin.render.md_rendering."""
 
 from io import StringIO
 
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
 
-from guffin.pandoc_rendering import vertex_tree_to_pandoc
+from guffin.render.pandoc_rendering import vertex_tree_to_pandoc
 
 from conftest import FIXTURES_MD_DIR, article1_vertex_tree
 
