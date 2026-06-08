@@ -72,8 +72,8 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  python tests/regen_fixtures.py \"[[Test Article]] 1\" --prefix test_article_1\n"
-            "  python tests/regen_fixtures.py \"[[Test Article]] 2\" --prefix test_article_2\n"
+            '  python tests/regen_fixtures.py "[[Test Article]] 1" --prefix test_article_1\n'
+            '  python tests/regen_fixtures.py "[[Test Article]] 2" --prefix test_article_2\n'
         ),
     )
     parser.add_argument("qualifier", help="Roam page title or 9-char node UID.")
@@ -176,9 +176,9 @@ def main() -> None:
             api_endpoint=endpoint,
             bundle=False,
         )
-        rendered: Final[str] = (
-            pathlib.Path(tmp_dir) / f"{shell_safe_filename(qualifier)}.md"
-        ).read_text(encoding="utf-8")
+        rendered: Final[str] = (pathlib.Path(tmp_dir) / f"{shell_safe_filename(qualifier)}.md").read_text(
+            encoding="utf-8"
+        )
     md_path.write_text(rendered, encoding="utf-8")
     print(f"  wrote {md_path}")
 
