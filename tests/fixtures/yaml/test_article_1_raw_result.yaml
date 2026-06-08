@@ -1,0 +1,290 @@
+- - prevent-clean: 1773090962400
+    children:
+    - id: 4224
+    user:
+      id: 3
+    id: 4223
+    uid: LBFKibPIj
+    word-count: 9
+    edit-user:
+      id: 3
+    time: 1773090962400
+    title: Test Article
+    edit-nonce: 0iIGJ1buX
+    edit-time: 1780843750454
+- - heading: 3
+    string: Section 2.1.1
+    children:
+    - id: 4028
+    user:
+      id: 3
+    id: 4025
+    uid: yFUau9Cpg
+    parents:
+    - id: 3327
+    - id: 3329
+    - id: 3332
+    time: 1771515468425
+    order: 0
+    open: true
+    page:
+      id: 3327
+- - prevent-clean: 1775578686108
+    user:
+      id: 3
+    id: 5450
+    uid: OexZiLR_O
+    word-count: 0
+    edit-user:
+      id: 3
+    time: 1773784559632
+    title: '>'
+    edit-nonce: 2POM1zS7j
+    edit-time: 1773784559631
+- - heading: 1
+    string: Section 1
+    children:
+    - id: 3331
+    - id: 4758
+    user:
+      id: 3
+    id: 3328
+    uid: 0EgPyHSZi
+    parents:
+    - id: 3327
+    time: 1770568919008
+    order: 1
+    seen-by:
+    - id: 3
+    open: true
+    page:
+      id: 3327
+- - heading: 1
+    string: Section 3
+    children:
+    - id: 3333
+    user:
+      id: 3
+    id: 3330
+    uid: 40bvW14UU
+    parents:
+    - id: 3327
+    time: 1770568926764
+    order: 3
+    open: true
+    page:
+      id: 3327
+- - heading: 3
+    string: illustration 1.1
+    children:
+    - id: 11124
+    user:
+      id: 3
+    id: 3334
+    uid: TaN67WqnA
+    parents:
+    - id: 3327
+    - id: 3328
+    - id: 3331
+    time: 1771512875819
+    order: 0
+    seen-by:
+    - id: 3
+    open: true
+    page:
+      id: 3327
+- - heading: 0
+    string: 'AI assistant (Claude Opus 4.6): '
+    prevent-clean: 1780850098668
+    user:
+      id: 3
+    id: 4758
+    uid: Ma5KGUH9O
+    parents:
+    - id: 3327
+    - id: 3328
+    time: 1773355356452
+    order: 1
+    view-type: bullet
+    open: true
+    page:
+      id: 3327
+- - heading: 1
+    string: Section 2
+    children:
+    - id: 3332
+    - id: 4026
+    user:
+      id: 3
+    id: 3329
+    uid: wdMgyBiP9
+    parents:
+    - id: 3327
+    time: 1770568922821
+    order: 2
+    open: true
+    page:
+      id: 3327
+- - string: '![A flower](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F_otAwc2B9g.jpeg.enc?alt=media&token=25c3ac2a-f62e-462e-99b4-99b337a476c0)'
+    user:
+      id: 3
+    id: 11124
+    uid: uj8YolCoE
+    parents:
+    - id: 3327
+    - id: 3328
+    - id: 3331
+    - id: 3334
+    time: 1780844520106
+    order: 0
+    seen-by:
+    - id: 3
+    page:
+      id: 3327
+- - heading: 2
+    string: Section 1.1
+    children:
+    - id: 3334
+    user:
+      id: 3
+    id: 3331
+    uid: 3BX-iWc-p
+    parents:
+    - id: 3327
+    - id: 3328
+    time: 1770568958676
+    order: 0
+    seen-by:
+    - id: 3
+    open: true
+    page:
+      id: 3327
+- - string: Section 2.1.1.1
+    user:
+      id: 3
+    id: 4028
+    uid: bxkcECGwN
+    parents:
+    - id: 3327
+    - id: 3329
+    - id: 3332
+    - id: 4025
+    time: 1780774148272
+    props:
+      ah-level: h4
+    order: 0
+    open: false
+    page:
+      id: 3327
+- - prevent-clean: 1774919203079
+    user:
+      id: 3
+    id: 5462
+    uid: ZgUWBRb7j
+    word-count: 0
+    edit-user:
+      id: 3
+    time: 1773788725523
+    title: '!INFO'
+    edit-nonce: z3caCCN5O
+    edit-time: 1773788725520
+- - heading: 2
+    string: Section 2.1
+    children:
+    - id: 4025
+    user:
+      id: 3
+    id: 3332
+    uid: drtANJYTg
+    parents:
+    - id: 3327
+    - id: 3329
+    time: 1770568965850
+    order: 0
+    open: true
+    page:
+      id: 3327
+- - string: '[[>]] [[!INFO]] THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
+      – DO NOT REMOVE
+
+      Features:
+
+      - Page is completely self-contained – there are `no Roam embeds` of any kind
+
+      - 3 top-level `headers`, all H1
+
+      - nested `headers` down to H4, via __Augmented Headings__ extension
+
+      - a node, (Ma5KGUH9O) "AI assistant (Claude Opus 4.6):" that has property: BLOCK_HEADING
+      = 0, which is not a valid Markdown level. It seems that this can happen when
+      first a valid level value (1-6) is assigned, and then the heading level is removed
+      altogether through the Roam UI.
+
+      - a single JPEG `image` that has not been resized through the Roam UI
+
+      - this INFO `Callout box`, which contains Roam `page references` '
+    user:
+      id: 3
+    id: 11113
+    uid: cNW8lmXIM
+    parents:
+    - id: 3327
+    time: 1780935475280
+    order: 0
+    open: true
+    page:
+      id: 3327
+    refs:
+    - id: 5450
+    - id: 5462
+- - heading: 2
+    string: Section 2.2
+    user:
+      id: 3
+    id: 4026
+    uid: 5f1ahOFdp
+    parents:
+    - id: 3327
+    - id: 3329
+    time: 1772563665137
+    order: 1
+    open: false
+    page:
+      id: 3327
+- - prevent-clean: 1773356473975
+    children:
+    - id: 3328
+    - id: 3329
+    - id: 3330
+    - id: 11113
+    user:
+      id: 3
+    sidebar: 18
+    id: 3327
+    uid: 6olpFWiw1
+    word-count: 135
+    edit-user:
+      id: 3
+    time: 1780882773773
+    title: '[[Test Article]] 1'
+    seen-by:
+    - id: 3
+    edit-nonce: 6AwV9hui_
+    view-type: bullet
+    edit-time: 1780935475280
+    refs:
+    - id: 4223
+- - heading: 2
+    string: Section 3.1
+    user:
+      id: 3
+    id: 3333
+    uid: JW5PswS6v
+    parents:
+    - id: 3327
+    - id: 3330
+    time: 1770568971504
+    order: 0
+    open: false
+    page:
+      id: 3327

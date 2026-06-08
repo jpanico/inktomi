@@ -47,12 +47,56 @@ configure_logging()
 
 FIXTURES_YAML: Final[pathlib.Path] = pathlib.Path("tests/fixtures/yaml")
 FIXTURES_MD: Final[pathlib.Path] = pathlib.Path("tests/fixtures/markdown")
+README_PATH: Final[pathlib.Path] = pathlib.Path("tests/fixtures/README.md")
 
 _TRANSIENT_FIELDS: Final[frozenset[str]] = frozenset({"open", "sidebar", "lookup", "seen_by"})
 
 _DEFAULT_PORT: Final[str] = "3333"
 _DEFAULT_GRAPH: Final[str] = "SCFH"
 _DEFAULT_TOKEN: Final[str] = "roam-graph-local-token-OR3s0AcJn5rwxPJ6MYaqnIyjNi7ai"
+
+_CALLOUT_MARKER: Final[str] = "[[>]] [[!INFO]] THIS PAGE IS USED FOR TESTING [GUFFIN]("
+_PROPERTIES_MARKER: Final[str] = "Features:"
+
+
+def _extract_features(callout_string: str) -> str | None:
+    """Return the feature bullet list that follows 'Features:' in a callout node string.
+
+    Lines starting with '-- ' are Roam's convention for sub-list items; they are
+    converted to CommonMark indented bullets ('  - ').
+    """
+    idx: Final[int] = callout_string.find(_PROPERTIES_MARKER)
+    if idx == -1:
+        return None
+    raw: Final[str] = callout_string[idx + len(_PROPERTIES_MARKER) :].strip()
+    normalized: Final[list[str]] = ["  - " + line[3:] if line.startswith("-- ") else line for line in raw.splitlines()]
+    return "\n".join(normalized)
+
+
+def _update_readme_article_features(qualifier: str, features: str) -> None:
+    """Replace the body of the '#### `<qualifier>`' subsection in README_PATH with features."""
+    text: Final[str] = README_PATH.read_text(encoding="utf-8")
+    lines: Final[list[str]] = text.splitlines(keepends=True)
+    heading: Final[str] = f"#### `{qualifier}`"
+    start_idx: int | None = None
+    end_idx: int | None = None
+    for i, line in enumerate(lines):
+        stripped = line.rstrip("\n").rstrip()
+        if stripped == heading:
+            start_idx = i
+        elif start_idx is not None and i > start_idx + 1:
+            if stripped.startswith("####") or stripped.startswith("###") or stripped.startswith("##"):
+                end_idx = i
+                break
+    if start_idx is None:
+        print(f"  WARNING: '#### `{qualifier}`' not found in {README_PATH}; skipping README update")
+        return
+    if end_idx is None:
+        end_idx = len(lines)
+    new_content: Final[str] = f"{heading}\n\n{features}\n\n"
+    new_lines: Final[list[str]] = lines[:start_idx] + [new_content] + lines[end_idx:]
+    README_PATH.write_text("".join(new_lines), encoding="utf-8")
+    print(f"  updated {README_PATH} (#### `{qualifier}` features)")
 
 
 def _stub_node_dict(node: RoamNode) -> dict[str, object]:
@@ -181,6 +225,20 @@ def main() -> None:
         )
     md_path.write_text(rendered, encoding="utf-8")
     print(f"  wrote {md_path}")
+
+    # Update README Article Features section from callout node
+    callout_node: Final[RoamNode | None] = next(
+        (n for n in nodes if n.string is not None and n.string.startswith(_CALLOUT_MARKER)),
+        None,
+    )
+    if callout_node is None or callout_node.string is None:
+        print(f"  WARNING: callout node not found for '{qualifier}'; skipping README update")
+    else:
+        features_text: Final[str | None] = _extract_features(callout_node.string)
+        if features_text is None:
+            print(f"  WARNING: '{_PROPERTIES_MARKER}' not found in callout node; skipping README update")
+        else:
+            _update_readme_article_features(qualifier, features_text)
 
     # -------------------------------------------------------------------------
     # Path B: include_refs=True  →  raw_result, anchor_tree, nodes_by_uid

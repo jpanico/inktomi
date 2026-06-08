@@ -29,10 +29,34 @@ This directory contains test data used by the guffin test suite.
 ## Test Articles
 
 Two live Roam pages serve as the primary test sources: `[[Test Article]] 1` and
-`[[Test Article]] 2`.  For each source, `tests/regen_fixtures.py` generates six
-fixture files that capture different stages and views of the data pipeline.
+`[[Test Article]] 2`. 
 
-### No-refs fixture set (`include_refs=False`) — a linear pipeline
+### Article Features
+
+#### `[[Test Article]] 1`
+
+- Page is completely self-contained – there are `no Roam embeds` of any kind
+- 3 top-level `headers`, all H1
+- nested `headers` down to H4, via __Augmented Headings__ extension
+- a node, (Ma5KGUH9O) "AI assistant (Claude Opus 4.6):" that has property: BLOCK_HEADING = 0, which is not a valid Markdown level. It seems that this can happen when first a valid level value (1-6) is assigned, and then the heading level is removed altogether through the Roam UI.
+- a single JPEG `image` that has not been resized through the Roam UI
+- this INFO `Callout box`, which contains Roam `page references`
+
+#### `[[Test Article]] 2`
+
+- This page is primarily a demonstration of different kinds of refs:
+  - internal block ref (to block on this page)
+  - external block ref (to block on a __different page__)
+  - internal embed (of block from this page)
+  - external embed (of block from __different page__)
+- no`headers`
+- this INFO `Callout box`, which contains Roam `page references`
+
+### Fixtures
+
+For each source article, `tests/regen_fixtures.py` generates six fixture files that capture different stages and views of the data pipeline.
+
+#### No-refs fixture set (`include_refs=False`) — a linear pipeline
 
 These three fixtures represent successive stages of the export pipeline applied
 to the anchor subtree alone, with no referenced pages included:
@@ -43,7 +67,7 @@ to the anchor subtree alone, with no referenced pages included:
 | `<prefix>_vertices.yaml` | The same subtree transcribed into the export model (`VertexTree`) |
 | `<prefix>_expected.md` | The fully rendered CommonMark output |
 
-### With-refs fixture set (`include_refs=True`) — three views of the same fetch
+#### With-refs fixture set (`include_refs=True`) — three views of the same fetch
 
 These three fixtures are all derived from a single API call that pulls the anchor
 subtree together with every page and block it references.  Rather than a pipeline,
