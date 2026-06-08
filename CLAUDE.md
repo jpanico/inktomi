@@ -45,9 +45,9 @@ GUFFIN_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `export_roam_tree.py` — exports a Roam page or node subtree; `--format markdown` (default) writes a `.mdbundle` or plain `.md`; `--format pdf` writes a PDF via Panflute + Pandoc + Typst; target is a page title or node UID (`export-roam-tree`)
   - **Core logic**
     - `roam_tree_loader.py` — shared tree-loading pipeline; `fetch_roam_trees` resolves a target, fetches nodes, and returns a `(NodeFetchResult, VertexTree | None)` pair
-    - `roam_md_to_commonmark.py` — converts Roam-flavored Markdown strings to CommonMark; `to_commonmark()` is the main entry point
-    - `roam_transcribe.py` — transcribes `NodeTree` → `VertexTree`; applies `to_commonmark()` to all text fields
-    - `pandoc_rendering.py` — shared Pandoc/Panflute rendering utilities; `vertex_tree_to_pandoc()` builds a Panflute `Doc` from a `VertexTree` (batch-parsing inline CommonMark via a single Pandoc call); `fetch_images()` fetches Cloud Firestore image assets
+    - `roam_md_to_pandoc_md.py` — converts Roam-flavored Markdown strings to Pandoc Markdown; `to_pandoc_md()` is the main entry point
+    - `roam_transcribe.py` — transcribes `NodeTree` → `VertexTree`; applies `to_pandoc_md()` to all text fields
+    - `pandoc_rendering.py` — shared Pandoc/Panflute rendering utilities; `vertex_tree_to_pandoc()` builds a Panflute `Doc` from a `VertexTree` (batch-parsing inline Pandoc Markdown via a single Pandoc call); `fetch_images()` fetches Cloud Firestore image assets
     - `md_rendering.py` — renders a `VertexTree` to Markdown: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to CommonMark via Pandoc, writes a plain `.md` or `.mdbundle/` directory
     - `pdf_rendering.py` — renders a `VertexTree` to PDF: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to PDF via Pandoc + Typst
     - `filenames.py` — `shell_safe_filename()` normalizes strings to POSIX-safe filenames

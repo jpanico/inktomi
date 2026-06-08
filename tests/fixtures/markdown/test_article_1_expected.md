@@ -1,6 +1,6 @@
 # Test Article 1
 
-\> !INFO THIS PAGE IS USED FOR TESTING GUFFIN(https://github.com/jpanico/guffin) – DO NOT REMOVE
+\> !INFO THIS PAGE IS USED FOR TESTING \[GUFFIN\](https://github.com/jpanico/guffin) – DO NOT REMOVE
 Features:
 - Page is completely self-contained – there are \`no Roam embeds\` of any kind
 - 3 top-level \`headers\`, all H1

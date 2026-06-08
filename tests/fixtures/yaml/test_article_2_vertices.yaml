@@ -15,7 +15,7 @@
   text: '{{embed: ((drtANJYTg))}}'
 - vertex_type: roam/text-content
   uid: I1QOMCtdJ
-  text: '> !INFO THIS PAGE IS USED FOR TESTING GUFFIN(https://github.com/jpanico/guffin)
+  text: '> !INFO THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
     – DO NOT REMOVE
 
     Features:

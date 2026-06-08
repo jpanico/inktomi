@@ -38,7 +38,7 @@ from guffin.graph import (
     VertexTree,
     VertexType,
 )
-from guffin.roam_md_to_commonmark import to_commonmark
+from guffin.roam_md_to_pandoc_md import to_pandoc_md
 from guffin.roam_network import min_effective_heading_level
 from guffin.roam_node import RoamNode, effective_heading_level, is_image_node
 from guffin.roam_tree import NodeTree
@@ -213,7 +213,7 @@ def to_page_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> PageVertex:
         raise ValueError(f"RoamNode uid={node.uid!r} has no 'title'")
     return PageVertex(
         uid=node.uid,
-        title=to_commonmark(node.title),
+        title=to_pandoc_md(node.title),
         children=_resolve_children(node, id_map),
         refs=_resolve_refs(node, id_map),
     )
@@ -282,7 +282,7 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset
         raise ValueError(f"RoamNode uid={node.uid!r} has no effective heading level")
     return HeadingVertex(
         uid=node.uid,
-        text=to_commonmark(node.string),
+        text=to_pandoc_md(node.string),
         heading=heading + heading_offset,
         children=_resolve_children(node, id_map),
         refs=_resolve_refs(node, id_map),
@@ -310,7 +310,7 @@ def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextCo
         raise ValueError(f"RoamNode uid={node.uid!r} has no 'string'")
     return TextContentVertex(
         uid=node.uid,
-        text=to_commonmark(node.string),
+        text=to_pandoc_md(node.string),
         children=_resolve_children(node, id_map),
         refs=_resolve_refs(node, id_map),
     )

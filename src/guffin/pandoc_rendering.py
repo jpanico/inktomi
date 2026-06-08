@@ -2,7 +2,7 @@
 
 Converts the normalized vertex tree produced by
 :func:`~guffin.roam_transcribe.transcribe` into a Panflute
-:class:`~panflute.Doc` (the Pandoc object model), with inline CommonMark
+:class:`~panflute.Doc` (the Pandoc object model), with inline Pandoc Markdown
 properly parsed into structured panflute inline elements.
 
 Both :mod:`~guffin.md_rendering` and :mod:`~guffin.pdf_rendering` delegate
@@ -12,12 +12,12 @@ output formats.
 Inline parsing:
 
 Text fields on :class:`~guffin.graph.HeadingVertex` and
-:class:`~guffin.graph.TextContentVertex` contain normalized CommonMark
-(e.g. ``**bold**``, ``*italic*``, `` `code` ``).  The private
-:func:`parse_inline_md` batches all unique text strings into a single
-Pandoc parse call, returning a mapping from text string to the
-corresponding list of panflute inline elements.  This avoids per-block
-subprocess overhead while correctly handling all CommonMark inline syntax.
+:class:`~guffin.graph.TextContentVertex` contain normalized Pandoc Markdown
+(e.g. ``**bold**``, ``*italic*``, `` `code` ``, ``[text]{.mark}``).  The
+private :func:`parse_inline_md` batches all unique text strings into a single
+Pandoc parse call, returning a mapping from text string to the corresponding
+list of panflute inline elements.  This avoids per-block subprocess overhead
+while correctly handling all Pandoc Markdown inline syntax.
 
 Rendering rules:
 
@@ -38,7 +38,7 @@ Rendering rules:
 
 Public symbols:
 
-- :func:`parse_inline_md` — batch-parse CommonMark inline text strings into
+- :func:`parse_inline_md` — batch-parse Pandoc Markdown inline text strings into
   panflute inline element lists via a single Pandoc call.
 - :func:`fetch_images` — fetch all
   :class:`~guffin.graph.ImageVertex` assets from a
@@ -93,7 +93,7 @@ logger = logging.getLogger(__name__)
 
 @validate_call
 def parse_inline_md(texts: list[str]) -> dict[str, list[pf.Inline]]:
-    """Batch-parse CommonMark inline text strings into panflute inline element lists.
+    """Batch-parse Pandoc Markdown inline text strings into panflute inline element lists.
 
     Joins all unique, non-empty strings with a random sentinel paragraph as
     separator, converts the combined document to Pandoc JSON in a single
@@ -110,7 +110,7 @@ def parse_inline_md(texts: list[str]) -> dict[str, list[pf.Inline]]:
 
     Returns:
         Mapping from each unique non-empty input string to the list of
-        panflute inline elements produced by parsing it as CommonMark.
+        panflute inline elements produced by parsing it as Pandoc Markdown.
     """
     unique: Final[list[str]] = list(dict.fromkeys(t for t in texts if t))
     if not unique:
@@ -121,7 +121,7 @@ def parse_inline_md(texts: list[str]) -> dict[str, list[pf.Inline]]:
     sep: Final[str] = f"GUFFIN_SEP_{uuid.uuid4().hex}"
     combined: Final[str] = f"\n\n{sep}\n\n".join(unique)
 
-    json_str: Final[str] = pypandoc.convert_text(combined, "json", format="commonmark")
+    json_str: Final[str] = pypandoc.convert_text(combined, "json", format="markdown")
     doc: Final[pf.Doc] = pf.load(StringIO(json_str))
 
     result: Final[dict[str, list[pf.Inline]]] = {}
@@ -363,7 +363,7 @@ def vertex_tree_to_pandoc(
 ) -> pf.Doc:
     """Convert a :class:`~guffin.graph.VertexTree` to a Panflute :class:`~panflute.Doc`.
 
-    Collects all text strings from the tree, parses their inline CommonMark
+    Collects all text strings from the tree, parses their inline Pandoc Markdown
     in a single Pandoc call, then walks the tree to build Pandoc block
     elements.
 

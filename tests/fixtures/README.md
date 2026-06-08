@@ -35,11 +35,10 @@ Three live Roam pages serve as the primary test sources: `[[Test Article]] 0`,
 
 #### `[[Test Article]] 0`
 
-- Baseline document with almost no features
-- 3 top-level `blocks` (no headers)
-- `nested blocks`
-- `italics` text
-- `bold` text
+- 3 top-level blocks
+- nested blocks
+- italics text
+- bold text
 - this INFO `Callout box`, which contains Roam `page references`
 
 #### `[[Test Article]] 1`

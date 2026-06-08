@@ -1,6 +1,6 @@
 # Test Article 2
 
-\> !INFO THIS PAGE IS USED FOR TESTING GUFFIN(https://github.com/jpanico/guffin) – DO NOT REMOVE
+\> !INFO THIS PAGE IS USED FOR TESTING \[GUFFIN\](https://github.com/jpanico/guffin) – DO NOT REMOVE
 Features:
 - This page is primarily a demonstration of different kinds of refs:
 -- internal block ref (to block on this page)

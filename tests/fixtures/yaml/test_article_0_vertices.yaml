@@ -21,7 +21,7 @@
   text: block 3.1.1
 - vertex_type: roam/text-content
   uid: qnCiceZgk
-  text: '> !INFO THIS PAGE IS USED FOR TESTING GUFFIN(https://github.com/jpanico/guffin)
+  text: '> !INFO THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
     – DO NOT REMOVE
 
     This page is a baseline Roam document, with almost no features
