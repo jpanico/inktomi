@@ -155,35 +155,7 @@ guffin/
 ├── tests/                         # pytest test suite
 │   ├── conftest.py                # Shared fixtures and helpers (api_endpoint, article1_node_tree, …)
 │   ├── regen_fixtures.py          # Developer script: regenerate all six fixture files for a given article
-│   └── fixtures/
-│       ├── images/
-│       │   ├── flower.jpeg                      # JPEG used in live asset-fetch tests
-│       │   ├── test_article_1.png               # Screenshot of Test Article 1 in Roam (reference only)
-│       │   └── test_article_2.png               # Screenshot of Test Article 2 in Roam (reference only)
-│       ├── json/
-│       │   └── image_node.json                  # Raw pull-block payload for a Firestore image block
-│       ├── markdown/
-│       │   ├── descendant_rule.md               # CSS descendant-rule reference snippet
-│       │   ├── flower.jpeg                      # Image asset bundled alongside test_article_1_expected.md
-│       │   ├── test_article_0_expected.md       # Expected CommonMark output for Test Article 0
-│       │   ├── test_article_1_expected.md       # Expected CommonMark output for Test Article 1
-│       │   └── test_article_2_expected.md       # Expected CommonMark output for Test Article 2
-│       └── yaml/
-│           ├── test_article_0_anchor_tree.yaml  # Serialized NodeTree for Test Article 0 (anchor subtree)
-│           ├── test_article_0_nodes.yaml        # Serialized RoamNode list for Test Article 0
-│           ├── test_article_0_nodes_by_uid.yaml # Serialized NodesByUid for Test Article 0
-│           ├── test_article_0_raw_result.yaml   # Raw Datalog result for Test Article 0
-│           ├── test_article_0_vertices.yaml     # Serialized VertexTree for Test Article 0
-│           ├── test_article_1_anchor_tree.yaml  # Serialized NodeTree for Test Article 1 (anchor subtree)
-│           ├── test_article_1_nodes.yaml        # Serialized RoamNode list for Test Article 1
-│           ├── test_article_1_nodes_by_uid.yaml # Serialized NodesByUid for Test Article 1
-│           ├── test_article_1_raw_result.yaml   # Raw Datalog result for Test Article 1
-│           ├── test_article_1_vertices.yaml     # Serialized VertexTree for Test Article 1
-│           ├── test_article_2_anchor_tree.yaml  # Serialized NodeTree for Test Article 2 (anchor subtree)
-│           ├── test_article_2_nodes.yaml        # Serialized RoamNode list for Test Article 2
-│           ├── test_article_2_nodes_by_uid.yaml # Serialized NodesByUid for Test Article 2
-│           ├── test_article_2_raw_result.yaml   # Raw Datalog result for Test Article 2
-│           └── test_article_2_vertices.yaml     # Serialized VertexTree for Test Article 2
+│   └── fixtures/                  # See tests/fixtures/README.md for full inventory
 ├── scripts/
 │   ├── dump-roam-tree.sh              # Shell wrapper for dump-roam-tree
 │   ├── export-roam-tree.sh            # Shell wrapper for export-roam-tree
