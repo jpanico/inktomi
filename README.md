@@ -131,9 +131,9 @@ guffin/
 │       ├── dump_roam_tree.py      # CLI: dump a Roam page or node subtree as a Rich tree to the terminal
 │       ├── export_roam_tree.py    # CLI: export a Roam page or node subtree (--format markdown|pdf)
 │       ├── roam_tree_loader.py    # Shared tree-loading pipeline; fetch_roam_trees resolves a target, fetches nodes, returns (NodeTree, VertexTree)
-│       ├── roam_md_to_commonmark.py # Convert Roam-flavored Markdown to CommonMark
-│       ├── roam_transcribe.py     # Transcribe NodeTree → VertexTree (applies normalize())
-│       ├── pandoc_rendering.py    # Shared Pandoc/panflute utilities: inline CommonMark parsing, image fetching, VertexTree → Doc conversion
+│       ├── roam_md_to_pandoc_md.py  # Convert Roam-flavored Markdown to Pandoc Markdown
+│       ├── roam_transcribe.py     # Transcribe NodeTree → VertexTree (applies to_pandoc_md())
+│       ├── pandoc_rendering.py    # Shared Pandoc/panflute utilities: inline Pandoc Markdown parsing, image fetching, VertexTree → Doc conversion
 │       ├── md_rendering.py        # Render VertexTree → Markdown via Pandoc; write .mdbundle or plain .md
 │       ├── pdf_rendering.py       # Render VertexTree → PDF via pandoc_rendering + Pandoc + Typst
 │       ├── rich_rendering.py      # Rich panel/tree rendering for NodeTree and VertexTree

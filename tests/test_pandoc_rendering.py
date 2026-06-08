@@ -68,21 +68,21 @@ class TestParseInlineMd:
         assert text == "hello world"
 
     def test_bold_text_parses_to_strong(self) -> None:
-        """CommonMark bold syntax produces a Strong inline."""
+        """Pandoc Markdown bold syntax produces a Strong inline."""
         result = parse_inline_md(["**bold**"])
         assert "**bold**" in result
         inlines = result["**bold**"]
         assert any(isinstance(i, pf.Strong) for i in inlines)
 
     def test_italic_text_parses_to_emph(self) -> None:
-        """CommonMark italic syntax produces an Emph inline."""
+        """Pandoc Markdown italic syntax produces an Emph inline."""
         result = parse_inline_md(["*italic*"])
         assert "*italic*" in result
         inlines = result["*italic*"]
         assert any(isinstance(i, pf.Emph) for i in inlines)
 
     def test_code_span_parses_to_code(self) -> None:
-        """CommonMark code span produces a Code inline."""
+        """Pandoc Markdown code span produces a Code inline."""
         result = parse_inline_md(["`code`"])
         assert "`code`" in result
         inlines = result["`code`"]
