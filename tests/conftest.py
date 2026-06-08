@@ -59,7 +59,7 @@ def article1_node_tree() -> NodeTree:
     """Load and return the ``[[Test Article]] 1`` :class:`~guffin.roam_tree.NodeTree` from its YAML fixture."""
     raw: Final[list[dict[str, object]]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_1_nodes.yaml").read_text())
     network: Final[list[RoamNode]] = [RoamNode.model_validate(r) for r in raw]
-    root_node: Final[RoamNode] = next(n for n in network if node_type(n) == NodeType.Page)
+    root_node: Final[RoamNode] = next(n for n in network if node_type(n) == NodeType.ROAM_PAGE)
     return NodeTree.build(super_network=network, root_node=root_node)
 
 

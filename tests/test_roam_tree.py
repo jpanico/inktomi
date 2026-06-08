@@ -221,7 +221,7 @@ class TestNodeTree:
         """Test that constructing NodeTree directly (bypassing build) raises ValueError."""
         root = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="stub", children=[])
         with pytest.raises(Exception, match="NodeTree.build"):
-            NodeTree(tree_network=[root], root_node=root)
+            NodeTree(tree_network=[root], root_node=root)  # type: ignore[call-arg]
 
 
 # ---------------------------------------------------------------------------

@@ -130,24 +130,24 @@ class TestVertexType:
     """Tests for vertex_type."""
 
     def test_page_node_returns_roam_page(self) -> None:
-        """Test that a page node classifies as ROAM_PAGE."""
-        assert vertex_type(_make_page()) is VertexType.ROAM_PAGE
+        """Test that a page node classifies as GUFFIN_PAGE."""
+        assert vertex_type(_make_page()) is VertexType.GUFFIN_PAGE
 
     def test_image_node_returns_roam_image(self) -> None:
-        """Test that an image block node classifies as ROAM_IMAGE."""
-        assert vertex_type(_make_image()) is VertexType.ROAM_IMAGE
+        """Test that an image block node classifies as GUFFIN_IMAGE."""
+        assert vertex_type(_make_image()) is VertexType.GUFFIN_IMAGE
 
     def test_native_heading_node_returns_roam_heading(self) -> None:
-        """Test that a native heading block node classifies as ROAM_HEADING."""
-        assert vertex_type(_make_heading()) is VertexType.ROAM_HEADING
+        """Test that a native heading block node classifies as GUFFIN_HEADING."""
+        assert vertex_type(_make_heading()) is VertexType.GUFFIN_HEADING
 
     def test_ah_level_heading_node_returns_roam_heading(self) -> None:
-        """Test that an Augmented Headings block node classifies as ROAM_HEADING."""
-        assert vertex_type(_make_ah_heading()) is VertexType.ROAM_HEADING
+        """Test that an Augmented Headings block node classifies as GUFFIN_HEADING."""
+        assert vertex_type(_make_ah_heading()) is VertexType.GUFFIN_HEADING
 
     def test_plain_text_node_returns_roam_text_content(self) -> None:
-        """Test that a plain text block node classifies as ROAM_TEXT_CONTENT."""
-        assert vertex_type(_make_text()) is VertexType.ROAM_TEXT_CONTENT
+        """Test that a plain text block node classifies as GUFFIN_TEXT_CONTENT."""
+        assert vertex_type(_make_text()) is VertexType.GUFFIN_TEXT_CONTENT
 
     def test_node_with_neither_title_nor_string_raises_validation_error(self) -> None:
         """Test that constructing a node missing both title and string raises ValidationError."""
@@ -169,9 +169,9 @@ class TestToPageVertex:
     """Tests for to_page_vertex."""
 
     def test_returns_roam_page_vertex_type(self) -> None:
-        """Test that to_page_vertex produces a vertex with type ROAM_PAGE."""
+        """Test that to_page_vertex produces a vertex with type GUFFIN_PAGE."""
         node = _make_page()
-        assert to_page_vertex(node, _id_map(node)).vertex_type is VertexType.ROAM_PAGE
+        assert to_page_vertex(node, _id_map(node)).vertex_type is VertexType.GUFFIN_PAGE
 
     def test_uid_preserved(self) -> None:
         """Test that the vertex uid matches the source node uid."""
@@ -274,9 +274,9 @@ class TestToImageVertex:
     """Tests for to_image_vertex."""
 
     def test_returns_roam_image_vertex_type(self) -> None:
-        """Test that to_image_vertex produces a vertex with type ROAM_IMAGE."""
+        """Test that to_image_vertex produces a vertex with type GUFFIN_IMAGE."""
         node = _make_image()
-        assert to_image_vertex(node, _id_map(node)).vertex_type is VertexType.ROAM_IMAGE
+        assert to_image_vertex(node, _id_map(node)).vertex_type is VertexType.GUFFIN_IMAGE
 
     def test_uid_preserved(self) -> None:
         """Test that the vertex uid matches the source node uid."""
@@ -351,9 +351,9 @@ class TestToHeadingVertex:
     """Tests for to_heading_vertex."""
 
     def test_returns_roam_heading_vertex_type(self) -> None:
-        """Test that to_heading_vertex produces a vertex with type ROAM_HEADING."""
+        """Test that to_heading_vertex produces a vertex with type GUFFIN_HEADING."""
         node = _make_heading()
-        assert to_heading_vertex(node, _id_map(node)).vertex_type is VertexType.ROAM_HEADING
+        assert to_heading_vertex(node, _id_map(node)).vertex_type is VertexType.GUFFIN_HEADING
 
     def test_uid_preserved(self) -> None:
         """Test that the vertex uid matches the source node uid."""
@@ -409,9 +409,9 @@ class TestToTextContentVertex:
     """Tests for to_text_content_vertex."""
 
     def test_returns_roam_text_content_vertex_type(self) -> None:
-        """Test that to_text_content_vertex produces a vertex with type ROAM_TEXT_CONTENT."""
+        """Test that to_text_content_vertex produces a vertex with type GUFFIN_TEXT_CONTENT."""
         node = _make_text()
-        assert to_text_content_vertex(node, _id_map(node)).vertex_type is VertexType.ROAM_TEXT_CONTENT
+        assert to_text_content_vertex(node, _id_map(node)).vertex_type is VertexType.GUFFIN_TEXT_CONTENT
 
     def test_uid_preserved(self) -> None:
         """Test that the vertex uid matches the source node uid."""
@@ -454,37 +454,37 @@ class TestTranscribeNode:
     """Integration tests for transcribe_node — verifies correct dispatch to each vertex builder."""
 
     def test_transcribes_page_node(self) -> None:
-        """Test that a page node is transcribed to a ROAM_PAGE vertex with correct fields."""
+        """Test that a page node is transcribed to a GUFFIN_PAGE vertex with correct fields."""
         node = _make_page(title="My Page")
         v = transcribe_node(node, _id_map(node))
         assert isinstance(v, PageVertex)
-        assert v.vertex_type is VertexType.ROAM_PAGE
+        assert v.vertex_type is VertexType.GUFFIN_PAGE
         assert v.title == "My Page"
 
     def test_transcribes_image_node(self) -> None:
-        """Test that an image block node is transcribed to a ROAM_IMAGE vertex with correct fields."""
+        """Test that an image block node is transcribed to a GUFFIN_IMAGE vertex with correct fields."""
         node = _make_image()
         v = transcribe_node(node, _id_map(node))
         assert isinstance(v, ImageVertex)
-        assert v.vertex_type is VertexType.ROAM_IMAGE
+        assert v.vertex_type is VertexType.GUFFIN_IMAGE
         assert v.file_name == "photo.jpeg"
         assert v.media_type == "image/jpeg"
 
     def test_transcribes_heading_node(self) -> None:
-        """Test that a heading block node is transcribed to a ROAM_HEADING vertex with correct fields."""
+        """Test that a heading block node is transcribed to a GUFFIN_HEADING vertex with correct fields."""
         node = _make_heading(string="Intro", heading=1)
         v = transcribe_node(node, _id_map(node))
         assert isinstance(v, HeadingVertex)
-        assert v.vertex_type is VertexType.ROAM_HEADING
+        assert v.vertex_type is VertexType.GUFFIN_HEADING
         assert v.text == "Intro"
         assert v.heading == 1
 
     def test_transcribes_text_content_node(self) -> None:
-        """Test that a plain text block node is transcribed to a ROAM_TEXT_CONTENT vertex."""
+        """Test that a plain text block node is transcribed to a GUFFIN_TEXT_CONTENT vertex."""
         node = _make_text(string="Body text")
         v = transcribe_node(node, _id_map(node))
         assert isinstance(v, TextContentVertex)
-        assert v.vertex_type is VertexType.ROAM_TEXT_CONTENT
+        assert v.vertex_type is VertexType.GUFFIN_TEXT_CONTENT
         assert v.text == "Body text"
 
     def test_children_resolved_via_id_map(self) -> None:
@@ -527,7 +527,7 @@ class TestTranscribeNode:
         node = RoamNode.model_validate(raw)
         v = transcribe_node(node, _id_map(node))
         assert isinstance(v, ImageVertex)
-        assert v.vertex_type is VertexType.ROAM_IMAGE
+        assert v.vertex_type is VertexType.GUFFIN_IMAGE
         assert v.uid == "mPCzedeKx"
         assert v.source.host == "firebasestorage.googleapis.com"
         assert v.alt_text == "A flower"

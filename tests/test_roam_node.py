@@ -17,11 +17,6 @@ _FIRESTORE_URL = (
 _IMAGE_STRING = f"![A flower]({_FIRESTORE_URL})"
 
 
-def _make_page(uid: str = "pageuid01", id: int = 100, title: str = "My Page") -> RoamNode:
-    """Return a minimal page RoamNode."""
-    return RoamNode(uid=uid, id=id, time=STUB_TIME, user=STUB_USER, title=title, children=[])
-
-
 def _make_image(uid: str = "imageuid1", id: int = 101, string: str = _IMAGE_STRING) -> RoamNode:
     """Return a minimal Firestore image-block RoamNode."""
     return RoamNode(
@@ -30,6 +25,20 @@ def _make_image(uid: str = "imageuid1", id: int = 101, string: str = _IMAGE_STRI
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
+        parents=[IdObject(id=99)],
+        page=IdObject(id=99),
+    )
+
+
+def _make_heading(uid: str = "headnguid", id: int = 102, string: str = "Section One", level: int = 2) -> RoamNode:
+    """Return a minimal native-heading RoamNode."""
+    return RoamNode(
+        uid=uid,
+        id=id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=string,
+        heading=level,
         parents=[IdObject(id=99)],
         page=IdObject(id=99),
     )
@@ -153,24 +162,34 @@ class TestNodeType:
     """Tests for the NodeType enum."""
 
     def test_page_value(self) -> None:
-        """Test that NodeType.Page has string value 'Page'."""
-        assert NodeType.Page == "Page"
+        """Test that NodeType.ROAM_PAGE has string value 'roam/page'."""
+        assert NodeType.ROAM_PAGE == "roam/page"
 
     def test_block_value(self) -> None:
-        """Test that NodeType.Block has string value 'Block'."""
-        assert NodeType.Block == "Block"
+        """Test that NodeType.ROAM_PLAIN_BLOCK has string value 'roam/plain-block'."""
+        assert NodeType.ROAM_PLAIN_BLOCK == "roam/plain-block"
 
     def test_embed_value(self) -> None:
-        """Test that NodeType.Embed has string value 'Embed'."""
-        assert NodeType.Embed == "Embed"
+        """Test that NodeType.ROAM_EMBED_BLOCK has string value 'roam/embed-block'."""
+        assert NodeType.ROAM_EMBED_BLOCK == "roam/embed-block"
 
     def test_image_value(self) -> None:
-        """Test that NodeType.Image has string value 'Image'."""
-        assert NodeType.Image == "Image"
+        """Test that NodeType.ROAM_IMAGE_BLOCK has string value 'roam/image-block'."""
+        assert NodeType.ROAM_IMAGE_BLOCK == "roam/image-block"
 
-    def test_exactly_four_members(self) -> None:
-        """Test that NodeType has exactly four members."""
-        assert set(NodeType) == {NodeType.Page, NodeType.Block, NodeType.Embed, NodeType.Image}
+    def test_heading_value(self) -> None:
+        """Test that NodeType.ROAM_HEADING_BLOCK has string value 'roam/heading-block'."""
+        assert NodeType.ROAM_HEADING_BLOCK == "roam/heading-block"
+
+    def test_exactly_five_members(self) -> None:
+        """Test that NodeType has exactly five members."""
+        assert set(NodeType) == {
+            NodeType.ROAM_PAGE,
+            NodeType.ROAM_PLAIN_BLOCK,
+            NodeType.ROAM_EMBED_BLOCK,
+            NodeType.ROAM_IMAGE_BLOCK,
+            NodeType.ROAM_HEADING_BLOCK,
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -182,12 +201,12 @@ class TestNodeTypeFunction:
     """Tests for the node_type() function."""
 
     def test_page_node_returns_page(self) -> None:
-        """Test that a node with title set returns NodeType.Page."""
+        """Test that a node with title set returns NodeType.ROAM_PAGE."""
         node = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="My Page", children=[])
-        assert node_type(node) is NodeType.Page
+        assert node_type(node) is NodeType.ROAM_PAGE
 
     def test_block_node_returns_block(self) -> None:
-        """Test that a node with string set returns NodeType.Block."""
+        """Test that a node with string set returns NodeType.ROAM_PLAIN_BLOCK."""
         node = RoamNode(
             uid="block0001",
             id=2,
@@ -197,15 +216,15 @@ class TestNodeTypeFunction:
             parents=[IdObject(id=99)],
             page=IdObject(id=99),
         )
-        assert node_type(node) is NodeType.Block
+        assert node_type(node) is NodeType.ROAM_PLAIN_BLOCK
 
     def test_page_node_is_not_block(self) -> None:
-        """Test that a page node does not return NodeType.Block."""
+        """Test that a page node does not return NodeType.ROAM_PLAIN_BLOCK."""
         node = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="My Page", children=[])
-        assert node_type(node) is not NodeType.Block
+        assert node_type(node) is not NodeType.ROAM_PLAIN_BLOCK
 
     def test_block_node_is_not_page(self) -> None:
-        """Test that a block node does not return NodeType.Page."""
+        """Test that a block node does not return NodeType.ROAM_PAGE."""
         node = RoamNode(
             uid="block0001",
             id=2,
@@ -215,25 +234,25 @@ class TestNodeTypeFunction:
             parents=[IdObject(id=99)],
             page=IdObject(id=99),
         )
-        assert node_type(node) is not NodeType.Page
+        assert node_type(node) is not NodeType.ROAM_PAGE
 
     def test_embed_node_returns_embed(self) -> None:
-        """Test that a node with title 'embed' returns NodeType.Embed."""
+        """Test that a node with title 'embed' returns NodeType.ROAM_EMBED_BLOCK."""
         node = RoamNode(uid="embed0001", id=3, time=STUB_TIME, user=STUB_USER, title="embed")
-        assert node_type(node) is NodeType.Embed
+        assert node_type(node) is NodeType.ROAM_EMBED_BLOCK
 
     def test_embed_node_is_not_page(self) -> None:
-        """Test that an embed node does not return NodeType.Page."""
+        """Test that an embed node does not return NodeType.ROAM_PAGE."""
         node = RoamNode(uid="embed0001", id=3, time=STUB_TIME, user=STUB_USER, title="embed")
-        assert node_type(node) is not NodeType.Page
+        assert node_type(node) is not NodeType.ROAM_PAGE
 
     def test_image_node_returns_image(self) -> None:
-        """Test that a bare Firestore image block returns NodeType.Image."""
-        assert node_type(_make_image()) is NodeType.Image
+        """Test that a bare Firestore image block returns NodeType.ROAM_IMAGE_BLOCK."""
+        assert node_type(_make_image()) is NodeType.ROAM_IMAGE_BLOCK
 
     def test_image_node_is_not_block(self) -> None:
-        """Test that an image node does not return NodeType.Block."""
-        assert node_type(_make_image()) is not NodeType.Block
+        """Test that an image node does not return NodeType.ROAM_PLAIN_BLOCK."""
+        assert node_type(_make_image()) is not NodeType.ROAM_PLAIN_BLOCK
 
     def test_image_node_with_surrounding_whitespace_returns_image(self) -> None:
         """Test that leading/trailing whitespace around the image link is tolerated."""
@@ -246,10 +265,10 @@ class TestNodeTypeFunction:
             parents=[IdObject(id=99)],
             page=IdObject(id=99),
         )
-        assert node_type(node) is NodeType.Image
+        assert node_type(node) is NodeType.ROAM_IMAGE_BLOCK
 
     def test_image_node_with_empty_alt_text_returns_image(self) -> None:
-        """Test that an image link with empty alt text returns NodeType.Image."""
+        """Test that an image link with empty alt text returns NodeType.ROAM_IMAGE_BLOCK."""
         node = RoamNode(
             uid="imageuid1",
             id=101,
@@ -259,10 +278,10 @@ class TestNodeTypeFunction:
             parents=[IdObject(id=99)],
             page=IdObject(id=99),
         )
-        assert node_type(node) is NodeType.Image
+        assert node_type(node) is NodeType.ROAM_IMAGE_BLOCK
 
     def test_text_before_image_returns_block(self) -> None:
-        """Test that text before the image link yields NodeType.Block, not Image."""
+        """Test that text before the image link yields NodeType.ROAM_PLAIN_BLOCK, not Image."""
         node = RoamNode(
             uid="imageuid1",
             id=101,
@@ -272,10 +291,10 @@ class TestNodeTypeFunction:
             parents=[IdObject(id=99)],
             page=IdObject(id=99),
         )
-        assert node_type(node) is NodeType.Block
+        assert node_type(node) is NodeType.ROAM_PLAIN_BLOCK
 
     def test_text_after_image_returns_block(self) -> None:
-        """Test that text after the image link yields NodeType.Block, not Image."""
+        """Test that text after the image link yields NodeType.ROAM_PLAIN_BLOCK, not Image."""
         node = RoamNode(
             uid="imageuid1",
             id=101,
@@ -285,10 +304,10 @@ class TestNodeTypeFunction:
             parents=[IdObject(id=99)],
             page=IdObject(id=99),
         )
-        assert node_type(node) is NodeType.Block
+        assert node_type(node) is NodeType.ROAM_PLAIN_BLOCK
 
     def test_two_image_links_returns_block(self) -> None:
-        """Test that a string with two image links yields NodeType.Block, not Image."""
+        """Test that a string with two image links yields NodeType.ROAM_PLAIN_BLOCK, not Image."""
         node = RoamNode(
             uid="imageuid1",
             id=101,
@@ -298,10 +317,10 @@ class TestNodeTypeFunction:
             parents=[IdObject(id=99)],
             page=IdObject(id=99),
         )
-        assert node_type(node) is NodeType.Block
+        assert node_type(node) is NodeType.ROAM_PLAIN_BLOCK
 
     def test_relative_url_image_returns_block(self) -> None:
-        """Test that a Markdown image with a relative URL yields NodeType.Block, not Image."""
+        """Test that a Markdown image with a relative URL yields NodeType.ROAM_PLAIN_BLOCK, not Image."""
         node = RoamNode(
             uid="imageuid1",
             id=101,
@@ -311,7 +330,33 @@ class TestNodeTypeFunction:
             parents=[IdObject(id=99)],
             page=IdObject(id=99),
         )
-        assert node_type(node) is NodeType.Block
+        assert node_type(node) is NodeType.ROAM_PLAIN_BLOCK
+
+    def test_heading_node_returns_heading(self) -> None:
+        """Test that a native heading block (heading=2) returns NodeType.ROAM_HEADING_BLOCK."""
+        assert node_type(_make_heading()) is NodeType.ROAM_HEADING_BLOCK
+
+    def test_heading_node_is_not_block(self) -> None:
+        """Test that a heading node does not return NodeType.ROAM_PLAIN_BLOCK."""
+        assert node_type(_make_heading()) is not NodeType.ROAM_PLAIN_BLOCK
+
+    def test_augmented_heading_returns_heading(self) -> None:
+        """Test that a block with props['ah-level'] set returns NodeType.ROAM_HEADING_BLOCK."""
+        node = RoamNode(
+            uid="headnguid",
+            id=102,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string="Deep Section",
+            props={"ah-level": "h4"},
+            parents=[IdObject(id=99)],
+            page=IdObject(id=99),
+        )
+        assert node_type(node) is NodeType.ROAM_HEADING_BLOCK
+
+    def test_plain_text_block_is_not_heading(self) -> None:
+        """Test that a plain text block does not return NodeType.ROAM_HEADING_BLOCK."""
+        assert node_type(_make_text()) is not NodeType.ROAM_HEADING_BLOCK
 
     def test_result_is_str_enum(self) -> None:
         """Test that the returned value is a NodeType StrEnum member."""

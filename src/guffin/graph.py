@@ -83,21 +83,21 @@ class VertexType(StrEnum):
     string-valued so they serialize cleanly to/from JSON without extra conversion.
 
     Values:
-        ROAM_PAGE: Normalized form of a Roam *Page* node — ``:node/title`` is
+        GUFFIN_PAGE: Normalized form of a Roam *Page* node — ``:node/title`` is
             present; ``:block/string`` is absent.
-        ROAM_TEXT_CONTENT: Normalized form of a Roam *Block* node that has no
+        GUFFIN_TEXT_CONTENT: Normalized form of a Roam *Block* node that has no
             ``heading`` property — i.e. normal body text.
-        ROAM_HEADING: Normalized form of a Roam *Block* node that carries a
+        GUFFIN_HEADING: Normalized form of a Roam *Block* node that carries a
             ``heading`` property (value 1, 2, or 3).
-        ROAM_IMAGE: Normalized form of a Roam *Block* node whose
+        GUFFIN_IMAGE: Normalized form of a Roam *Block* node whose
             ``:block/string`` embeds a Cloud Firestore URL pointing to a
             Roam-managed image upload.
     """
 
-    ROAM_PAGE = "roam/page"
-    ROAM_TEXT_CONTENT = "roam/text-content"
-    ROAM_HEADING = "roam/heading"
-    ROAM_IMAGE = "roam/image"
+    GUFFIN_PAGE = "guffin/page"
+    GUFFIN_TEXT_CONTENT = "guffin/text-content"
+    GUFFIN_HEADING = "guffin/heading"
+    GUFFIN_IMAGE = "guffin/image"
 
 
 class _BaseVertex[VT: VertexType](BaseModel):
@@ -108,7 +108,7 @@ class _BaseVertex[VT: VertexType](BaseModel):
 
     Type Parameters:
         VT: The :class:`VertexType` literal for the concrete subtype (e.g.
-            ``Literal[VertexType.ROAM_PAGE]``).
+            ``Literal[VertexType.GUFFIN_PAGE]``).
 
     Attributes:
         vertex_type: Discriminator field identifying the concrete subtype.
@@ -132,7 +132,7 @@ class _BaseVertex[VT: VertexType](BaseModel):
     refs: VertexRefs | None = Field(default=None, description="Referenced UIDs resolved from raw IdObject stubs.")
 
 
-class PageVertex(_BaseVertex[Literal[VertexType.ROAM_PAGE]]):
+class PageVertex(_BaseVertex[Literal[VertexType.GUFFIN_PAGE]]):
     """Normalized (transcribed) form of a Roam Page node.
 
     Produced when the source :class:`~guffin.roam_node.RoamNode` has
@@ -140,20 +140,20 @@ class PageVertex(_BaseVertex[Literal[VertexType.ROAM_PAGE]]):
     is collapsed into :attr:`text`.
 
     Attributes:
-        vertex_type: Always :attr:`~VertexType.ROAM_PAGE`.
+        vertex_type: Always :attr:`~VertexType.GUFFIN_PAGE`.
             Serialized as ``'vertex-type'``.
         title: Page title from the source node's ``title`` field.
     """
 
-    vertex_type: Literal[VertexType.ROAM_PAGE] = Field(
-        default=VertexType.ROAM_PAGE,
+    vertex_type: Literal[VertexType.GUFFIN_PAGE] = Field(
+        default=VertexType.GUFFIN_PAGE,
         serialization_alias="vertex-type",
-        description="Always VertexType.ROAM_PAGE (serialized as 'vertex-type').",
+        description="Always VertexType.GUFFIN_PAGE (serialized as 'vertex-type').",
     )
     title: str = Field(..., description="Page title from the source node's title field.")
 
 
-class HeadingVertex(_BaseVertex[Literal[VertexType.ROAM_HEADING]]):
+class HeadingVertex(_BaseVertex[Literal[VertexType.GUFFIN_HEADING]]):
     """Normalized (transcribed) form of a Roam Heading block node.
 
     Produced when the source :class:`~guffin.roam_node.RoamNode` has an
@@ -161,49 +161,49 @@ class HeadingVertex(_BaseVertex[Literal[VertexType.ROAM_HEADING]]):
     Augmented Headings ``props['ah-level']`` value (h4–h6).
 
     Attributes:
-        vertex_type: Always :attr:`~VertexType.ROAM_HEADING`.
+        vertex_type: Always :attr:`~VertexType.GUFFIN_HEADING`.
             Serialized as ``'vertex-type'``.
         text: Block string from the source node's ``string`` field.
         heading: Effective heading level in the range 1–6.
     """
 
-    vertex_type: Literal[VertexType.ROAM_HEADING] = Field(
-        default=VertexType.ROAM_HEADING,
+    vertex_type: Literal[VertexType.GUFFIN_HEADING] = Field(
+        default=VertexType.GUFFIN_HEADING,
         serialization_alias="vertex-type",
-        description="Always VertexType.ROAM_HEADING (serialized as 'vertex-type').",
+        description="Always VertexType.GUFFIN_HEADING (serialized as 'vertex-type').",
     )
     text: str = Field(..., description="Block string from the source node's string field.")
     heading: HeadingLevel = Field(..., description="Effective heading level (1–6).")
 
 
-class TextContentVertex(_BaseVertex[Literal[VertexType.ROAM_TEXT_CONTENT]]):
+class TextContentVertex(_BaseVertex[Literal[VertexType.GUFFIN_TEXT_CONTENT]]):
     """Normalized (transcribed) form of a plain-text Roam Block node.
 
     Produced when the source :class:`~guffin.roam_node.RoamNode` has
     ``:block/string`` set with no heading property and no embedded Firestore URL.
 
     Attributes:
-        vertex_type: Always :attr:`~VertexType.ROAM_TEXT_CONTENT`.
+        vertex_type: Always :attr:`~VertexType.GUFFIN_TEXT_CONTENT`.
             Serialized as ``'vertex-type'``.
         text: Block string from the source node's ``string`` field.
     """
 
-    vertex_type: Literal[VertexType.ROAM_TEXT_CONTENT] = Field(
-        default=VertexType.ROAM_TEXT_CONTENT,
+    vertex_type: Literal[VertexType.GUFFIN_TEXT_CONTENT] = Field(
+        default=VertexType.GUFFIN_TEXT_CONTENT,
         serialization_alias="vertex-type",
-        description="Always VertexType.ROAM_TEXT_CONTENT (serialized as 'vertex-type').",
+        description="Always VertexType.GUFFIN_TEXT_CONTENT (serialized as 'vertex-type').",
     )
     text: str = Field(..., description="Block string from the source node's string field.")
 
 
-class ImageVertex(_BaseVertex[Literal[VertexType.ROAM_IMAGE]]):
+class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
     """Normalized (transcribed) form of a Roam Cloud Firestore image block node.
 
     Produced when the source :class:`~guffin.roam_node.RoamNode` has a
     ``:block/string`` that embeds a Cloud Firestore storage URL.
 
     Attributes:
-        vertex_type: Always :attr:`~VertexType.ROAM_IMAGE`.
+        vertex_type: Always :attr:`~VertexType.GUFFIN_IMAGE`.
             Serialized as ``'vertex-type'``.
         source: Cloud Firestore storage URL for the image file.
         alt_text: Alt text extracted from the Markdown image link
@@ -217,10 +217,10 @@ class ImageVertex(_BaseVertex[Literal[VertexType.ROAM_IMAGE]]):
             Serialized as ``'media-type'``.
     """
 
-    vertex_type: Literal[VertexType.ROAM_IMAGE] = Field(
-        default=VertexType.ROAM_IMAGE,
+    vertex_type: Literal[VertexType.GUFFIN_IMAGE] = Field(
+        default=VertexType.GUFFIN_IMAGE,
         serialization_alias="vertex-type",
-        description="Always VertexType.ROAM_IMAGE (serialized as 'vertex-type').",
+        description="Always VertexType.GUFFIN_IMAGE (serialized as 'vertex-type').",
     )
     source: Url = Field(..., description="Cloud Firestore storage URL for the image file.")
     alt_text: str | None = Field(
@@ -258,7 +258,7 @@ Uses ``vertex_type`` as the discriminator field to select among :class:`PageVert
 
 Example::
 
-    v = vertex_adapter.validate_python({"vertex_type": "roam/page", "uid": "abc", "text": "My Page"})
+    v = vertex_adapter.validate_python({"vertex_type": "guffin/page", "uid": "abc", "text": "My Page"})
     assert isinstance(v, PageVertex)
 """
 

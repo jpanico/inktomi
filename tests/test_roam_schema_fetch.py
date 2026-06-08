@@ -69,9 +69,7 @@ class TestFetchRoamSchemaRequest:
         json_str: str = FetchRoamSchema.Request.PAYLOAD.model_dump_json()
         parsed: dict[str, object] = json.loads(json_str)
 
-        assert parsed["action"] == "data.q"
-        assert isinstance(parsed["args"], list)
-        assert len(parsed["args"]) == 1
+        assert parsed == {"action": "data.q", "args": [FetchRoamSchema.Request.DATALOG_SCHEMA_QUERY]}
 
 
 class TestFetchRoamSchemaResponsePayload:

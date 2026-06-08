@@ -2,7 +2,8 @@
 
 Public symbols:
 
-- :class:`NodeType` — ``StrEnum`` of pull-block entity types: ``Page``, ``Block``, ``Embed``, ``Image``.
+- :class:`NodeType` — ``StrEnum`` of pull-block entity types: ``ROAM_PAGE``, ``ROAM_PLAIN_BLOCK``,
+  ``ROAM_EMBED_BLOCK``, ``ROAM_IMAGE_BLOCK``, ``ROAM_HEADING_BLOCK``.
 - :class:`RoamNode` — raw shape of a pull-block as returned by the Roam Local API.
 - :func:`node_type` — return the :class:`NodeType` of a :class:`RoamNode`.
 - :func:`effective_heading_level` — return the effective heading level for a
@@ -36,17 +37,20 @@ logger = logging.getLogger(__name__)
 class NodeType(enum.StrEnum):
     """Entity type of a Roam pull-block.
 
-    - **Page**: ``title`` is a non-``"embed"`` string, ``string`` is ``None``.
-    - **Block**: ``string`` is set, ``title`` is ``None``, content is plain text or a heading.
-    - **Embed**: ``title`` is the literal ``"embed"``, ``string`` is ``None``, ``children`` is ``None``.
-    - **Image**: ``string`` consists solely of a single Markdown image link to a Cloud Firestore URL.
+    - **ROAM_PAGE**: ``title`` is a non-``"embed"`` string, ``string`` is ``None``.
+    - **ROAM_PLAIN_BLOCK**: ``string`` is set, ``title`` is ``None``, no special Roam properties.
+    - **ROAM_HEADING_BLOCK**: ``heading`` (levels 1–3) or ``props['ah-level']`` (levels 4–6) is set; the entire
+      block content is the heading text.
+    - **ROAM_IMAGE_BLOCK**: ``string`` consists solely of a single Markdown image link to a Cloud Firestore URL.
       Produced by drag-and-drop into the Roam UI; supports image-resize properties via ``props``.
+    - **ROAM_EMBED_BLOCK**: ``title`` is the literal ``"embed"``, ``string`` is ``None``, ``children`` is ``None``.
     """
 
-    Page = "Page"
-    Block = "Block"
-    Embed = "Embed"
-    Image = "Image"
+    ROAM_PAGE = "roam/page"
+    ROAM_PLAIN_BLOCK = "roam/plain-block"
+    ROAM_HEADING_BLOCK = "roam/heading-block"
+    ROAM_IMAGE_BLOCK = "roam/image-block"
+    ROAM_EMBED_BLOCK = "roam/embed-block"
 
 
 class RoamNode(BaseModel):
@@ -155,7 +159,7 @@ class RoamNode(BaseModel):
     @field_validator("heading", mode="before")
     @classmethod
     def _coerce_zero_heading(cls, v: object) -> object:
-        # Roam API returns heading=0 for non-heading blocks instead of omitting the field.
+        # Roam API *can* return heading=0 for non-heading blocks instead of omitting the field.
         return None if v == 0 else v
 
     @model_validator(mode="after")
@@ -243,26 +247,30 @@ type NodesByUid = dict[Uid, RoamNode]
 def node_type(node: RoamNode) -> NodeType:
     """Return the :class:`NodeType` of *node*.
 
-    Discriminates first on :attr:`~RoamNode.title`: returns :attr:`NodeType.Embed`
-    when ``title`` is the literal ``"embed"``, :attr:`NodeType.Page` when ``title``
+    Discriminates first on :attr:`~RoamNode.title`: returns :attr:`NodeType.ROAM_EMBED_BLOCK`
+    when ``title`` is the literal ``"embed"``, :attr:`NodeType.ROAM_PAGE` when ``title``
     is any other non-``None`` string.  For title-less nodes (blocks), returns
-    :attr:`NodeType.Image` when ``string`` consists solely of a single Markdown image
-    link (as matched by :data:`~guffin.roam_primitives.IMAGE_LINK_RE`), and
-    :attr:`NodeType.Block` otherwise.
+    :attr:`NodeType.ROAM_IMAGE_BLOCK` when ``string`` consists solely of a single Markdown image
+    link (as matched by :data:`~guffin.roam_primitives.IMAGE_LINK_RE`),
+    :attr:`NodeType.ROAM_HEADING_BLOCK` when :func:`effective_heading_level` is non-``None``,
+    and :attr:`NodeType.ROAM_PLAIN_BLOCK` otherwise.
 
     Args:
         node: The node whose entity type to determine.
 
     Returns:
-        :attr:`NodeType.Embed` if ``title == "embed"``;
-        :attr:`NodeType.Page` if ``title`` is set (and not ``"embed"``);
-        :attr:`NodeType.Image` if ``string`` is solely a single Markdown image link;
-        :attr:`NodeType.Block` otherwise.
+        :attr:`NodeType.ROAM_EMBED_BLOCK` if ``title == "embed"``;
+        :attr:`NodeType.ROAM_PAGE` if ``title`` is set (and not ``"embed"``);
+        :attr:`NodeType.ROAM_IMAGE_BLOCK` if ``string`` is solely a single Markdown image link;
+        :attr:`NodeType.ROAM_HEADING_BLOCK` if ``heading`` or ``props['ah-level']`` is set;
+        :attr:`NodeType.ROAM_PLAIN_BLOCK` otherwise.
     """
     if node.title == "embed":
-        return NodeType.Embed
+        return NodeType.ROAM_EMBED_BLOCK
     if node.title is not None:
-        return NodeType.Page
+        return NodeType.ROAM_PAGE
     if node.string is not None and IMAGE_LINK_RE.fullmatch(node.string.strip()):
-        return NodeType.Image
-    return NodeType.Block
+        return NodeType.ROAM_IMAGE_BLOCK
+    if effective_heading_level(node) is not None:
+        return NodeType.ROAM_HEADING_BLOCK
+    return NodeType.ROAM_PLAIN_BLOCK

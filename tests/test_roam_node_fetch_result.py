@@ -34,20 +34,6 @@ def _page_node(uid: str = _PAGE_UID, title: str = _PAGE_TITLE) -> RoamNode:
     return RoamNode(uid=uid, id=1, time=STUB_TIME, user=STUB_USER, title=title, children=[])
 
 
-def _block_node(uid: str = _BLOCK_UID, string: str = "block text", page_id: int = 1) -> RoamNode:
-    """Return a minimal Block :class:`~guffin.roam_node.RoamNode` for use in tests."""
-    return RoamNode(
-        uid=uid,
-        id=2,
-        time=STUB_TIME,
-        user=STUB_USER,
-        string=string,
-        order=0,
-        page=IdObject(id=page_id),
-        parents=[IdObject(id=page_id)],
-    )
-
-
 # ---------------------------------------------------------------------------
 # QueryAnchorKind
 # ---------------------------------------------------------------------------

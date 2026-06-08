@@ -157,18 +157,10 @@ def _extract_file_name(firestore_url: str) -> str | None:
 
 @validate_call
 def vertex_type(node: RoamNode) -> VertexType:
-    r"""Classify *node* into a :class:`~guffin.graph.VertexType`.
+    """Classify *node* into a :class:`~guffin.graph.VertexType`.
 
-    Handles both native Roam headings (levels 1–3 via ``node.heading``) and Augmented
-    Headings extension levels (4–6 via ``node.props['ah-level']``).
-
-    Classification order:
-
-    1. ``node.title`` is set → :attr:`~guffin.graph.VertexType.ROAM_PAGE`
-    2. :func:`~guffin.roam_node.node_type` is :attr:`~guffin.roam_node.NodeType.Image`
-       → :attr:`~guffin.graph.VertexType.ROAM_IMAGE`
-    3. Effective heading level is non-\ ``None`` → :attr:`~guffin.graph.VertexType.ROAM_HEADING`
-    4. Otherwise → :attr:`~guffin.graph.VertexType.ROAM_TEXT_CONTENT`
+    Dispatches on :func:`~guffin.roam_node.node_type` for a direct
+    :class:`~guffin.roam_node.NodeType` → :class:`~guffin.graph.VertexType` mapping.
 
     Args:
         node: The raw Roam node to classify.
@@ -177,20 +169,21 @@ def vertex_type(node: RoamNode) -> VertexType:
         The :class:`~guffin.graph.VertexType` for *node*.
 
     Raises:
+        NotImplementedError: If *node* is a :attr:`~guffin.roam_node.NodeType.ROAM_EMBED_BLOCK`.
         ValidationError: If *node* is ``None`` or invalid.
-        ValueError: If *node* has neither a ``title`` nor a ``string`` field set.
     """
     logger.debug("node=%r", node)
-    if node.title is not None:
-        return VertexType.ROAM_PAGE
-    string: Final[str | None] = node.string
-    if string is None:
-        raise ValueError(f"RoamNode uid={node.uid!r} has neither 'title' nor 'string'")
-    if node_type(node) is NodeType.Image:
-        return VertexType.ROAM_IMAGE
-    if effective_heading_level(node) is not None:
-        return VertexType.ROAM_HEADING
-    return VertexType.ROAM_TEXT_CONTENT
+    match node_type(node):
+        case NodeType.ROAM_PAGE:
+            return VertexType.GUFFIN_PAGE
+        case NodeType.ROAM_PLAIN_BLOCK:
+            return VertexType.GUFFIN_TEXT_CONTENT
+        case NodeType.ROAM_HEADING_BLOCK:
+            return VertexType.GUFFIN_HEADING
+        case NodeType.ROAM_IMAGE_BLOCK:
+            return VertexType.GUFFIN_IMAGE
+        case NodeType.ROAM_EMBED_BLOCK:
+            raise NotImplementedError(f"RoamNode uid={node.uid!r}: ROAM_EMBED_BLOCK transcription is not supported")
 
 
 @validate_call
@@ -344,13 +337,13 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
     """
     logger.debug("node=%r, id_map keys=%r, heading_offset=%d", node, list(id_map.keys()), heading_offset)
     match vertex_type(node):
-        case VertexType.ROAM_PAGE:
+        case VertexType.GUFFIN_PAGE:
             return to_page_vertex(node, id_map)
-        case VertexType.ROAM_IMAGE:
+        case VertexType.GUFFIN_IMAGE:
             return to_image_vertex(node, id_map)
-        case VertexType.ROAM_HEADING:
+        case VertexType.GUFFIN_HEADING:
             return to_heading_vertex(node, id_map, heading_offset)
-        case VertexType.ROAM_TEXT_CONTENT:
+        case VertexType.GUFFIN_TEXT_CONTENT:
             return to_text_content_vertex(node, id_map)
 
 

@@ -272,7 +272,7 @@ class TestResponsePayload:
         """Test that a valid Response.Payload instance can be constructed."""
         payload: Response.Payload = Response.Payload(success=True, result={"filename": "test.jpg"})
         assert payload.success is True
-        assert payload.result["filename"] == "test.jpg"
+        assert payload.result == {"filename": "test.jpg"}
 
     def test_is_base_model_at_runtime(self) -> None:
         """Test that Response.Payload is a BaseModel instance at runtime."""
@@ -325,8 +325,7 @@ class TestMakeRequest:
             result: Response.Payload = invoke_action(file_get_payload, api_endpoint)
 
         assert result.success is True
-        assert isinstance(result.result, dict)
-        assert result.result["filename"] == "test.jpg"
+        assert result.result == {"filename": "test.jpg"}
 
     def test_posts_to_endpoint_url(
         self, api_endpoint: ApiEndpoint, file_get_payload: Request.Payload, mock_200_response: MagicMock
