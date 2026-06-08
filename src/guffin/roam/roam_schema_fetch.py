@@ -5,10 +5,10 @@ Public symbols:
 - :class:`FetchRoamSchema` — stateless utility class that fetches the Datomic
   schema for a Roam graph via the Local API's ``data.q`` action.
 
-The schema model types (:data:`~guffin.roam_schema.RoamSchema`,
-:class:`~guffin.roam_schema.RoamNamespace`,
-:class:`~guffin.roam_schema.RoamAttribute`) are defined in
-:mod:`guffin.roam_schema`.
+The schema model types (:data:`~guffin.roam.roam_schema.RoamSchema`,
+:class:`~guffin.roam.roam_schema.RoamNamespace`,
+:class:`~guffin.roam.roam_schema.RoamAttribute`) are defined in
+:mod:`guffin.roam.roam_schema`.
 """
 
 import logging
@@ -17,13 +17,13 @@ from typing import Final, final
 
 from pydantic import BaseModel, ConfigDict, validate_call
 
-from guffin.roam_local_api import (
+from guffin.roam.roam_local_api import (
     ApiEndpoint,
     Request as LocalApiRequest,
     Response as LocalApiResponse,
     invoke_action,
 )
-from guffin.roam_schema import RoamAttribute, RoamNamespace, RoamSchema
+from guffin.roam.roam_schema import RoamAttribute, RoamNamespace, RoamSchema
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +34,9 @@ class FetchRoamSchema:
 
     Executes a ``data.q`` action via the Local API, which proxies
     ``roamAlphaAPI.data.q`` through the Roam Desktop app's local HTTP server.
-    The schema is returned as a :data:`~guffin.roam_schema.RoamSchema`.
+    The schema is returned as a :data:`~guffin.roam.roam_schema.RoamSchema`.
 
-    Delegates HTTP transport to :func:`~guffin.roam_local_api.invoke_action`,
+    Delegates HTTP transport to :func:`~guffin.roam.roam_local_api.invoke_action`,
     which handles header construction and error raising.
     """
 
@@ -80,19 +80,19 @@ class FetchRoamSchema:
         """Fetch the Roam Datomic schema via the Local API.
 
         Executes the ``data.q`` schema query and returns all attributes present in
-        the graph's Datomic schema as :class:`~guffin.roam_schema.RoamAttribute` members.
+        the graph's Datomic schema as :class:`~guffin.roam.roam_schema.RoamAttribute` members.
 
         Args:
             api_endpoint: The API endpoint (URL + bearer token) for the target Roam graph.
 
         Returns:
-            A :data:`~guffin.roam_schema.RoamSchema` — a list of
-            :class:`~guffin.roam_schema.RoamAttribute` members, one per row in the
+            A :data:`~guffin.roam.roam_schema.RoamSchema` — a list of
+            :class:`~guffin.roam.roam_schema.RoamAttribute` members, one per row in the
             schema query result.
 
         Raises:
             ValueError: If a ``(namespace, attr_name)`` pair returned by the live graph
-                has no matching :class:`~guffin.roam_schema.RoamAttribute` member
+                has no matching :class:`~guffin.roam.roam_schema.RoamAttribute` member
                 (schema drift detected).
             ValidationError: If ``api_endpoint`` is ``None`` or invalid.
             requests.exceptions.ConnectionError: If the Local API is unreachable.

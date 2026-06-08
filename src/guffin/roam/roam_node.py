@@ -18,7 +18,7 @@ from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator, validate_call
 
-from guffin.roam_primitives import (
+from guffin.roam.roam_primitives import (
     IMAGE_LINK_RE,
     HeadingLevel,
     Id,
@@ -30,7 +30,7 @@ from guffin.roam_primitives import (
     RawRefs,
     Uid,
 )
-from guffin.roam_schema import RoamAttribute
+from guffin.roam.roam_schema import RoamAttribute
 
 logger = logging.getLogger(__name__)
 
@@ -280,7 +280,7 @@ def node_type(node: RoamNode) -> NodeType:
     when ``title`` is the literal ``"embed"``, :attr:`NodeType.ROAM_PAGE` when ``title``
     is any other non-``None`` string.  For title-less nodes (blocks), returns
     :attr:`NodeType.ROAM_IMAGE_BLOCK` when ``string`` consists solely of a single Markdown image
-    link (as matched by :data:`~guffin.roam_primitives.IMAGE_LINK_RE`),
+    link (as matched by :data:`~guffin.roam.roam_primitives.IMAGE_LINK_RE`),
     :attr:`NodeType.ROAM_HEADING_BLOCK` when :func:`effective_heading_level` is non-``None``,
     :attr:`NodeType.ROAM_CALLOUT_BLOCK` when ``string`` starts with a valid callout marker
     (as matched by the module-private ``_CALLOUT_RE``),

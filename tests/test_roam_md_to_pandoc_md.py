@@ -1,6 +1,6 @@
-"""Unit tests for guffin.roam_md_to_pandoc_md."""
+"""Unit tests for guffin.roam.roam_md_to_pandoc_md."""
 
-from guffin.roam_md_to_pandoc_md import (
+from guffin.roam.roam_md_to_pandoc_md import (
     convert_highlights,
     convert_italics,
     convert_page_link_aliases,

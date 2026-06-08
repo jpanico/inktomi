@@ -15,9 +15,9 @@ from guffin.graph import (
     VertexType,
     vertex_adapter,
 )
-from guffin.roam_network import min_effective_heading_level
-from guffin.roam_node import RoamNode
-from guffin.roam_transcribe import (
+from guffin.roam.roam_network import min_effective_heading_level
+from guffin.roam.roam_node import RoamNode
+from guffin.roam.roam_transcribe import (
     to_heading_vertex,
     to_image_vertex,
     to_page_vertex,
@@ -26,7 +26,7 @@ from guffin.roam_transcribe import (
     transcribe_node,
     vertex_type,
 )
-from guffin.roam_primitives import Id, IdObject
+from guffin.roam.roam_primitives import Id, IdObject
 
 # A real Firestore URL whose path yields a predictable file_name and media_type:
 #   file_name  = "photo.jpeg"

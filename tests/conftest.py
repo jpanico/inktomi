@@ -8,10 +8,10 @@ import pytest
 import yaml
 
 from guffin.graph import VertexTree, vertex_adapter
-from guffin.roam_local_api import ApiEndpoint, ApiEndpointURL
-from guffin.roam_node import NodeType, RoamNode, node_type
-from guffin.roam_tree import NodeTree
-from guffin.roam_primitives import IdObject
+from guffin.roam.roam_local_api import ApiEndpoint, ApiEndpointURL
+from guffin.roam.roam_node import NodeType, RoamNode, node_type
+from guffin.roam.roam_tree import NodeTree
+from guffin.roam.roam_primitives import IdObject
 
 FIXTURES_YAML_DIR: pathlib.Path = pathlib.Path(__file__).parent / "fixtures" / "yaml"
 """Absolute path to the ``tests/fixtures/yaml/`` directory."""
@@ -34,7 +34,7 @@ STUB_USER: IdObject = IdObject(id=1)
 
 @pytest.fixture
 def api_endpoint() -> ApiEndpoint:
-    """Return a minimal :class:`~guffin.roam_local_api.ApiEndpoint` for unit tests."""
+    """Return a minimal :class:`~guffin.roam.roam_local_api.ApiEndpoint` for unit tests."""
     return ApiEndpoint(
         url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
         bearer_token="test-token",
@@ -43,7 +43,7 @@ def api_endpoint() -> ApiEndpoint:
 
 @pytest.fixture
 def live_api_endpoint() -> ApiEndpoint:
-    """Return a live :class:`~guffin.roam_local_api.ApiEndpoint` built from env vars.
+    """Return a live :class:`~guffin.roam.roam_local_api.ApiEndpoint` built from env vars.
 
     Requires ``GUFFIN_ROAM_LOCAL_API_PORT``, ``GUFFIN_ROAM_GRAPH_NAME``, and ``GUFFIN_ROAM_API_TOKEN``
     to be set in the environment.  Intended for use in tests marked ``@pytest.mark.live``.
@@ -56,7 +56,7 @@ def live_api_endpoint() -> ApiEndpoint:
 
 
 def article1_node_tree() -> NodeTree:
-    """Load and return the ``[[Test Article]] 1`` :class:`~guffin.roam_tree.NodeTree` from its YAML fixture."""
+    """Load and return the ``[[Test Article]] 1`` :class:`~guffin.roam.roam_tree.NodeTree` from its YAML fixture."""
     raw: Final[list[dict[str, object]]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_1_nodes.yaml").read_text())
     network: Final[list[RoamNode]] = [RoamNode.model_validate(r) for r in raw]
     root_node: Final[RoamNode] = next(n for n in network if node_type(n) == NodeType.ROAM_PAGE)

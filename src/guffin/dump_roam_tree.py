@@ -7,17 +7,17 @@ hierarchy:
 
 - **Vertex tree** (default, ``--vertex-tree`` / ``-v/-V``) — normalized
   :class:`~guffin.graph.VertexTree` produced by
-  :func:`~guffin.roam_transcribe.transcribe`.
-- **Node tree** (``--node-tree`` / ``-n/-N``) — raw :class:`~guffin.roam_tree.NodeTree`
+  :func:`~guffin.roam.roam_transcribe.transcribe`.
+- **Node tree** (``--node-tree`` / ``-n/-N``) — raw :class:`~guffin.roam.roam_tree.NodeTree`
   as returned by the Roam Local API; each panel body lists selected
-  :class:`~guffin.roam_node.RoamNode` fields, configurable via
+  :class:`~guffin.roam.roam_node.RoamNode` fields, configurable via
   ``--node-props`` (defaults to
   :data:`~guffin.rich_rendering.DEFAULT_NODE_PANEL_PROPS`).
 - **Raw results** (``--raw-results`` / ``-r/-R``) — raw Datalog query results
   as returned by the Roam Local API, before any transcription.
 
 ``TARGET`` is interpreted as a **node UID** if it matches
-:data:`~guffin.roam_primitives.UID_PATTERN` (exactly 9 alphanumeric/dash/underscore
+:data:`~guffin.roam.roam_primitives.UID_PATTERN` (exactly 9 alphanumeric/dash/underscore
 characters, the fixed format used by Roam for all block and page UIDs); otherwise it is
 treated as a **page title**.  A page whose title happens to be exactly 9
 characters from that alphabet would be misidentified — this edge case is
@@ -58,13 +58,13 @@ from guffin.rich_rendering import (
     build_rich_refs_box,
     build_rich_vertex_tree,
 )
-from guffin.roam_node_fetch import RoamNodeNotFoundError
-from guffin.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec, QueryAnchorKind
-from guffin.roam_tree_loader import fetch_roam_trees
+from guffin.roam.roam_node_fetch import RoamNodeNotFoundError
+from guffin.roam.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec, QueryAnchorKind
+from guffin.roam.roam_tree_loader import fetch_roam_trees
 from guffin.graph import VertexTree
-from guffin.roam_local_api import ApiEndpoint
+from guffin.roam.roam_local_api import ApiEndpoint
 from guffin.logging_config import configure_logging
-from guffin.roam_primitives import UID_PATTERN
+from guffin.roam.roam_primitives import UID_PATTERN
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -94,15 +94,15 @@ def _dump_node_tree(fetch_result: NodeFetchResult, node_props: str | None, conso
     """Render and print the node tree from *fetch_result* as a Rich tree.
 
     Logs a warning and returns early when
-    :attr:`~guffin.roam_node_fetch_result.NodeFetchResult.anchor_tree` is ``None``.
+    :attr:`~guffin.roam.roam_node_fetch_result.NodeFetchResult.anchor_tree` is ``None``.
     After the tree, prints a ``refs`` box containing one
     :func:`~guffin.rich_rendering.make_node_panel` panel per node in
-    :attr:`~guffin.roam_tree.NodeTree.refs_by_id` (omitted when empty).
+    :attr:`~guffin.roam.roam_tree.NodeTree.refs_by_id` (omitted when empty).
 
     Args:
-        fetch_result: Fetch result whose :attr:`~guffin.roam_node_fetch_result.NodeFetchResult.anchor_tree`
+        fetch_result: Fetch result whose :attr:`~guffin.roam.roam_node_fetch_result.NodeFetchResult.anchor_tree`
             is rendered.
-        node_props: Comma-separated :class:`~guffin.roam_node.RoamNode` field names
+        node_props: Comma-separated :class:`~guffin.roam.roam_node.RoamNode` field names
             to include in each panel body, or ``None`` to use
             :data:`~guffin.rich_rendering.DEFAULT_NODE_PANEL_PROPS`.
         console: Rich :class:`~rich.console.Console` to print to.
@@ -161,12 +161,12 @@ def dump_trees(
     :func:`_dump_vertex_tree` based on the corresponding flags.
 
     Args:
-        fetch_result: The :class:`~guffin.roam_node_fetch_result.NodeFetchResult` returned
+        fetch_result: The :class:`~guffin.roam.roam_node_fetch_result.NodeFetchResult` returned
             by the fetch pipeline, carrying the raw node tree and Datalog results.
         vertex_tree: Normalized :class:`~guffin.graph.VertexTree` produced
-            by :func:`~guffin.roam_transcribe.transcribe`, or ``None`` when
+            by :func:`~guffin.roam.roam_transcribe.transcribe`, or ``None`` when
             vertex tree computation was skipped.
-        node_props: Comma-separated list of :class:`~guffin.roam_node.RoamNode`
+        node_props: Comma-separated list of :class:`~guffin.roam.roam_node.RoamNode`
             field names to include in each node panel body, or ``None`` to use
             :data:`~guffin.rich_rendering.DEFAULT_NODE_PANEL_PROPS`.
         show_raw_results: When ``True``, call :func:`_dump_raw_table`.
@@ -273,7 +273,7 @@ def main(
     """Dump a Roam Research page or node subtree as a Rich tree to the console.
 
     TARGET is interpreted as a node UID (fetches the subtree rooted there) if
-    it matches :data:`~guffin.roam_primitives.UID_PATTERN`, otherwise as a
+    it matches :data:`~guffin.roam.roam_primitives.UID_PATTERN`, otherwise as a
     page title (fetches all blocks on that page).  Use ``--vertex-tree`` / ``-v/-V``
     and ``--node-tree`` / ``-n/-N`` to control which trees are printed (vertex tree
     is shown by default).  Use ``--raw-results`` / ``-r/-R`` to also print the raw

@@ -75,7 +75,7 @@ def to_pandoc_md(roam_string: str) -> str:
 
     Args:
         roam_string: A single Roam block string (the raw ``string`` field from a
-            :class:`~guffin.roam_node.RoamNode`).
+            :class:`~guffin.roam.roam_node.RoamNode`).
 
     Returns:
         The Pandoc Markdown string.

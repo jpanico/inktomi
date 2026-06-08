@@ -2,8 +2,8 @@
 
 Public symbols:
 
-- :func:`fetch_roam_trees` — fetch nodes for a :class:`~guffin.roam_node_fetch_result.NodeFetchSpec`
-  and return a :class:`~guffin.roam_node_fetch_result.NodeFetchResult` paired with an optional
+- :func:`fetch_roam_trees` — fetch nodes for a :class:`~guffin.roam.roam_node_fetch_result.NodeFetchSpec`
+  and return a :class:`~guffin.roam.roam_node_fetch_result.NodeFetchResult` paired with an optional
   :class:`~guffin.graph.VertexTree`, ready for rendering or further processing.
 """
 
@@ -13,11 +13,11 @@ from typing import Final
 from pydantic import validate_call
 
 from guffin.graph import VertexTree
-from guffin.roam_local_api import ApiEndpoint
-from guffin.roam_node_fetch import FetchRoamNodes
-from guffin.roam_node_fetch_result import NodeFetchResult, NodeFetchSpec
-from guffin.roam_tree import NodeTree
-from guffin.roam_transcribe import transcribe
+from guffin.roam.roam_local_api import ApiEndpoint
+from guffin.roam.roam_node_fetch import FetchRoamNodes
+from guffin.roam.roam_node_fetch_result import NodeFetchResult, NodeFetchSpec
+from guffin.roam.roam_tree import NodeTree
+from guffin.roam.roam_transcribe import transcribe
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,8 @@ def fetch_roam_trees(
 ) -> tuple[NodeFetchResult, VertexTree | None]:
     """Fetch Roam nodes for *fetch_spec* and build a validated node tree and vertex tree.
 
-    Fetches :class:`~guffin.roam_node.RoamNode` records for *fetch_spec* via
-    *api_endpoint*, constructs a :class:`~guffin.roam_tree.NodeTree`, and optionally
+    Fetches :class:`~guffin.roam.roam_node.RoamNode` records for *fetch_spec* via
+    *api_endpoint*, constructs a :class:`~guffin.roam.roam_tree.NodeTree`, and optionally
     transcribes it to a :class:`~guffin.graph.VertexTree`.
 
     Propagates any exception raised during fetching or transcription; callers are

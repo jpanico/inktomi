@@ -2,7 +2,7 @@
 
 Public symbols:
 
-- :data:`NodeNetwork` — a collection of :class:`~guffin.roam_node.RoamNode` instances.
+- :data:`NodeNetwork` — a collection of :class:`~guffin.roam.roam_node.RoamNode` instances.
 - :func:`all_children_present` — :data:`~guffin.validation.Validator` requiring all child ids in a
   :data:`NodeNetwork` to resolve to member nodes.
 - :func:`all_descendants` — collect all nodes reachable from an ancestor via child edges.
@@ -10,14 +10,14 @@ Public symbols:
   :data:`NodeNetwork` to resolve to member nodes; accepts a *root_node* argument whose own
   parent ids are exempt from the check.
 - :func:`has_unique_ids` — :data:`~guffin.validation.Validator` requiring every
-  :attr:`~guffin.roam_node.RoamNode.id` in a :data:`NodeNetwork` to be unique.
+  :attr:`~guffin.roam.roam_node.RoamNode.id` in a :data:`NodeNetwork` to be unique.
 - :func:`is_acyclic` — :data:`~guffin.validation.Validator` requiring the child-edge graph of a
   :data:`NodeNetwork` to be cycle-free.
-- :func:`refs_ids` — return the set of all :attr:`~guffin.roam_node.RoamNode.refs` ids across every
+- :func:`refs_ids` — return the set of all :attr:`~guffin.roam.roam_node.RoamNode.refs` ids across every
   node in a :data:`NodeNetwork`.
 - :func:`direct_refs_nodes` — return the :data:`NodeNetwork` of nodes in a :data:`NodeNetwork` whose
-  :attr:`~guffin.roam_node.RoamNode.id` is referenced by any node's
-  :attr:`~guffin.roam_node.RoamNode.refs` list.
+  :attr:`~guffin.roam.roam_node.RoamNode.id` is referenced by any node's
+  :attr:`~guffin.roam.roam_node.RoamNode.refs` list.
 - :func:`refs_nodes` — return the :data:`NodeNetwork` of all direct-ref target nodes in a
   :data:`NodeNetwork` plus all of their transitive descendants available in that network.
 - :func:`min_effective_heading_level` — return the minimum effective heading level across all
@@ -28,16 +28,16 @@ from typing import Final
 
 from pydantic import validate_call
 
-from guffin.roam_node import RoamNode, effective_heading_level
-from guffin.roam_primitives import HeadingLevel, Id, Uid
+from guffin.roam.roam_node import RoamNode, effective_heading_level
+from guffin.roam.roam_primitives import HeadingLevel, Id, Uid
 from guffin.validation import ValidationError
 
 type NodeNetwork = list[RoamNode]
-"""A collection of :class:`~guffin.roam_node.RoamNode` instances.
+"""A collection of :class:`~guffin.roam.roam_node.RoamNode` instances.
 
-Relationships between nodes are encoded via :attr:`~guffin.roam_node.RoamNode.children`,
-:attr:`~guffin.roam_node.RoamNode.parents`, and :attr:`~guffin.roam_node.RoamNode.page` as
-:class:`~guffin.roam_primitives.IdObject` stubs referencing :attr:`~guffin.roam_node.RoamNode.id`
+Relationships between nodes are encoded via :attr:`~guffin.roam.roam_node.RoamNode.children`,
+:attr:`~guffin.roam.roam_node.RoamNode.parents`, and :attr:`~guffin.roam.roam_node.RoamNode.page` as
+:class:`~guffin.roam.roam_primitives.IdObject` stubs referencing :attr:`~guffin.roam.roam_node.RoamNode.id`
 values within the collection.
 """
 
@@ -46,9 +46,9 @@ values within the collection.
 def all_children_present(network: NodeNetwork) -> ValidationError | None:
     """Return ``None`` when every child id referenced in *network* resolves to a node in *network*.
 
-    Iterates every node in *network* and checks that each :attr:`~guffin.roam_node.RoamNode.id`
-    value found in a node's :attr:`~guffin.roam_node.RoamNode.children` list corresponds to the
-    :attr:`~guffin.roam_node.RoamNode.id` of at least one node in *network*.
+    Iterates every node in *network* and checks that each :attr:`~guffin.roam.roam_node.RoamNode.id`
+    value found in a node's :attr:`~guffin.roam.roam_node.RoamNode.children` list corresponds to the
+    :attr:`~guffin.roam.roam_node.RoamNode.id` of at least one node in *network*.
 
     A network with no children at all vacuously satisfies this condition and
     returns ``None``.
@@ -79,10 +79,10 @@ def all_children_present(network: NodeNetwork) -> ValidationError | None:
 def all_parents_present(network: NodeNetwork, root_node: RoamNode) -> ValidationError | None:
     """Return ``None`` when every parent id referenced in *network* resolves to a node in *network*.
 
-    Iterates every node in *network* and checks that each :attr:`~guffin.roam_node.RoamNode.id`
-    value found in a node's :attr:`~guffin.roam_node.RoamNode.parents` list corresponds to the
-    :attr:`~guffin.roam_node.RoamNode.id` of at least one node in *network*.  Parent ids that
-    appear in *root_node*'s :attr:`~guffin.roam_node.RoamNode.parents` list are exempt from this
+    Iterates every node in *network* and checks that each :attr:`~guffin.roam.roam_node.RoamNode.id`
+    value found in a node's :attr:`~guffin.roam.roam_node.RoamNode.parents` list corresponds to the
+    :attr:`~guffin.roam.roam_node.RoamNode.id` of at least one node in *network*.  Parent ids that
+    appear in *root_node*'s :attr:`~guffin.roam.roam_node.RoamNode.parents` list are exempt from this
     check — they are considered external ancestors that legitimately live outside *network*.
 
     A network with no parents at all vacuously satisfies this condition and returns ``None``.
@@ -118,9 +118,9 @@ def all_parents_present(network: NodeNetwork, root_node: RoamNode) -> Validation
 
 @validate_call
 def has_unique_ids(network: NodeNetwork) -> ValidationError | None:
-    """Return ``None`` when every :attr:`~guffin.roam_node.RoamNode.id` in *network* is unique.
+    """Return ``None`` when every :attr:`~guffin.roam.roam_node.RoamNode.id` in *network* is unique.
 
-    Checks that no two nodes in *network* share the same :attr:`~guffin.roam_node.RoamNode.id`
+    Checks that no two nodes in *network* share the same :attr:`~guffin.roam.roam_node.RoamNode.id`
     value.  An empty network vacuously satisfies this condition.
 
     Args:
@@ -148,7 +148,7 @@ def has_unique_ids(network: NodeNetwork) -> ValidationError | None:
 def is_acyclic(network: NodeNetwork) -> ValidationError | None:
     """Return ``None`` when the child-edge graph of *network* contains no directed cycles.
 
-    Performs a depth-first search over the :attr:`~guffin.roam_node.RoamNode.children` edges of
+    Performs a depth-first search over the :attr:`~guffin.roam.roam_node.RoamNode.children` edges of
     *network*, colouring each node white (unvisited), grey (on the current DFS
     path), or black (fully explored).  Encountering a grey node during
     traversal reveals a back-edge and therefore a cycle.
@@ -207,7 +207,7 @@ def all_descendants(ancestor: RoamNode, network: NodeNetwork) -> NodeNetwork:
     """Collect all descendant nodes of *ancestor* reachable via child edges in *network*.
 
     Performs an iterative depth-first traversal starting from *ancestor*, following each
-    node's :attr:`~guffin.roam_node.RoamNode.children` links.  The traversal is bounded
+    node's :attr:`~guffin.roam.roam_node.RoamNode.children` links.  The traversal is bounded
     to *network*; any child id that cannot be resolved to a node in *network* raises a
     :class:`ValueError`.
 
@@ -254,10 +254,10 @@ def all_descendants(ancestor: RoamNode, network: NodeNetwork) -> NodeNetwork:
 
 @validate_call
 def refs_ids(network: NodeNetwork) -> set[Id]:
-    """Return the set of all :attr:`~guffin.roam_node.RoamNode.refs` ids across every node in *network*.
+    """Return the set of all :attr:`~guffin.roam.roam_node.RoamNode.refs` ids across every node in *network*.
 
-    Collects every :attr:`~guffin.roam_primitives.IdObject.id` found in the
-    :attr:`~guffin.roam_node.RoamNode.refs` field of every node in *network*.  Nodes whose
+    Collects every :attr:`~guffin.roam.roam_primitives.IdObject.id` found in the
+    :attr:`~guffin.roam.roam_node.RoamNode.refs` field of every node in *network*.  Nodes whose
     ``refs`` field is ``None`` contribute nothing.  An empty *network* returns an empty set.
 
     Args:
@@ -275,9 +275,9 @@ def direct_refs_nodes(network: NodeNetwork) -> NodeNetwork:
     """Return the nodes in *network* that are referenced by any node's ``refs`` list.
 
     Finds all ids across *network* via :func:`refs_ids`, then returns the subset of nodes
-    in *network* whose :attr:`~guffin.roam_node.RoamNode.id` appears in that set.  Ref
+    in *network* whose :attr:`~guffin.roam.roam_node.RoamNode.id` appears in that set.  Ref
     targets that resolve to nodes outside *network* are not included; use
-    :attr:`~guffin.roam_tree.NodeTree.refs_by_id` when the full ref-node pool may be
+    :attr:`~guffin.roam.roam_tree.NodeTree.refs_by_id` when the full ref-node pool may be
     broader than *network* itself.
 
     Args:
@@ -332,7 +332,7 @@ def refs_nodes(network: NodeNetwork) -> NodeNetwork:
 def min_effective_heading_level(network: NodeNetwork) -> HeadingLevel | None:
     """Return the minimum effective heading level across all nodes in *network*.
 
-    Applies :func:`~guffin.roam_node.effective_heading_level` to every node,
+    Applies :func:`~guffin.roam.roam_node.effective_heading_level` to every node,
     collecting all non-``None`` results, and returns the smallest value.
     Returns ``None`` when *network* contains no heading nodes.
 
@@ -340,7 +340,7 @@ def min_effective_heading_level(network: NodeNetwork) -> HeadingLevel | None:
         network: The collection of nodes to examine.
 
     Returns:
-        The minimum :data:`~guffin.roam_primitives.HeadingLevel` found across
+        The minimum :data:`~guffin.roam.roam_primitives.HeadingLevel` found across
         all nodes in *network*, or ``None`` if no node is a heading.
     """
     levels: Final[set[HeadingLevel]] = {lvl for node in network if (lvl := effective_heading_level(node)) is not None}
