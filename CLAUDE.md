@@ -77,8 +77,8 @@ GUFFIN_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
 
 ## Test Fixtures
 
-Two live Roam pages serve as the primary test sources: `[[Test Article]] 1` and
-`[[Test Article]] 2`.  For each source, `tests/regen_fixtures.py` generates six
+Three live Roam pages serve as the primary test sources: `[[Test Article]] 0`,
+`[[Test Article]] 1`, and `[[Test Article]] 2`.  For each source, `tests/regen_fixtures.py` generates six
 fixture files that capture different stages and views of the data pipeline.
 
 ### No-refs fixture set (`include_refs=False`) — a linear pipeline
@@ -106,6 +106,7 @@ are three different lenses on the same underlying data:
 
 To regenerate fixtures from the live Roam graph (requires Roam Desktop running):
 ```bash
+python tests/regen_fixtures.py "[[Test Article]] 0" --prefix test_article_0
 python tests/regen_fixtures.py "[[Test Article]] 1" --prefix test_article_1
 python tests/regen_fixtures.py "[[Test Article]] 2" --prefix test_article_2
 ```

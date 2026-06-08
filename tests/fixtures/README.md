@@ -28,10 +28,19 @@ This directory contains test data used by the guffin test suite.
 
 ## Test Articles
 
-Two live Roam pages serve as the primary test sources: `[[Test Article]] 1` and
-`[[Test Article]] 2`. 
+Three live Roam pages serve as the primary test sources: `[[Test Article]] 0`,
+`[[Test Article]] 1`, and `[[Test Article]] 2`.
 
 ### Article Features
+
+#### `[[Test Article]] 0`
+
+- Baseline document with almost no features
+- 3 top-level `blocks` (no headers)
+- `nested blocks`
+- `italics` text
+- `bold` text
+- this INFO `Callout box`, which contains Roam `page references`
 
 #### `[[Test Article]] 1`
 
@@ -94,6 +103,7 @@ To regenerate fixtures from the live Roam graph:
 
 ```bash
 source .venv/bin/activate
+python tests/regen_fixtures.py "[[Test Article]] 0" --prefix test_article_0
 python tests/regen_fixtures.py "[[Test Article]] 1" --prefix test_article_1
 python tests/regen_fixtures.py "[[Test Article]] 2" --prefix test_article_2
 ```

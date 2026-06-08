@@ -1,0 +1,241 @@
+- - prevent-clean: 1773090962400
+    children:
+    - id: 4224
+    user:
+      id: 3
+    id: 4223
+    uid: LBFKibPIj
+    word-count: 9
+    edit-user:
+      id: 3
+    time: 1773090962400
+    title: Test Article
+    edit-nonce: 0iIGJ1buX
+    edit-time: 1780843750454
+- - string: block 3
+    children:
+    - id: 11154
+    - id: 11155
+    user:
+      id: 3
+    id: 11147
+    uid: jVQvHi40O
+    parents:
+    - id: 11137
+    time: 1780944791082
+    order: 3
+    open: true
+    page:
+      id: 11137
+- - string: block 1
+    children:
+    - id: 11151
+    - id: 11153
+    - id: 11157
+    - id: 11158
+    user:
+      id: 3
+    id: 11149
+    uid: MRKYttxrM
+    parents:
+    - id: 11137
+    time: 1780944762391
+    order: 1
+    open: true
+    page:
+      id: 11137
+- - string: block 3.1.1
+    user:
+      id: 3
+    id: 11156
+    uid: g9mXrLNQd
+    parents:
+    - id: 11137
+    - id: 11147
+    - id: 11154
+    time: 1780944807646
+    order: 0
+    open: true
+    page:
+      id: 11137
+- - string: '[[>]] [[!INFO]] THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
+      – DO NOT REMOVE
+
+      This page is a baseline Roam document, with almost no features
+
+      Features:
+
+      - 3 top-level blocks
+
+      - nested blocks
+
+      - italics text
+
+      - bold text
+
+      - this INFO `Callout box`, which contains Roam `page references`'
+    user:
+      id: 3
+    id: 11148
+    uid: qnCiceZgk
+    parents:
+    - id: 11137
+    time: 1780944726716
+    order: 0
+    open: true
+    page:
+      id: 11137
+    refs:
+    - id: 5450
+    - id: 5462
+- - string: This para features __italics__
+    user:
+      id: 3
+    id: 11157
+    uid: 2yQYaKIEV
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1780944909127
+    order: 0
+    open: true
+    page:
+      id: 11137
+- - string: block 1.2
+    user:
+      id: 3
+    id: 11153
+    uid: WtrddPBAt
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1780944784665
+    order: 3
+    open: true
+    page:
+      id: 11137
+- - string: block 2
+    user:
+      id: 3
+    id: 11150
+    uid: Odbqghm-D
+    parents:
+    - id: 11137
+    time: 1780944763258
+    order: 2
+    open: true
+    page:
+      id: 11137
+- - prevent-clean: 1780944726720
+    user:
+      id: 3
+    id: 5450
+    uid: OexZiLR_O
+    word-count: 0
+    edit-user:
+      id: 3
+    time: 1773784559632
+    title: '>'
+    edit-nonce: 2POM1zS7j
+    edit-time: 1773784559631
+- - string: block 1.1
+    children:
+    - id: 11152
+    user:
+      id: 3
+    id: 11151
+    uid: mGk4VnMT3
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1780944773800
+    order: 2
+    open: true
+    page:
+      id: 11137
+- - prevent-clean: 1780944726720
+    user:
+      id: 3
+    id: 5462
+    uid: ZgUWBRb7j
+    word-count: 0
+    edit-user:
+      id: 3
+    time: 1773788725523
+    title: '!INFO'
+    edit-nonce: z3caCCN5O
+    edit-time: 1773788725520
+- - string: This para features **bold**
+    user:
+      id: 3
+    id: 11158
+    uid: QB8DChDBs
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1780944927251
+    order: 1
+    open: true
+    page:
+      id: 11137
+- - string: block 3.1
+    children:
+    - id: 11156
+    user:
+      id: 3
+    id: 11154
+    uid: d6b4AGFrG
+    parents:
+    - id: 11137
+    - id: 11147
+    time: 1780944798657
+    order: 0
+    open: true
+    page:
+      id: 11137
+- - string: block 3.2
+    user:
+      id: 3
+    id: 11155
+    uid: 5N_QAEc3C
+    parents:
+    - id: 11137
+    - id: 11147
+    time: 1780944802560
+    order: 1
+    open: true
+    page:
+      id: 11137
+- - prevent-clean: 1780943971663
+    children:
+    - id: 11147
+    - id: 11148
+    - id: 11149
+    - id: 11150
+    user:
+      id: 3
+    id: 11137
+    uid: L7iQsWlWT
+    word-count: 68
+    edit-user:
+      id: 3
+    time: 1780943981609
+    title: '[[Test Article]] 0'
+    edit-nonce: 9mYwr5NkM
+    edit-time: 1780944927251
+    refs:
+    - id: 4223
+- - string: block 1.1.1
+    user:
+      id: 3
+    id: 11152
+    uid: 2IDW6tZJ4
+    parents:
+    - id: 11137
+    - id: 11149
+    - id: 11151
+    time: 1780944780043
+    order: 0
+    open: true
+    page:
+      id: 11137
