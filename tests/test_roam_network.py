@@ -2,7 +2,7 @@
 
 import pytest
 
-from guffin.roam.roam_network import (
+from guffin.roam.network import (
     all_children_present,
     all_descendants,
     all_parents_present,
@@ -12,8 +12,8 @@ from guffin.roam.roam_network import (
     min_effective_heading_level,
     refs_ids,
 )
-from guffin.roam.roam_node import RoamNode
-from guffin.roam.roam_primitives import IdObject
+from guffin.roam.node import RoamNode
+from guffin.roam.primitives import IdObject
 from guffin.common.validation import ValidationError
 
 from conftest import STUB_TIME, STUB_USER, article1_node_tree

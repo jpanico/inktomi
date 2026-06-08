@@ -3,18 +3,18 @@
 Public symbols:
 
 - :data:`DEFAULT_NODE_PANEL_PROPS` — the property names rendered in a panel body by default.
-- :func:`make_node_panel` — render a :class:`~guffin.roam.roam_node.RoamNode` as a Rich
+- :func:`make_node_panel` — render a :class:`~guffin.roam.node.RoamNode` as a Rich
   :class:`~rich.panel.Panel`.
 - :func:`build_rich_node_tree` — build a Rich :class:`~rich.tree.Tree` from a
-  :class:`~guffin.roam.roam_tree.NodeTree` using a depth-first traversal.
+  :class:`~guffin.roam.tree.NodeTree` using a depth-first traversal.
 - :func:`build_rich_refs_box` — build a Rich :class:`~rich.panel.Panel` summarising the
-  back-reference nodes in a :class:`~guffin.roam.roam_tree.NodeTree`.
+  back-reference nodes in a :class:`~guffin.roam.tree.NodeTree`.
 - :func:`make_vertex_panel` — render a :data:`~guffin.graph.Vertex` as a Rich
   :class:`~rich.panel.Panel`.
 - :func:`build_rich_vertex_tree` — build a Rich :class:`~rich.tree.Tree` from a
   :class:`~guffin.graph.VertexTree` using a depth-first traversal.
 - :func:`build_rich_raw_table` — build a Rich :class:`~rich.table.Table` of raw
-  Datalog pull-blocks from a :class:`~guffin.roam.roam_node_fetch_result.NodeFetchResult`.
+  Datalog pull-blocks from a :class:`~guffin.roam.node_fetch_result.NodeFetchResult`.
 """
 
 import logging
@@ -37,10 +37,10 @@ from guffin.graph import (
     VertexTree,
     VertexTreeDFSIterator,
 )
-from guffin.roam.roam_node import RoamNode
-from guffin.roam.roam_node_fetch_result import NodeFetchResult
-from guffin.roam.roam_tree import NodeTree, NodeTreeDFSIterator
-from guffin.roam.roam_primitives import Id, IdObject, IMAGE_LINK_RE, Uid
+from guffin.roam.node import RoamNode
+from guffin.roam.node_fetch_result import NodeFetchResult
+from guffin.roam.tree import NodeTree, NodeTreeDFSIterator
+from guffin.roam.primitives import Id, IdObject, IMAGE_LINK_RE, Uid
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ DEFAULT_NODE_PANEL_PROPS: Final[list[str]] = ["heading", "order", "children", "p
 """Property names rendered in the panel body by :func:`make_node_panel` when no explicit list is given.
 
 ``string``/``title`` and ``id`` are always shown in the panel title and are not
-included here.  All other :class:`~guffin.roam.roam_node.RoamNode` field names are
+included here.  All other :class:`~guffin.roam.node.RoamNode` field names are
 valid entries.
 """
 
@@ -58,7 +58,7 @@ def _format_node_prop(node: RoamNode, prop: str) -> str:
 
     Args:
         node: The node whose property is to be formatted.
-        prop: A :class:`~guffin.roam.roam_node.RoamNode` field name.
+        prop: A :class:`~guffin.roam.node.RoamNode` field name.
 
     Returns:
         A ``"name=value"`` string.  Unknown *prop* names produce ``"name=?"``.
@@ -118,7 +118,7 @@ def make_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS)
     ``id`` in parentheses.  The title text is determined as follows:
 
     - If the block string contains a Cloud Firestore image link matching
-      :data:`~guffin.roam.roam_primitives.IMAGE_LINK_RE`, the title reads
+      :data:`~guffin.roam.primitives.IMAGE_LINK_RE`, the title reads
       ``IMAGE [<alt>](FIRESTORE_URL)``.
     - Otherwise, if ``"heading"`` is in *props* and the node has a heading level,
       an ``H{n}:`` prefix is prepended.
@@ -130,7 +130,7 @@ def make_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS)
 
     Args:
         node: The node to render.
-        props: Ordered list of :class:`~guffin.roam.roam_node.RoamNode` field names
+        props: Ordered list of :class:`~guffin.roam.node.RoamNode` field names
             to include.  Controls both the ``H{n}:`` title prefix (shown only when
             ``"heading"`` is present) and the body pairs (``heading`` itself is
             never written to the body).  Defaults to :data:`DEFAULT_NODE_PANEL_PROPS`.
@@ -155,12 +155,12 @@ def build_rich_node_tree(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_P
     """Build a Rich tree from *tree* using a depth-first traversal.
 
     Iterates *tree* in pre-order depth-first order via
-    :meth:`~guffin.roam.roam_tree.NodeTree.dfs`, attaching each node as a Rich
+    :meth:`~guffin.roam.tree.NodeTree.dfs`, attaching each node as a Rich
     panel under its parent in the rendered tree.
 
     Args:
-        tree: The :class:`~guffin.roam.roam_tree.NodeTree` to render.
-        props: Ordered list of :class:`~guffin.roam.roam_node.RoamNode` field names
+        tree: The :class:`~guffin.roam.tree.NodeTree` to render.
+        props: Ordered list of :class:`~guffin.roam.node.RoamNode` field names
             to include in each panel body.  Defaults to :data:`DEFAULT_NODE_PANEL_PROPS`.
 
     Returns:
@@ -183,18 +183,18 @@ def build_rich_node_tree(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_P
 def build_rich_refs_box(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PROPS) -> Panel | None:
     """Build a Rich :class:`~rich.panel.Panel` summarising the back-reference nodes in *tree*.
 
-    For each node in :attr:`~guffin.roam.roam_tree.NodeTree.refs_by_id`, renders a
+    For each node in :attr:`~guffin.roam.tree.NodeTree.refs_by_id`, renders a
     two-column grid row containing a :func:`make_node_panel` on the left and a
     *referenced by* panel listing the ids of tree nodes that cite it on the right.
     All rows are collected into a single ``refs`` panel.
 
-    Returns ``None`` when :attr:`~guffin.roam.roam_tree.NodeTree.refs_by_id` is empty.
+    Returns ``None`` when :attr:`~guffin.roam.tree.NodeTree.refs_by_id` is empty.
 
     Args:
-        tree: The :class:`~guffin.roam.roam_tree.NodeTree` whose
-            :attr:`~guffin.roam.roam_tree.NodeTree.refs_by_id` and
-            :attr:`~guffin.roam.roam_tree.NodeTree.tree_network` are used.
-        props: Ordered list of :class:`~guffin.roam.roam_node.RoamNode` field names
+        tree: The :class:`~guffin.roam.tree.NodeTree` whose
+            :attr:`~guffin.roam.tree.NodeTree.refs_by_id` and
+            :attr:`~guffin.roam.tree.NodeTree.tree_network` are used.
+        props: Ordered list of :class:`~guffin.roam.node.RoamNode` field names
             to include in each node panel body.  Defaults to :data:`DEFAULT_NODE_PANEL_PROPS`.
 
     Returns:
@@ -400,7 +400,7 @@ def build_rich_raw_table(fetch_result: NodeFetchResult) -> Table:
     Rows are sorted by ``id``; columns cover every attribute key present across
     all pull-blocks, excluding those in :data:`_RAW_RESULTS_EXCLUDED_ATTRS`, and
     ordered according to :data:`_RAW_RESULTS_COL_ORDER` (remaining keys follow
-    alphabetically).  :class:`~guffin.roam.roam_primitives.IdObject` values and
+    alphabetically).  :class:`~guffin.roam.primitives.IdObject` values and
     single-entry ``{"id": …}`` ref dicts are rendered as plain integer ids; lists
     of such refs are rendered as a comma-separated id sequence.  Column headers
     are overridden per :data:`_RAW_RESULTS_COL_HEADERS`; cell values are
@@ -409,7 +409,7 @@ def build_rich_raw_table(fetch_result: NodeFetchResult) -> Table:
     :func:`_truncate_urls_in_cell`.
 
     Args:
-        fetch_result: Fetch result whose :attr:`~guffin.roam.roam_node_fetch_result.NodeFetchResult.raw_result`
+        fetch_result: Fetch result whose :attr:`~guffin.roam.node_fetch_result.NodeFetchResult.raw_result`
             supplies the pull-block rows.
 
     Returns:

@@ -26,7 +26,7 @@ result in one of two output formats controlled by ``--format``:
   Typst to be installed.
 
 ``TARGET`` is interpreted as a **node UID** if it matches
-:data:`~guffin.roam.roam_primitives.UID_PATTERN` (exactly 9 alphanumeric/dash/underscore
+:data:`~guffin.roam.primitives.UID_PATTERN` (exactly 9 alphanumeric/dash/underscore
 characters, the fixed format used by Roam for all block and page UIDs); otherwise it is
 treated as a **page title**.  A page whose title happens to be exactly 9
 characters from that alphabet would be misidentified — this edge case is
@@ -63,11 +63,11 @@ from guffin.graph import VertexTree
 from guffin.cli.logging_config import configure_logging
 from guffin.render.md_rendering import render as render_md
 from guffin.render.pdf_rendering import render as render_pdf
-from guffin.roam.roam_local_api import ApiEndpoint
-from guffin.roam.roam_node_fetch import RoamNodeNotFoundError
-from guffin.roam.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec, QueryAnchorKind
-from guffin.roam.roam_primitives import UID_PATTERN
-from guffin.roam_tree_loader import fetch_roam_trees
+from guffin.roam.local_api import ApiEndpoint
+from guffin.roam.node_fetch import RoamNodeNotFoundError
+from guffin.roam.node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec, QueryAnchorKind
+from guffin.roam.primitives import UID_PATTERN
+from guffin.cli.load_roam_tree import fetch_roam_trees
 
 configure_logging()
 logger = logging.getLogger(__name__)

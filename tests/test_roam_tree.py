@@ -2,15 +2,15 @@
 
 import pytest
 
-from guffin.roam.roam_network import (
+from guffin.roam.network import (
     all_children_present,
     all_parents_present,
     has_unique_ids,
     is_acyclic,
 )
-from guffin.roam.roam_node import RoamNode
-from guffin.roam.roam_primitives import Id, IdObject
-from guffin.roam.roam_tree import NodeTree, NodeTreeDFSIterator, is_tree
+from guffin.roam.node import RoamNode
+from guffin.roam.primitives import Id, IdObject
+from guffin.roam.tree import NodeTree, NodeTreeDFSIterator, is_tree
 from guffin.common.validation import ValidationError
 
 from conftest import STUB_TIME, STUB_USER, article1_node_tree

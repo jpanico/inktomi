@@ -1,7 +1,7 @@
 """Shared Pandoc/panflute rendering utilities for :class:`~guffin.graph.VertexTree` → :class:`~panflute.Doc`.
 
 Converts the normalized vertex tree produced by
-:func:`~guffin.roam_transcribe.transcribe` into a Panflute
+:func:`~guffin.roam_tree_to_vertex_tree.transcribe` into a Panflute
 :class:`~panflute.Doc` (the Pandoc object model), with inline Pandoc Markdown
 properly parsed into structured panflute inline elements.
 
@@ -79,9 +79,9 @@ from guffin.graph import (
     VertexTree,
     root_vertex,
 )
-from guffin.roam.roam_asset_fetch import fetch_and_cache_asset
-from guffin.roam.roam_local_api import ApiEndpoint
-from guffin.roam.roam_primitives import Uid
+from guffin.roam.asset_fetch import fetch_and_cache_asset
+from guffin.roam.local_api import ApiEndpoint
+from guffin.roam.primitives import Uid
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +162,7 @@ def fetch_images(
     """Fetch all :class:`~guffin.graph.ImageVertex` assets to *image_dir*.
 
     Delegates fetching and caching to
-    :func:`~guffin.roam.roam_asset_fetch.fetch_and_cache_asset`.  Each fetched
+    :func:`~guffin.roam.asset_fetch.fetch_and_cache_asset`.  Each fetched
     asset is written to *image_dir* under its deterministic
     ``<sha256>.<ext>`` filename.  Vertices that fail to fetch are skipped
     with a warning and will fall back to a hyperlink in the rendered output.

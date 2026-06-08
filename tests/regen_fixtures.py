@@ -36,12 +36,12 @@ from guffin.common.filenames import shell_safe_filename
 from guffin.graph import VertexTree, vertex_adapter
 from guffin.cli.logging_config import configure_logging
 from guffin.render.md_rendering import render
-from guffin.roam.roam_local_api import ApiEndpoint
-from guffin.roam.roam_node import RoamNode
-from guffin.roam.roam_node_fetch import FetchRoamNodes
-from guffin.roam.roam_node_fetch_result import NodeFetchAnchor, NodeFetchResult, anchor_node
-from guffin.roam_transcribe import transcribe
-from guffin.roam.roam_tree import NodeTree
+from guffin.roam.local_api import ApiEndpoint
+from guffin.roam.node import RoamNode
+from guffin.roam.node_fetch import FetchRoamNodes
+from guffin.roam.node_fetch_result import NodeFetchAnchor, NodeFetchResult, anchor_node
+from guffin.roam_tree_to_vertex_tree import transcribe
+from guffin.roam.tree import NodeTree
 
 configure_logging()
 

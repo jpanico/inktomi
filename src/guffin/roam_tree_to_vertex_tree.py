@@ -4,7 +4,7 @@ Public symbols:
 
 - :data:`SHOULD_NORMALIZE_HEADING_LEVELS` — whether heading levels should be
   normalized during transcription.
-- :func:`vertex_type` — classify a :class:`~guffin.roam.roam_node.RoamNode` into a
+- :func:`vertex_type` — classify a :class:`~guffin.roam.node.RoamNode` into a
   :class:`~guffin.graph.VertexType`.
 - :func:`to_page_vertex` — build a :class:`~guffin.graph.PageVertex` from a
   page node.
@@ -14,9 +14,9 @@ Public symbols:
   a heading block node.
 - :func:`to_text_content_vertex` — build a
   :class:`~guffin.graph.TextContentVertex` from a plain text block node.
-- :func:`transcribe_node` — transcribe a :class:`~guffin.roam.roam_node.RoamNode` into
+- :func:`transcribe_node` — transcribe a :class:`~guffin.roam.node.RoamNode` into
   the appropriate :data:`~guffin.graph.Vertex` subtype.
-- :func:`transcribe` — transcribe all nodes in a :class:`~guffin.roam.roam_tree.NodeTree`
+- :func:`transcribe` — transcribe all nodes in a :class:`~guffin.roam.tree.NodeTree`
   into a :class:`~guffin.graph.VertexTree`.
 """
 
@@ -39,11 +39,11 @@ from guffin.graph import (
     VertexType,
 )
 from guffin.roam_md_to_pandoc_md import to_pandoc_md
-from guffin.roam.roam_network import min_effective_heading_level
-from guffin.roam.roam_node import NodeType, RoamNode, effective_heading_level, node_type
-from guffin.roam.roam_tree import NodeTree
+from guffin.roam.network import min_effective_heading_level
+from guffin.roam.node import NodeType, RoamNode, effective_heading_level, node_type
+from guffin.roam.tree import NodeTree
 from guffin.common.media_type import MediaType
-from guffin.roam.roam_primitives import IMAGE_LINK_RE, HeadingLevel, Id, Url
+from guffin.roam.primitives import IMAGE_LINK_RE, HeadingLevel, Id, Url
 
 logger = logging.getLogger(__name__)
 
@@ -53,19 +53,19 @@ SHOULD_NORMALIZE_HEADING_LEVELS: Final[bool] = True
 _url_adapter: TypeAdapter[Url] = TypeAdapter(Url)
 """Pydantic :class:`~pydantic.TypeAdapter` for validating and coercing URL strings to.
 
-:data:`~guffin.roam.roam_primitives.Url`.
+:data:`~guffin.roam.primitives.Url`.
 """
 
 
 def _resolve_children(node: RoamNode, id_map: dict[Id, RoamNode]) -> VertexChildren | None:
     """Return an ordered list of child UIDs for *node*, or ``None`` if childless.
 
-    Children are sorted by :attr:`~guffin.roam.roam_node.RoamNode.order`.  Stubs
+    Children are sorted by :attr:`~guffin.roam.node.RoamNode.order`.  Stubs
     whose id is absent from *id_map* are silently dropped.
 
     Args:
         node: The node whose children are to be resolved.
-        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.roam_node.RoamNode`.
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`.
 
     Returns:
         Sorted list of child UIDs, or ``None`` when *node* has no children or
@@ -88,7 +88,7 @@ def _resolve_refs(node: RoamNode, id_map: dict[Id, RoamNode]) -> VertexRefs | No
 
     Args:
         node: The node whose refs are to be resolved.
-        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.roam_node.RoamNode`.
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`.
 
     Returns:
         List of referenced UIDs, or ``None`` when *node* has no refs or all ref
@@ -159,8 +159,8 @@ def _extract_file_name(firestore_url: str) -> str | None:
 def vertex_type(node: RoamNode) -> VertexType:
     """Classify *node* into a :class:`~guffin.graph.VertexType`.
 
-    Dispatches on :func:`~guffin.roam.roam_node.node_type` for a direct
-    :class:`~guffin.roam.roam_node.NodeType` → :class:`~guffin.graph.VertexType` mapping.
+    Dispatches on :func:`~guffin.roam.node.node_type` for a direct
+    :class:`~guffin.roam.node.NodeType` → :class:`~guffin.graph.VertexType` mapping.
 
     Args:
         node: The raw Roam node to classify.
@@ -169,7 +169,7 @@ def vertex_type(node: RoamNode) -> VertexType:
         The :class:`~guffin.graph.VertexType` for *node*.
 
     Raises:
-        NotImplementedError: If *node* is a :attr:`~guffin.roam.roam_node.NodeType.ROAM_EMBED_BLOCK`.
+        NotImplementedError: If *node* is a :attr:`~guffin.roam.node.NodeType.ROAM_EMBED_BLOCK`.
         ValidationError: If *node* is ``None`` or invalid.
     """
     logger.debug("node=%r", node)
@@ -194,7 +194,7 @@ def to_page_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> PageVertex:
 
     Args:
         node: A page node with ``node.title`` set.
-        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.roam_node.RoamNode`,
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`,
             used to resolve child and ref stubs to UIDs.
 
     Returns:
@@ -221,7 +221,7 @@ def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
 
     Args:
         node: A block node whose ``node.string`` embeds a Firestore image URL.
-        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.roam_node.RoamNode`,
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`,
             used to resolve child and ref stubs to UIDs.
 
     Returns:
@@ -257,7 +257,7 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset
     Args:
         node: A block node with an effective heading level (native ``node.heading``
             or ``node.props['ah-level']``).
-        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.roam_node.RoamNode`,
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`,
             used to resolve child and ref stubs to UIDs.
         heading_offset: Integer offset added to the effective heading level before
             building the vertex.  Use ``1 − min_level`` to normalize the shallowest
@@ -291,7 +291,7 @@ def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextCo
 
     Args:
         node: A plain text block node with ``node.string`` set.
-        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.roam_node.RoamNode`,
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`,
             used to resolve child and ref stubs to UIDs.
 
     Returns:
@@ -317,14 +317,14 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
     r"""Transcribe *node* into a normalized :class:`~guffin.graph.Vertex`.
 
     Determines the :class:`~guffin.graph.VertexType` via :func:`vertex_type`,
-    resolves raw :class:`~guffin.roam.roam_primitives.IdObject` stubs in children and refs to
+    resolves raw :class:`~guffin.roam.primitives.IdObject` stubs in children and refs to
     stable UIDs via *id_map*, and handles both native Roam headings (levels 1–3 via
     ``node.heading``) and Augmented Headings extension levels (4–6 via
     ``node.props['ah-level']``).
 
     Args:
         node: The raw Roam node to transcribe.
-        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.roam_node.RoamNode`,
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`,
             used to resolve child and ref stubs to UIDs.  Stubs whose id is absent
             from *id_map* are silently dropped.
         heading_offset: Integer offset forwarded to :func:`to_heading_vertex` when *node*

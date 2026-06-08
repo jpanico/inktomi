@@ -6,13 +6,13 @@ Public symbols:
 - :class:`NodeFetchAnchor` — immutable model pairing a raw anchor string with its detected kind.
 - :class:`NodeFetchSpec` — immutable model pairing a :class:`NodeFetchAnchor` with fetch options.
 - :class:`NodeFetchResult` — immutable model bundling the fetch specification, its resolved node tree,
-  a :data:`~guffin.roam.roam_node.NodesByUid` index of all fetched nodes, and the raw
-  Datalog query result before :class:`~guffin.roam.roam_node.RoamNode` parsing.
-- :data:`NodeFetchResult_Placeholder` — flat list of :class:`~guffin.roam.roam_node.RoamNode` records
-  returned by all :class:`~guffin.roam.roam_node_fetch.FetchRoamNodes` fetch methods.
-- :func:`anchor_node` — return the :class:`~guffin.roam.roam_node.RoamNode` in a
-  :data:`~guffin.roam.roam_network.NodeNetwork` that matches a :class:`NodeFetchAnchor`.
-- :func:`anchor_tree` — return the subtree of a :data:`~guffin.roam.roam_network.NodeNetwork`
+  a :data:`~guffin.roam.node.NodesByUid` index of all fetched nodes, and the raw
+  Datalog query result before :class:`~guffin.roam.node.RoamNode` parsing.
+- :data:`NodeFetchResult_Placeholder` — flat list of :class:`~guffin.roam.node.RoamNode` records
+  returned by all :class:`~guffin.roam.node_fetch.FetchRoamNodes` fetch methods.
+- :func:`anchor_node` — return the :class:`~guffin.roam.node.RoamNode` in a
+  :data:`~guffin.roam.network.NodeNetwork` that matches a :class:`NodeFetchAnchor`.
+- :func:`anchor_tree` — return the subtree of a :data:`~guffin.roam.network.NodeNetwork`
   rooted at the node that matches a :class:`NodeFetchAnchor`.
 """
 
@@ -21,15 +21,15 @@ from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator, validate_call
 
-from guffin.roam.roam_network import NodeNetwork
-from guffin.roam.roam_node import NodesByUid, RoamNode
-from guffin.roam.roam_primitives import UID_RE
-from guffin.roam.roam_tree import NodeTree
+from guffin.roam.network import NodeNetwork
+from guffin.roam.node import NodesByUid, RoamNode
+from guffin.roam.primitives import UID_RE
+from guffin.roam.tree import NodeTree
 
 
 @enum.unique
 class QueryAnchorKind(enum.Enum):
-    """Discriminates the kind of anchor passed to :class:`~guffin.roam.roam_node_fetch.FetchRoamNodes` fetch methods.
+    """Discriminates the kind of anchor passed to :class:`~guffin.roam.node_fetch.FetchRoamNodes` fetch methods.
 
     Attributes:
         PAGE_TITLE: The anchor is a Roam page title string.
@@ -48,7 +48,7 @@ class QueryAnchorKind(enum.Enum):
 
         Returns:
             :attr:`NODE_UID` when *target* matches
-            :data:`~guffin.roam.roam_primitives.UID_RE`; :attr:`PAGE_TITLE` otherwise.
+            :data:`~guffin.roam.primitives.UID_RE`; :attr:`PAGE_TITLE` otherwise.
         """
         return QueryAnchorKind.NODE_UID if UID_RE.match(target) else QueryAnchorKind.PAGE_TITLE
 
@@ -81,7 +81,7 @@ class NodeFetchSpec(BaseModel):
             ``:block/refs`` from the anchor node or any of its descendants.
             When ``False``, only the anchor node and its descendant blocks are fetched.
         include_node_tree: When ``True``, parse fetched pull-blocks into a
-            :class:`~guffin.roam.roam_node.RoamNode` model tree and populate
+            :class:`~guffin.roam.node.RoamNode` model tree and populate
             :attr:`~NodeFetchResult.anchor_tree` and :attr:`~NodeFetchResult.nodes_by_uid`.
             When ``False``, skip parsing and return only the raw Datalog result;
             :attr:`~NodeFetchResult.anchor_tree` and :attr:`~NodeFetchResult.nodes_by_uid`
@@ -110,17 +110,17 @@ class NodeFetchResult(BaseModel):
 
     Attributes:
         fetch_spec: The fetch specification used to perform the fetch.
-        anchor_tree: The :class:`~guffin.roam.roam_tree.NodeTree` rooted at the fetch anchor.
+        anchor_tree: The :class:`~guffin.roam.tree.NodeTree` rooted at the fetch anchor.
             ``None`` when :attr:`~NodeFetchSpec.include_node_tree` is ``False``.
         nodes_by_uid: Index mapping each fetched node's UID to its
-            :class:`~guffin.roam.roam_node.RoamNode`.
+            :class:`~guffin.roam.node.RoamNode`.
             ``None`` when :attr:`~NodeFetchSpec.include_node_tree` is ``False``.
         raw_result: The raw Datalog query result from the Local API before
-            :class:`~guffin.roam.roam_node.RoamNode` parsing.  Each outer list element is a
+            :class:`~guffin.roam.node.RoamNode` parsing.  Each outer list element is a
             single-element row (Datalog ``[:find (pull ...)]`` always wraps each tuple in a
             list); the inner dict is the raw pull-block attribute map as returned by Roam.
-        network: All :class:`~guffin.roam.roam_node.RoamNode` instances fetched by this result,
-            as a flat :data:`~guffin.roam.roam_network.NodeNetwork` list.  Empty when
+        network: All :class:`~guffin.roam.node.RoamNode` instances fetched by this result,
+            as a flat :data:`~guffin.roam.network.NodeNetwork` list.  Empty when
             :attr:`~NodeFetchSpec.include_node_tree` is ``False``.
     """
 
@@ -158,7 +158,7 @@ class NodeFetchResult(BaseModel):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def network(self) -> NodeNetwork:
-        """Return all fetched nodes as a flat :data:`~guffin.roam.roam_network.NodeNetwork` list.
+        """Return all fetched nodes as a flat :data:`~guffin.roam.network.NodeNetwork` list.
 
         Returns every node in :attr:`nodes_by_uid`, which includes both the structural nodes
         of :attr:`anchor_tree` and any additional nodes fetched via ``:block/refs`` when
@@ -167,8 +167,8 @@ class NodeFetchResult(BaseModel):
         is ``None``).
 
         Returns:
-            A :data:`~guffin.roam.roam_network.NodeNetwork` containing every
-            :class:`~guffin.roam.roam_node.RoamNode` in :attr:`nodes_by_uid`, or ``[]``
+            A :data:`~guffin.roam.network.NodeNetwork` containing every
+            :class:`~guffin.roam.node.RoamNode` in :attr:`nodes_by_uid`, or ``[]``
             when :attr:`nodes_by_uid` is ``None``.
         """
         return list(self.nodes_by_uid.values()) if self.nodes_by_uid is not None else []
@@ -190,7 +190,7 @@ class NodeFetchResult(BaseModel):
 
         Args:
             fetch_spec: The fetch specification used to perform the fetch.
-            raw_result: The raw Datalog query result before :class:`~guffin.roam.roam_node.RoamNode`
+            raw_result: The raw Datalog query result before :class:`~guffin.roam.node.RoamNode`
                 parsing.  Stored verbatim in :attr:`~NodeFetchResult.raw_result`.
 
         Returns:
@@ -210,8 +210,8 @@ class NodeFetchResult(BaseModel):
 
         This is the sole public constructor for :class:`NodeFetchResult`.  It locates the
         anchor node within *network* via :func:`anchor_node`, wraps the full network in a
-        :class:`~guffin.roam.roam_tree.NodeTree` rooted there, and builds a
-        :data:`~guffin.roam.roam_node.NodesByUid` index over all nodes in *network*.
+        :class:`~guffin.roam.tree.NodeTree` rooted there, and builds a
+        :data:`~guffin.roam.node.NodesByUid` index over all nodes in *network*.
 
         Uses :meth:`~pydantic.BaseModel.model_construct` to bypass the
         :meth:`_guard_direct_construction` validator, which blocks all other construction paths.
@@ -220,20 +220,20 @@ class NodeFetchResult(BaseModel):
             network: The flat node network returned by the fetch.
             fetch_spec: The fetch specification whose :attr:`~NodeFetchSpec.anchor` identifies
                 the root node of *network*.
-            raw_result: The raw Datalog query result before :class:`~guffin.roam.roam_node.RoamNode`
+            raw_result: The raw Datalog query result before :class:`~guffin.roam.node.RoamNode`
                 parsing.  Stored verbatim in :attr:`~NodeFetchResult.raw_result`.
 
         Returns:
             A :class:`NodeFetchResult` whose :attr:`anchor_tree` is rooted at the node
             in *network* that matches :attr:`fetch_spec.anchor <NodeFetchSpec.anchor>`,
             whose :attr:`nodes_by_uid` indexes every node in *network* by
-            :attr:`~guffin.roam.roam_node.RoamNode.uid`, and whose :attr:`raw_result` is
+            :attr:`~guffin.roam.node.RoamNode.uid`, and whose :attr:`raw_result` is
             *raw_result*.
 
         Raises:
             ValueError: If no node in *network* matches :attr:`fetch_spec.anchor
                 <NodeFetchSpec.anchor>`, or if *network* fails any
-                :class:`~guffin.roam.roam_tree.NodeTree` invariant.
+                :class:`~guffin.roam.tree.NodeTree` invariant.
         """
         root: Final[RoamNode] = anchor_node(network, fetch_spec.anchor)
         anchor_tree: Final[NodeTree] = NodeTree.build(super_network=network, root_node=root)
@@ -244,7 +244,7 @@ class NodeFetchResult(BaseModel):
 
 
 type NodeFetchResult_Placeholder = NodeNetwork
-"""Flat list of :class:`~guffin.roam.roam_node.RoamNode` records returned by all public fetch methods."""
+"""Flat list of :class:`~guffin.roam.node.RoamNode` records returned by all public fetch methods."""
 
 
 @validate_call
@@ -254,13 +254,13 @@ def anchor_node(network: NodeNetwork, anchor: NodeFetchAnchor) -> RoamNode:
     Args:
         network: The node network to search.
         anchor: The fetch anchor whose :attr:`~NodeFetchAnchor.qualifier` string identifies
-            the anchor node — matched against :attr:`~guffin.roam.roam_node.RoamNode.uid`
+            the anchor node — matched against :attr:`~guffin.roam.node.RoamNode.uid`
             for :attr:`~QueryAnchorKind.NODE_UID` anchors, or against
-            :attr:`~guffin.roam.roam_node.RoamNode.title` for :attr:`~QueryAnchorKind.PAGE_TITLE`
+            :attr:`~guffin.roam.node.RoamNode.title` for :attr:`~QueryAnchorKind.PAGE_TITLE`
             anchors.
 
     Returns:
-        The matching :class:`~guffin.roam.roam_node.RoamNode`.
+        The matching :class:`~guffin.roam.node.RoamNode`.
 
     Raises:
         ValueError: If no node in *network* matches *anchor*.
@@ -278,7 +278,7 @@ def anchor_node(network: NodeNetwork, anchor: NodeFetchAnchor) -> RoamNode:
 def anchor_tree(network: NodeNetwork, anchor: NodeFetchAnchor) -> NodeNetwork:
     """Return all nodes in *network* reachable from the anchor node via.
 
-    :attr:`~guffin.roam.roam_node.RoamNode.children`.
+    :attr:`~guffin.roam.node.RoamNode.children`.
 
     Performs a depth-first traversal starting at the node identified by *anchor*,
     following ``:block/children`` references at every level.  The anchor node itself
@@ -289,7 +289,7 @@ def anchor_tree(network: NodeNetwork, anchor: NodeFetchAnchor) -> NodeNetwork:
         anchor: The fetch anchor identifying the root of the subtree.
 
     Returns:
-        A :data:`~guffin.roam.roam_network.NodeNetwork` containing the anchor node and
+        A :data:`~guffin.roam.network.NodeNetwork` containing the anchor node and
         every node transitively reachable through ``:block/children``, in DFS pre-order.
 
     Raises:

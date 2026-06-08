@@ -10,9 +10,9 @@ import pytest
 import requests
 from pydantic import ValidationError
 
-from guffin.roam.roam_local_api import ApiEndpoint
-from guffin.roam.roam_schema_fetch import FetchRoamSchema
-from guffin.roam.roam_schema import RoamAttribute, RoamNamespace, RoamSchema
+from guffin.roam.local_api import ApiEndpoint
+from guffin.roam.schema_fetch import FetchRoamSchema
+from guffin.roam.schema import RoamAttribute, RoamNamespace, RoamSchema
 
 logger = logging.getLogger(__name__)
 
@@ -138,13 +138,13 @@ class TestFetchRoamSchemaFetch:
         mock_response.status_code = 500
         mock_response.text = "Internal Server Error"
 
-        with patch("guffin.roam.roam_local_api.requests.post", return_value=mock_response):
+        with patch("guffin.roam.local_api.requests.post", return_value=mock_response):
             with pytest.raises(requests.exceptions.HTTPError):
                 FetchRoamSchema.fetch(api_endpoint)
 
     def test_successful_fetch_returns_schema(self, api_endpoint: ApiEndpoint, mock_200_response: MagicMock) -> None:
         """Test that a 200 response is parsed and returned as a list of RoamAttribute members."""
-        with patch("guffin.roam.roam_local_api.requests.post", return_value=mock_200_response):
+        with patch("guffin.roam.local_api.requests.post", return_value=mock_200_response):
             result: RoamSchema = FetchRoamSchema.fetch(api_endpoint)
 
         assert isinstance(result, list)
@@ -158,14 +158,14 @@ class TestFetchRoamSchemaFetch:
 
     def test_posts_to_correct_endpoint_url(self, api_endpoint: ApiEndpoint, mock_200_response: MagicMock) -> None:
         """Test that the POST is made to the correct endpoint URL."""
-        with patch("guffin.roam.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
+        with patch("guffin.roam.local_api.requests.post", return_value=mock_200_response) as mock_post:
             FetchRoamSchema.fetch(api_endpoint)
 
         assert mock_post.call_args.args[0] == str(api_endpoint.url)
 
     def test_posts_data_q_action(self, api_endpoint: ApiEndpoint, mock_200_response: MagicMock) -> None:
         """Test that the POST body contains the data.q action."""
-        with patch("guffin.roam.roam_local_api.requests.post", return_value=mock_200_response) as mock_post:
+        with patch("guffin.roam.local_api.requests.post", return_value=mock_200_response) as mock_post:
             FetchRoamSchema.fetch(api_endpoint)
 
         posted_json: dict[str, object] = mock_post.call_args.kwargs["json"]

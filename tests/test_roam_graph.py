@@ -10,7 +10,7 @@ from guffin.graph import (
     VertexTree,
     VertexTreeDFSIterator,
 )
-from guffin.roam.roam_primitives import Uid
+from guffin.roam.primitives import Uid
 
 from conftest import article1_vertex_tree
 

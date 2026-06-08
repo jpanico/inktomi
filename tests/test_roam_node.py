@@ -3,12 +3,12 @@
 import pytest
 from pydantic import ValidationError
 
-from guffin.roam.roam_node import (
+from guffin.roam.node import (
     NodeType,
     RoamNode,
     node_type,
 )
-from guffin.roam.roam_primitives import IdObject
+from guffin.roam.primitives import IdObject
 
 from conftest import STUB_TIME, STUB_USER
 
