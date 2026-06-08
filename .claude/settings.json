@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(hatch run check *)",
-      "Bash(hatch run pytest *)"
+      "Bash(hatch run pytest *)",
+      "Bash(source .venv/bin/activate)"
     ]
   },
   "hooks": {
