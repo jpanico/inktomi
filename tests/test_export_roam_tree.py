@@ -18,7 +18,7 @@ class TestExportRoamTreeNoBundle:
     """Tests for export_roam_tree in --no-bundle mode."""
 
     def test_no_bundle_writes_expected_markdown(self, tmp_path: pathlib.Path) -> None:
-        """Test that --no-bundle exports the correct CommonMark document.
+        """Test that --no-bundle exports the correct GFM document.
 
         Loads nodes from the test_article_1_nodes.yaml fixture, mocks the Roam
         Local API fetch, invokes the CLI with --no-bundle, and asserts that the

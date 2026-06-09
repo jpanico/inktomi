@@ -14,12 +14,12 @@ class TestRenderArticleFixture:
     """Integration tests for the md_rendering Pandoc output path."""
 
     def test_article_fixture_renders_to_expected_markdown(self) -> None:
-        """Rendering article1 via Pandoc matches the expected CommonMark fixture."""
+        """Rendering article1 via Pandoc matches the expected GFM fixture."""
         doc = vertex_tree_to_pandoc(article1_vertex_tree(), {}, title_in_header=True)
         buf = StringIO()
         pf.dump(doc, output_stream=buf)  # type: ignore[no-untyped-call]
         result = pypandoc.convert_text(  # type: ignore[no-untyped-call]
-            buf.getvalue(), "commonmark", format="json", extra_args=["--wrap=none"]
+            buf.getvalue(), "gfm", format="json", extra_args=["--wrap=none"]
         )
         expected = (FIXTURES_MD_DIR / "test_article_1_expected.md").read_text()
         assert result == expected

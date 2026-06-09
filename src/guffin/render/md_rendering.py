@@ -1,7 +1,7 @@
-"""Render a :class:`~guffin.vertex_tree.VertexTree` to CommonMark and write Markdown exports to disk.
+"""Render a :class:`~guffin.vertex_tree.VertexTree` to GFM and write Markdown exports to disk.
 
 Converts the normalized vertex tree produced by
-:func:`~guffin.roam_tree_to_vertex_tree.transcribe` to a CommonMark document via the
+:func:`~guffin.roam_tree_to_vertex_tree.transcribe` to a GFM document via the
 Pandoc object model (see :mod:`~guffin.pandoc_rendering`), and writes the
 result to disk as either a plain ``.md`` file or a self-contained
 ``.mdbundle`` directory that embeds downloaded Cloud Firestore images.
@@ -50,7 +50,7 @@ def render(
     Converts *vertex_tree* to a Panflute :class:`~panflute.Doc` via
     :func:`~guffin.render.pandoc_rendering.vertex_tree_to_pandoc` (with the page
     title rendered as an H1 header), then invokes Pandoc to produce
-    CommonMark output.  Writes the result in one of two modes controlled by
+    GFM output.  Writes the result in one of two modes controlled by
     *bundle*:
 
     - ``bundle=True`` (default) — fetches Cloud Firestore image assets via
@@ -59,7 +59,7 @@ def render(
       ``<normalized_filename_stem>.mdbundle/`` directory containing the
       Markdown file and all images.  Image links in the Markdown reference
       the local filenames.
-    - ``bundle=False`` — writes the CommonMark text directly to
+    - ``bundle=False`` — writes the GFM text directly to
       ``<output_dir>/<normalized_filename_stem>.md`` without fetching
       images.  :class:`~guffin.vertex.ImageVertex` nodes fall back to
       hyperlinks pointing at the original Cloud Firestore URLs.
@@ -99,7 +99,7 @@ def render(
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files, title_in_header=True)
         bundle_json_str: Final[str] = pandoc_to_json(doc, dump_pandoc_ast, output_dir, stem)
         md_text: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
-            bundle_json_str, "commonmark", format="json", extra_args=["--wrap=none"]
+            bundle_json_str, "gfm", format="json", extra_args=["--wrap=none"]
         )
         output_file: Final[Path] = bundle_dir / f"{stem}.md"
         output_file.write_text(md_text, encoding="utf-8")
@@ -110,7 +110,7 @@ def render(
         no_bundle_doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, {}, title_in_header=True)
         json_str: Final[str] = pandoc_to_json(no_bundle_doc, dump_pandoc_ast, output_dir, stem)
         no_bundle_md: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
-            json_str, "commonmark", format="json", extra_args=["--wrap=none"]
+            json_str, "gfm", format="json", extra_args=["--wrap=none"]
         )
         output_path: Final[Path] = output_dir / f"{stem}.md"
         output_path.write_text(no_bundle_md, encoding="utf-8")

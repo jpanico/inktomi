@@ -9,7 +9,7 @@ A high-level overview of the core data processing pipeline that is utilized by t
 5. `VertexTree`: "transcribe" the `NodeTree` into a Roam agnostic `VertexTree`, via `roam_transcribe.py::transcribe`. During transcription, Roam flavored Markdown (Roamdown) is translated into Pandoc Markdown.
 6. **Panflute Doc** (`pandoc_rendering.py`): shared by both output paths. `vertex_tree_to_pandoc()` walks the `VertexTree`, batch-parses all inline Pandoc Markdown text in a single Pandoc subprocess call (`parse_inline_md`), and builds a Panflute `Doc` (in-memory Pandoc AST). The `Doc` is then serialized to a Pandoc JSON string via `pf.dump()`.
 7. **Output** (two mutually exclusive paths, controlled by `--format`):
-   - **Markdown** (`md_rendering.py`): invoke Pandoc via `pypandoc` to convert the Pandoc JSON to a CommonMark string, then either write a plain `.md` file (`--no-bundle`) or fetch Cloud Firestore image assets and write a self-contained `.mdbundle/` directory (`--bundle`).
+   - **Markdown** (`md_rendering.py`): invoke Pandoc via `pypandoc` to convert the Pandoc JSON to a GFM string, then either write a plain `.md` file (`--no-bundle`) or fetch Cloud Firestore image assets and write a self-contained `.mdbundle/` directory (`--bundle`).
    - **PDF** (`pdf_rendering.py`): fetch Cloud Firestore image assets, then invoke Pandoc + Typst via `pypandoc` to convert the Pandoc JSON directly to a `.pdf` file.
 
 ## Diagram
@@ -36,11 +36,11 @@ flowchart TD
 
     PANDOC_JSON["<b>Pandoc JSON</b><br/>serialized AST string<br/><i>pf.dump()</i>"]
 
-    MDTEXT["<b>CommonMark string</b><br/><i>pypandoc → Pandoc  ·  md_rendering.py</i>"]
+    MDTEXT["<b>GFM string</b><br/><i>pypandoc → Pandoc  ·  md_rendering.py</i>"]
 
-    BUNDLE["<b>.mdbundle/</b><br/>CommonMark + fetched images"]
+    BUNDLE["<b>.mdbundle/</b><br/>GFM + fetched images"]
 
-    MDFILE["<b>.md file</b><br/>plain CommonMark"]
+    MDFILE["<b>.md file</b><br/>plain GFM"]
 
     PDF["<b>.pdf file</b><br/><i>pypandoc → Pandoc + Typst  ·  pdf_rendering.py</i>"]
 

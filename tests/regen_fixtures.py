@@ -6,7 +6,7 @@ Writes to tests/fixtures/yaml/ and tests/fixtures/markdown/:
   No-refs path (include_refs=False):
     <prefix>_nodes.yaml      — serialised NodeNetwork
     <prefix>_vertices.yaml   — serialised VertexTree
-    <prefix>_expected.md     — rendered CommonMark
+    <prefix>_expected.md     — rendered GFM
 
   With-refs path (include_refs=True):
     <prefix>_raw_result.yaml    — raw Datalog result before RoamNode parsing
@@ -64,7 +64,7 @@ def _extract_features(callout_string: str) -> str | None:
     """Return the feature bullet list that follows 'Features:' in a callout node string.
 
     Lines starting with '-- ' are Roam's convention for sub-list items; they are
-    converted to CommonMark indented bullets ('  - ').
+    converted to GFM indented bullets ('  - ').
     """
     idx: Final[int] = callout_string.find(_PROPERTIES_MARKER)
     if idx == -1:

@@ -4,7 +4,7 @@
 Python 3.14 toolkit for exporting Roam Research pages to self-contained
 documents.  Supports two output formats:
 
-- **Markdown** — renders to CommonMark and optionally bundles Cloud
+- **Markdown** — renders to GFM and optionally bundles Cloud
   Firestore-hosted images into a self-contained `.mdbundle` directory.
 - **PDF** — builds a Pandoc object model directly from the `VertexTree`
   via Panflute, fetches and embeds Cloud Firestore images, and produces a
@@ -52,7 +52,7 @@ GUFFIN_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `vertex_tree.py` — `VertexTree`, `VertexTreeDFSIterator`, `root_vertex()`; filter helpers `page_vertices()`, `heading_vertices()`, `text_content_vertices()`, `image_vertices()`, `image_urls()`
   - **`render/` sub-package** (`src/guffin/render/`) — rendering pipeline modules
     - `pandoc_rendering.py` — shared Pandoc/Panflute rendering utilities; `vertex_tree_to_pandoc()` builds a Panflute `Doc` from a `VertexTree` (batch-parsing inline Pandoc Markdown via a single Pandoc call); `fetch_images()` fetches Cloud Firestore image assets
-    - `md_rendering.py` — renders a `VertexTree` to Markdown: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to CommonMark via Pandoc, writes a plain `.md` or `.mdbundle/` directory
+    - `md_rendering.py` — renders a `VertexTree` to Markdown: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to GFM via Pandoc, writes a plain `.md` or `.mdbundle/` directory
     - `pdf_rendering.py` — renders a `VertexTree` to PDF: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to PDF via Pandoc + Typst
     - `rich_rendering.py` — Rich panel/tree rendering for `NodeTree` and `VertexTree`
   - **`common/` sub-package** (`src/guffin/common/`) — cross-cutting helpers shared across the package
@@ -92,7 +92,7 @@ the anchor subtree alone, with no referenced pages included:
 |---|---|
 | `<prefix>_nodes.yaml` | The Roam nodes (page + blocks) as parsed `RoamNode` model objects |
 | `<prefix>_vertices.yaml` | The same subtree transcribed into the export model (`VertexTree`) |
-| `<prefix>_expected.md` | The fully rendered CommonMark output |
+| `<prefix>_expected.md` | The fully rendered GFM output |
 
 ### With-refs fixture set (`include_refs=True`) — three views of the same fetch
 

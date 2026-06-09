@@ -2,7 +2,7 @@
 
 Python 3.14 toolkit for exporting Roam Research graph sub-trees to self-contained documents. Supports two output formats:
 
-- **Markdown** — renders to CommonMark and optionally bundles Roam-hosted (Cloud Firestore) images into a self-contained `.mdbundle` directory.
+- **Markdown** — renders to Github Flavored Markdown (GFM) and optionally bundles Roam-hosted (Cloud Firestore) images into a self-contained `.mdbundle` directory.
 - **PDF** — builds a Pandoc object model directly from the normalized graph sub-tree via [Panflute](https://github.com/sergiocorreia/panflute), fetches and embeds Roam-hosted (Cloud Firestore) images, and produces a PDF via [Pandoc](https://pandoc.org) + [Typst](https://typst.app).
 
 ## Development Setup
@@ -187,7 +187,7 @@ export-roam-tree <page_title_or_node_uid> --port <port> --graph <graph> --token 
 
 #### Markdown output (default)
 
-By default (`--format markdown`) it creates a `.mdbundle` directory containing the CommonMark document and any downloaded Cloud Firestore images. Pass `--no-bundle` to write a plain `.md` file instead.
+By default (`--format markdown`) it creates a `.mdbundle` directory containing the Github Flavored Markdown (GFM) document and any downloaded Cloud Firestore images. Pass `--no-bundle` to write a plain `.md` file instead.
 
 ```bash
 # Bundled (default) — creates ~/docs/Test Article.mdbundle/

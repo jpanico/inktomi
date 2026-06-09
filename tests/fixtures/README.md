@@ -6,7 +6,7 @@ This directory contains test data used by the guffin test suite.
 
 - `images/` — Test images referenced by live integration tests
 - `json/` — Raw Roam Local API response payloads used by unit tests
-- `markdown/` — Expected CommonMark output files and supporting assets
+- `markdown/` — Expected GFM output files and supporting assets
 - `yaml/` — Serialized `RoamNode` and `Vertex` trees used by unit tests
 
 ## Files
@@ -73,7 +73,7 @@ to the anchor subtree alone, with no referenced pages included:
 |---|---|
 | `<prefix>_nodes.yaml` | The Roam nodes (page + blocks) as parsed `RoamNode` model objects |
 | `<prefix>_vertices.yaml` | The same subtree transcribed into the export model (`VertexTree`) |
-| `<prefix>_expected.md` | The fully rendered CommonMark output |
+| `<prefix>_expected.md` | The fully rendered GFM output |
 
 #### With-refs fixture set (`include_refs=True`) — three views of the same fetch
 
