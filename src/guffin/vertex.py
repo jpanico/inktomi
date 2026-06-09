@@ -33,7 +33,8 @@ Public symbols:
   node.
 - :class:`ImageVertex` — normalized (transcribed) form of a Roam Firestore image block
   node.
-- :data:`Vertex` — union of all four concrete vertex types.
+- :class:`CalloutVertex` — normalized (transcribed) form of a Roam callout block node.
+- :data:`Vertex` — union of all five concrete vertex types.
 - :data:`vertex_adapter` — Pydantic :class:`~pydantic.TypeAdapter` for validating a
   :data:`Vertex` from a raw dict.
 """
@@ -78,19 +79,22 @@ class VertexType(StrEnum):
         GUFFIN_IMAGE: Normalized form of a Roam *Block* node whose
             ``:block/string`` embeds a Cloud Firestore URL pointing to a
             Roam-managed image upload.
+        GUFFIN_CALLOUT: Normalized form of a Roam *Block* node whose
+            ``:block/string`` starts with ``[[>]] [[!<TYPE>]]`` — a Roam callout marker.
     """
 
     GUFFIN_PAGE = "guffin/page"
     GUFFIN_TEXT_CONTENT = "guffin/text-content"
     GUFFIN_HEADING = "guffin/heading"
     GUFFIN_IMAGE = "guffin/image"
+    GUFFIN_CALLOUT = "guffin/callout"
 
 
 class _BaseVertex[VT: VertexType](BaseModel):
     """Shared fields inherited by all four concrete vertex types.
 
     Not instantiated directly — use :class:`PageVertex`, :class:`HeadingVertex`,
-    :class:`TextContentVertex`, or :class:`ImageVertex`.
+    :class:`TextContentVertex`, :class:`ImageVertex`, or :class:`CalloutVertex`.
 
     Type Parameters:
         VT: The :class:`VertexType` literal for the concrete subtype (e.g.
@@ -222,8 +226,54 @@ class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
     )
 
 
-type Vertex = PageVertex | HeadingVertex | TextContentVertex | ImageVertex
-"""Union of all four concrete, normalized vertex types.
+class CalloutVertex(_BaseVertex[Literal[VertexType.GUFFIN_CALLOUT]]):
+    """Normalized (transcribed) form of a Roam callout block node.
+
+    Produced when the source :class:`~guffin.roam.node.RoamNode` has a
+    ``:block/string`` that starts with ``[[>]] [[!<TYPE>]]`` — a Roam callout marker.
+
+    Attributes:
+        vertex_type: Always :attr:`~VertexType.GUFFIN_CALLOUT`.
+            Serialized as ``'vertex-type'``.
+        callout_type: Callout category, one of the twelve recognised callout type keywords.
+            Serialized as ``'callout-type'``.
+        title: Callout heading text — the remainder of the first block string after the
+            ``[[>]] [[!<TYPE>]]`` marker, stripped of leading/trailing whitespace.
+        body: Callout body text accumulated from the block's child nodes.
+    """
+
+    class CalloutType(StrEnum):
+        """Callout category keyword, matching the twelve types in the Roam callout marker."""
+
+        INFO = "info"
+        QUOTE = "quote"
+        EXAMPLE = "example"
+        NOTE = "note"
+        WARNING = "warning"
+        DANGER = "danger"
+        TIP = "tip"
+        SUMMARY = "summary"
+        SUCCESS = "success"
+        QUESTION = "question"
+        FAILURE = "failure"
+        BUG = "bug"
+
+    vertex_type: Literal[VertexType.GUFFIN_CALLOUT] = Field(
+        default=VertexType.GUFFIN_CALLOUT,
+        serialization_alias="vertex-type",
+        description="Always VertexType.GUFFIN_CALLOUT (serialized as 'vertex-type').",
+    )
+    callout_type: CalloutType = Field(
+        ...,
+        serialization_alias="callout-type",
+        description="Callout category keyword (serialized as 'callout-type').",
+    )
+    title: str = Field(..., description="Callout heading text, stripped of the leading marker.")
+    body: str = Field(..., description="Callout body text accumulated from child nodes.")
+
+
+type Vertex = PageVertex | HeadingVertex | TextContentVertex | ImageVertex | CalloutVertex
+"""Union of all five concrete, normalized vertex types.
 
 Use :data:`vertex_adapter` to validate a raw dict into the appropriate concrete
 subtype.  Use :class:`~guffin.vertex_tree.VertexTree` to hold a validated collection of vertices.
@@ -233,7 +283,7 @@ vertex_adapter: TypeAdapter[Vertex] = TypeAdapter(Annotated[Vertex, Field(discri
 """Pydantic :class:`~pydantic.TypeAdapter` for validating a raw dict into the correct :data:`Vertex` subtype.
 
 Uses ``vertex_type`` as the discriminator field to select among :class:`PageVertex`,
-:class:`HeadingVertex`, :class:`TextContentVertex`, and :class:`ImageVertex`.
+:class:`HeadingVertex`, :class:`TextContentVertex`, :class:`ImageVertex`, and :class:`CalloutVertex`.
 
 Example::
 

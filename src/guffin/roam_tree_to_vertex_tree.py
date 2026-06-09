@@ -14,6 +14,8 @@ Public symbols:
   a heading block node.
 - :func:`to_text_content_vertex` — build a
   :class:`~guffin.vertex.TextContentVertex` from a plain text block node.
+- :func:`to_callout_vertex` — build a :class:`~guffin.vertex.CalloutVertex` from a
+  callout block node.
 - :func:`transcribe_node` — transcribe a :class:`~guffin.roam.node.RoamNode` into
   the appropriate :data:`~guffin.vertex.Vertex` subtype.
 - :func:`transcribe` — transcribe all nodes in a :class:`~guffin.roam.tree.NodeTree`
@@ -28,6 +30,7 @@ from urllib.parse import unquote, urlparse
 from pydantic import TypeAdapter, validate_call
 
 from guffin.vertex import (
+    CalloutVertex,
     HeadingVertex,
     ImageVertex,
     PageVertex,
@@ -54,6 +57,15 @@ _url_adapter: TypeAdapter[Url] = TypeAdapter(Url)
 """Pydantic :class:`~pydantic.TypeAdapter` for validating and coercing URL strings to.
 
 :data:`~guffin.roam.primitives.Url`.
+"""
+
+_CALLOUT_MARKER_RE: Final[re.Pattern[str]] = re.compile(
+    r"\[\[>\]\] \[\[!(INFO|QUOTE|EXAMPLE|NOTE|WARNING|DANGER|TIP|SUMMARY|SUCCESS|QUESTION|FAILURE|BUG)\]\]\s*"
+)
+"""Captures the callout type keyword from ``[[>]] [[!<TYPE>]]`` at the start of a block string.
+
+Group 1 is the ``<TYPE>`` keyword (e.g. ``"NOTE"``); the trailing whitespace pattern consumes
+any space between the marker and the title text so that ``string[m.end():]`` is the raw title.
 """
 
 
@@ -183,7 +195,7 @@ def vertex_type(node: RoamNode) -> VertexType:
         case NodeType.ROAM_IMAGE_BLOCK:
             return VertexType.GUFFIN_IMAGE
         case NodeType.ROAM_CALLOUT_BLOCK:
-            return VertexType.GUFFIN_TEXT_CONTENT
+            return VertexType.GUFFIN_CALLOUT
         case NodeType.ROAM_EMBED_BLOCK:
             raise NotImplementedError(f"RoamNode uid={node.uid!r}: ROAM_EMBED_BLOCK transcription is not supported")
 
@@ -313,6 +325,43 @@ def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextCo
 
 
 @validate_call
+def to_callout_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> CalloutVertex:
+    """Build a :class:`~guffin.vertex.CalloutVertex` from a callout block *node*.
+
+    Parses the ``[[>]] [[!<TYPE>]]`` marker from ``node.string`` to extract the
+    :class:`~guffin.vertex.CalloutVertex.CalloutType` and title text.
+
+    Args:
+        node: A callout block node whose ``string`` starts with a valid callout marker.
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`,
+            used to resolve child and ref stubs to UIDs.
+
+    Returns:
+        A :class:`~guffin.vertex.CalloutVertex`.
+
+    Raises:
+        ValidationError: If *node* or *id_map* is ``None`` or invalid.
+        ValueError: If ``node.string`` is ``None`` or does not match the callout marker.
+    """
+    logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
+    if node.string is None:
+        raise ValueError(f"RoamNode uid={node.uid!r} has no 'string'")
+    m: Final[re.Match[str] | None] = _CALLOUT_MARKER_RE.match(node.string)
+    if m is None:
+        raise ValueError(f"RoamNode uid={node.uid!r} string does not match callout marker: {node.string!r}")
+    callout_type: Final[CalloutVertex.CalloutType] = CalloutVertex.CalloutType(m.group(1).lower())
+    title: Final[str] = to_pandoc_md(node.string[m.end() :].strip())
+    return CalloutVertex(
+        uid=node.uid,
+        callout_type=callout_type,
+        title=title,
+        body="",
+        children=_resolve_children(node, id_map),
+        refs=_resolve_refs(node, id_map),
+    )
+
+
+@validate_call
 def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: int = 0) -> Vertex:
     r"""Transcribe *node* into a normalized :class:`~guffin.vertex.Vertex`.
 
@@ -347,6 +396,8 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
             return to_heading_vertex(node, id_map, heading_offset)
         case VertexType.GUFFIN_TEXT_CONTENT:
             return to_text_content_vertex(node, id_map)
+        case VertexType.GUFFIN_CALLOUT:
+            return to_callout_vertex(node, id_map)
 
 
 @validate_call

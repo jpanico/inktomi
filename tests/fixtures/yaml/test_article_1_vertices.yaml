@@ -58,9 +58,10 @@
   - yFUau9Cpg
   text: Section 2.1
   heading: 2
-- vertex_type: guffin/text-content
+- vertex_type: guffin/callout
   uid: cNW8lmXIM
-  text: '> !INFO THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
+  callout_type: info
+  title: 'THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
     – DO NOT REMOVE
 
     Features:
@@ -78,7 +79,8 @@
 
     - a single JPEG `image` that has not been resized through the Roam UI
 
-    - this INFO `Callout box`, which contains Roam `page references` '
+    - this INFO `Callout box`, which contains Roam `page references`'
+  body: ''
 - vertex_type: guffin/heading
   uid: 5f1ahOFdp
   text: Section 2.2

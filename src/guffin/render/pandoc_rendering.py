@@ -70,6 +70,7 @@ import pypandoc  # type: ignore[import-untyped]
 from pydantic import ConfigDict, validate_call
 
 from guffin.vertex import (
+    CalloutVertex,
     HeadingVertex,
     ImageVertex,
     PageVertex,
@@ -351,6 +352,17 @@ def _vertex_to_blocks(
                 link: Final[pf.Link] = pf.Link(*label, url=str(vertex.source))
                 logger.warning("Image uid=%r not fetched; rendering as link", vertex.uid)
                 return [pf.Para(link)]
+        case CalloutVertex():
+            callout_blocks: list[pf.Block] = []
+            if vertex.title:
+                title_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.title, [pf.Str(vertex.title)])
+                callout_blocks.append(pf.Header(*title_inlines, level=4))
+            if vertex.body:
+                body_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.body, [pf.Str(vertex.body)])
+                callout_blocks.append(pf.Para(*body_inlines))
+            if vertex.children:
+                callout_blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
+            return [pf.Div(*callout_blocks, classes=["callout", f"callout-{vertex.callout_type.value}"])]
 
 
 @validate_call

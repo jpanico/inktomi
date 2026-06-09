@@ -31,6 +31,7 @@ from rich.tree import Tree as RichTree
 
 from guffin.vertex import (
     HeadingVertex,
+    ImageVertex,
     PageVertex,
     TextContentVertex,
     Vertex,
@@ -245,8 +246,10 @@ def make_vertex_panel(vertex: Vertex) -> Panel:
         text = f"H{vertex.heading}: {vertex.text}"
     elif isinstance(vertex, TextContentVertex):
         text = vertex.text
-    else:
+    elif isinstance(vertex, ImageVertex):
         text = f"IMAGE [{vertex.alt_text or ''}](<firestore_url>)"
+    else:
+        text = f"CALLOUT [{vertex.callout_type.value}]: {vertex.title}"
     title: Final[str] = f"[bold #00aa00]{text} ({vertex.uid})[/bold #00aa00]"
     children_str: Final[str] = f"[{', '.join(vertex.children)}]" if vertex.children else "None"
     refs_str: Final[str] = f"[{', '.join(vertex.refs)}]" if vertex.refs else "None"
