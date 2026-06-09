@@ -127,49 +127,74 @@ All production code under `src/guffin/` must be fully annotated with no `Any` ty
 ```
 guffin/
 ├── src/
-│   └── guffin/                  # Main package
-│       ├── dump_roam_tree.py      # CLI: dump a Roam page or node subtree as a Rich tree to the terminal
-│       ├── export_roam_tree.py    # CLI: export a Roam page or node subtree (--format markdown|pdf)
-│       ├── roam_tree_loader.py    # Shared tree-loading pipeline; fetch_roam_trees resolves a target, fetches nodes, returns (NodeTree, VertexTree)
-│       ├── roam_md_to_pandoc_md.py  # Convert Roam-flavored Markdown to Pandoc Markdown
-│       ├── roam_transcribe.py     # Transcribe NodeTree → VertexTree (applies to_pandoc_md())
-│       ├── pandoc_rendering.py    # Shared Pandoc/panflute utilities: inline Pandoc Markdown parsing, image fetching, VertexTree → Doc conversion
-│       ├── md_rendering.py        # Render VertexTree → Markdown via Pandoc; write .mdbundle or plain .md
-│       ├── pdf_rendering.py       # Render VertexTree → PDF via pandoc_rendering + Pandoc + Typst
-│       ├── rich_rendering.py      # Rich panel/tree rendering for NodeTree and VertexTree
-│       ├── validation.py          # Generic accumulator-pipeline validation framework
-│       ├── filenames.py           # POSIX filename normalization utilities
-│       ├── roam_primitives.py     # Foundational type aliases, UID_PATTERN/UID_RE, IMAGE_LINK_RE (dep root)
-│       ├── roam_node.py           # RoamNode, NodeType, node_type, NodesByUid
-│       ├── roam_network.py        # NodeNetwork type alias; network validators and utilities (all_descendants, refs_ids)
-│       ├── roam_tree.py           # NodeTree (build() factory, tree_network/refs_by_id fields), NodeTreeDFSIterator, is_tree
-│       ├── graph.py               # Vertex union, VertexTree, VertexTreeDFSIterator
-│       ├── roam_schema.py         # Datomic schema model types (RoamNamespace, etc.)
-│       ├── roam_asset.py          # Cloud Firestore asset model
-│       ├── roam_local_api.py      # ApiEndpoint model for the Roam Local API
-│       ├── roam_node_fetch_result.py # NodeFetchAnchor, NodeFetchSpec, NodeFetchResult; fetch result model and factories
-│       ├── roam_node_fetch.py     # Fetch RoamNode records via Local API; by page title or by node UID
-│       ├── roam_schema_fetch.py   # Fetch Datomic schema via Local API
-│       ├── roam_asset_fetch.py    # Fetch Firestore assets via Local API
-│       └── logging_config.py      # Colorized logging; reads LOG_LEVEL env var
-├── tests/                         # pytest test suite
-│   ├── conftest.py                # Shared fixtures and helpers (api_endpoint, article1_node_tree, …)
-│   ├── regen_fixtures.py          # Developer script: regenerate all six fixture files for a given article
-│   └── fixtures/                  # See tests/fixtures/README.md for full inventory
+│   └── guffin/                        # Main package
+│       ├── vertex.py                    # Vertex union + all five concrete types (PageVertex,
+│       │                                #   HeadingVertex, TextContentVertex, ImageVertex,
+│       │                                #   CalloutVertex); VertexType, VertexChildren, VertexRefs
+│       ├── vertex_tree.py               # VertexTree, VertexTreeDFSIterator, root_vertex();
+│       │                                #   filter helpers (page_vertices, image_urls, …)
+│       ├── roam_tree_to_vertex_tree.py  # Transcribe NodeTree → VertexTree; applies to_pandoc_md()
+│       ├── roam_md_to_pandoc_md.py      # Convert Roam-flavored Markdown strings to Pandoc Markdown
+│       │
+│       ├── cli/                         # CLI entry points and supporting infrastructure
+│       │   ├── dump_roam_tree.py          # dump-roam-tree: render Roam subtree as a Rich tree
+│       │   ├── export_roam_tree.py        # export-roam-tree: export to Markdown or PDF
+│       │   ├── load_roam_tree.py          # Shared tree-loading pipeline (fetch_roam_trees)
+│       │   └── logging_config.py          # Colorized logging; reads LOG_LEVEL env var
+│       │
+│       ├── common/                      # Cross-cutting helpers (no guffin dependencies)
+│       │   ├── filenames.py               # POSIX filename normalization (shell_safe_filename)
+│       │   ├── media_type.py              # MediaType enum; MIME type detection from filenames
+│       │   └── validation.py              # Generic accumulator-pipeline validation framework
+│       │
+│       ├── render/                      # Rendering pipeline modules
+│       │   ├── pandoc_rendering.py        # Shared Pandoc/Panflute utilities; vertex_tree_to_pandoc()
+│       │   │                              #   builds a Panflute Doc; fetch_images() fetches assets
+│       │   ├── md_rendering.py            # VertexTree → GFM Markdown; writes .mdbundle or plain .md
+│       │   ├── pdf_rendering.py           # VertexTree → PDF via Pandoc + Typst
+│       │   ├── rich_rendering.py          # Rich panel/tree rendering for NodeTree and VertexTree
+│       │   ├── gfm_callout.lua            # Lua filter: callout Div → GFM alert blockquote
+│       │   └── typst_callout.lua          # Lua filter: callout Div → gentle-clues callout box
+│       │
+│       ├── roam/                        # Roam Research data model, API, and processing
+│       │   ├── primitives.py              # Foundational types, UID_PATTERN, IMAGE_LINK_RE (dep root)
+│       │   ├── schema.py                  # Datomic schema model types (RoamNamespace, …)
+│       │   ├── node.py                    # RoamNode, NodeType, node_type, NodesByUid
+│       │   ├── network.py                 # NodeNetwork; validators (all_children_present, is_acyclic, …)
+│       │   ├── tree.py                    # NodeTree (build() factory), NodeTreeDFSIterator, is_tree
+│       │   ├── asset.py                   # Cloud Firestore asset model
+│       │   ├── local_api.py               # ApiEndpoint model for the Roam Local API
+│       │   ├── node_fetch_result.py       # NodeFetchAnchor, NodeFetchSpec, NodeFetchResult
+│       │   ├── node_fetch.py              # Fetch RoamNode records via Local API
+│       │   ├── schema_fetch.py            # Fetch Datomic schema via Local API
+│       │   └── asset_fetch.py             # Fetch Cloud Firestore assets via Local API
+│       │
+│       └── templates/                   # Bergfink Typst/Pandoc PDF template (package data)
+│           ├── bergfink.typst             # Pandoc template entry point
+│           ├── base_cfg.typ               # Default cfg dictionary (all supported keys)
+│           ├── user_cfg.typ               # User overrides (checked into repo as a working example)
+│           ├── default_styles.typ         # Show/set rules derived from cfg
+│           └── …                          # Supporting partials (titlepage, toc, abstract, …)
+│
+├── tests/                               # pytest test suite
+│   ├── conftest.py                        # Shared fixtures and helpers
+│   ├── regen_fixtures.py                  # Developer script: regenerate fixture files from live Roam
+│   └── fixtures/                          # markdown/, yaml/, images/, json/ — see fixtures/README.md
+│
 ├── scripts/
-│   ├── dump-roam-tree.sh              # Shell wrapper for dump-roam-tree
-│   ├── export-roam-tree.sh            # Shell wrapper for export-roam-tree
-│   ├── setup-mdbundle-handler.sh      # Setup .mdbundle auto-open in Typora (macOS)
-│   └── refresh-mdbundle-folders.sh    # Refresh existing .mdbundle folders (macOS)
+│   ├── dump-roam-tree.sh                  # Shell wrapper for dump-roam-tree
+│   ├── export-roam-tree.sh                # Shell wrapper for export-roam-tree
+│   ├── setup-mdbundle-handler.sh          # Setup .mdbundle auto-open in Typora (macOS)
+│   └── refresh-mdbundle-folders.sh        # Refresh existing .mdbundle folders (macOS)
+│
 ├── docs/
-│   ├── MDBUNDLE_SETUP.md           # macOS .mdbundle integration guide
-│   ├── processing_pipeline.md      # High-level overview of the core data processing pipeline
-│   ├── roam-local-api.md           # Roam Local API (JSON over HTTP) reference
-│   ├── roam-md.md                  # Roam-flavored Markdown vs. CommonMark differences
-│   ├── roam-querying.md            # Datalog query language, query structure, and all queries used in this project
-│   ├── roam-schema.md              # Full Roam attribute schema (kept in sync with RoamAttribute enum)
-│   └── roam_database.png           # Datomic/DataScript datom model diagram
-└── pyproject.toml                  # Project configuration
+│   ├── processing_pipeline.md             # High-level overview of the core data processing pipeline
+│   ├── roam-local-api.md                  # Roam Local API (JSON over HTTP) reference
+│   ├── roam-md.md                         # Roam-flavored Markdown vs. CommonMark differences
+│   ├── roam-querying.md                   # Datalog query language and all queries used in this project
+│   └── roam-schema.md                     # Full Roam attribute schema
+│
+└── pyproject.toml                         # Project configuration
 ```
 
 ## Usage
