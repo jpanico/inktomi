@@ -1,4 +1,4 @@
-"""Render a :class:`~guffin.graph.VertexTree` to a PDF via the Pandoc object model.
+"""Render a :class:`~guffin.vertex_tree.VertexTree` to a PDF via the Pandoc object model.
 
 Converts the normalized vertex tree produced by
 :func:`~guffin.roam_tree_to_vertex_tree.transcribe` into a Panflute
@@ -39,7 +39,7 @@ import pypandoc  # type: ignore[import-untyped]
 from pydantic import validate_call
 
 from guffin.common.filenames import shell_safe_filename
-from guffin.graph import VertexTree
+from guffin.vertex_tree import VertexTree
 from guffin.render.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam.local_api import ApiEndpoint
 

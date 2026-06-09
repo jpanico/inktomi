@@ -9,13 +9,13 @@ from pathlib import Path
 import panflute as pf  # type: ignore[import-untyped]
 from pydantic import HttpUrl
 
-from guffin.graph import (
+from guffin.vertex import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
     TextContentVertex,
-    VertexTree,
 )
+from guffin.vertex_tree import VertexTree
 from guffin.render.pandoc_rendering import (
     parse_inline_md,
     build_child_blocks,

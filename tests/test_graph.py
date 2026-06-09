@@ -1,6 +1,7 @@
 """Tests for graph module utility functions."""
 
-from guffin.graph import ImageVertex, PageVertex, TextContentVertex, VertexTree, image_urls, image_vertices, root_vertex
+from guffin.vertex import ImageVertex, PageVertex, TextContentVertex
+from guffin.vertex_tree import VertexTree, image_urls, image_vertices, root_vertex
 
 from conftest import article1_vertex_tree
 

@@ -33,7 +33,8 @@ from typing import Final
 import yaml
 
 from guffin.common.filenames import shell_safe_filename
-from guffin.graph import VertexTree, vertex_adapter
+from guffin.vertex import vertex_adapter
+from guffin.vertex_tree import VertexTree
 from guffin.cli.logging_config import configure_logging
 from guffin.render.md_rendering import render
 from guffin.roam.local_api import ApiEndpoint

@@ -9,10 +9,10 @@ Public symbols:
   :class:`~guffin.roam.tree.NodeTree` using a depth-first traversal.
 - :func:`build_rich_refs_box` — build a Rich :class:`~rich.panel.Panel` summarising the
   back-reference nodes in a :class:`~guffin.roam.tree.NodeTree`.
-- :func:`make_vertex_panel` — render a :data:`~guffin.graph.Vertex` as a Rich
+- :func:`make_vertex_panel` — render a :data:`~guffin.vertex.Vertex` as a Rich
   :class:`~rich.panel.Panel`.
 - :func:`build_rich_vertex_tree` — build a Rich :class:`~rich.tree.Tree` from a
-  :class:`~guffin.graph.VertexTree` using a depth-first traversal.
+  :class:`~guffin.vertex_tree.VertexTree` using a depth-first traversal.
 - :func:`build_rich_raw_table` — build a Rich :class:`~rich.table.Table` of raw
   Datalog pull-blocks from a :class:`~guffin.roam.node_fetch_result.NodeFetchResult`.
 """
@@ -29,14 +29,13 @@ from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree as RichTree
 
-from guffin.graph import (
+from guffin.vertex import (
     HeadingVertex,
     PageVertex,
     TextContentVertex,
     Vertex,
-    VertexTree,
-    VertexTreeDFSIterator,
 )
+from guffin.vertex_tree import VertexTree, VertexTreeDFSIterator
 from guffin.roam.node import RoamNode
 from guffin.roam.node_fetch_result import NodeFetchResult
 from guffin.roam.tree import NodeTree, NodeTreeDFSIterator
@@ -226,15 +225,15 @@ def make_vertex_panel(vertex: Vertex) -> Panel:
     The panel title shows a type-specific summary with the vertex ``uid`` in
     parentheses:
 
-    - :class:`~guffin.graph.PageVertex` — page title.
-    - :class:`~guffin.graph.HeadingVertex` — ``H{n}: <text>``.
-    - :class:`~guffin.graph.TextContentVertex` — block text as-is.
-    - :class:`~guffin.graph.ImageVertex` — ``IMAGE [<alt>](<firestore_url>)``.
+    - :class:`~guffin.vertex.PageVertex` — page title.
+    - :class:`~guffin.vertex.HeadingVertex` — ``H{n}: <text>``.
+    - :class:`~guffin.vertex.TextContentVertex` — block text as-is.
+    - :class:`~guffin.vertex.ImageVertex` — ``IMAGE [<alt>](<firestore_url>)``.
 
     The panel body shows ``type``, ``children``, and ``refs``.
 
     Args:
-        vertex: The :data:`~guffin.graph.Vertex` to render.
+        vertex: The :data:`~guffin.vertex.Vertex` to render.
 
     Returns:
         A :class:`~rich.panel.Panel` with a labelled title and metadata body.
@@ -264,7 +263,7 @@ def build_rich_vertex_tree(vertex_tree: VertexTree) -> RichTree:
     as a Rich panel under its parent in the rendered tree.
 
     Args:
-        vertex_tree: The :class:`~guffin.graph.VertexTree` to render.
+        vertex_tree: The :class:`~guffin.vertex_tree.VertexTree` to render.
 
     Returns:
         A :class:`~rich.tree.Tree` rooted at the single root vertex of

@@ -5,19 +5,19 @@ Public symbols:
 - :data:`SHOULD_NORMALIZE_HEADING_LEVELS` — whether heading levels should be
   normalized during transcription.
 - :func:`vertex_type` — classify a :class:`~guffin.roam.node.RoamNode` into a
-  :class:`~guffin.graph.VertexType`.
-- :func:`to_page_vertex` — build a :class:`~guffin.graph.PageVertex` from a
+  :class:`~guffin.vertex.VertexType`.
+- :func:`to_page_vertex` — build a :class:`~guffin.vertex.PageVertex` from a
   page node.
-- :func:`to_image_vertex` — build an :class:`~guffin.graph.ImageVertex` from a
+- :func:`to_image_vertex` — build an :class:`~guffin.vertex.ImageVertex` from a
   Firestore image block node.
-- :func:`to_heading_vertex` — build a :class:`~guffin.graph.HeadingVertex` from
+- :func:`to_heading_vertex` — build a :class:`~guffin.vertex.HeadingVertex` from
   a heading block node.
 - :func:`to_text_content_vertex` — build a
-  :class:`~guffin.graph.TextContentVertex` from a plain text block node.
+  :class:`~guffin.vertex.TextContentVertex` from a plain text block node.
 - :func:`transcribe_node` — transcribe a :class:`~guffin.roam.node.RoamNode` into
-  the appropriate :data:`~guffin.graph.Vertex` subtype.
+  the appropriate :data:`~guffin.vertex.Vertex` subtype.
 - :func:`transcribe` — transcribe all nodes in a :class:`~guffin.roam.tree.NodeTree`
-  into a :class:`~guffin.graph.VertexTree`.
+  into a :class:`~guffin.vertex_tree.VertexTree`.
 """
 
 import logging
@@ -27,7 +27,7 @@ from urllib.parse import unquote, urlparse
 
 from pydantic import TypeAdapter, validate_call
 
-from guffin.graph import (
+from guffin.vertex import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
@@ -35,9 +35,9 @@ from guffin.graph import (
     Vertex,
     VertexChildren,
     VertexRefs,
-    VertexTree,
     VertexType,
 )
+from guffin.vertex_tree import VertexTree
 from guffin.roam_md_to_pandoc_md import to_pandoc_md
 from guffin.roam.network import min_effective_heading_level
 from guffin.roam.node import NodeType, RoamNode, effective_heading_level, node_type
@@ -157,16 +157,16 @@ def _extract_file_name(firestore_url: str) -> str | None:
 
 @validate_call
 def vertex_type(node: RoamNode) -> VertexType:
-    """Classify *node* into a :class:`~guffin.graph.VertexType`.
+    """Classify *node* into a :class:`~guffin.vertex.VertexType`.
 
     Dispatches on :func:`~guffin.roam.node.node_type` for a direct
-    :class:`~guffin.roam.node.NodeType` → :class:`~guffin.graph.VertexType` mapping.
+    :class:`~guffin.roam.node.NodeType` → :class:`~guffin.vertex.VertexType` mapping.
 
     Args:
         node: The raw Roam node to classify.
 
     Returns:
-        The :class:`~guffin.graph.VertexType` for *node*.
+        The :class:`~guffin.vertex.VertexType` for *node*.
 
     Raises:
         NotImplementedError: If *node* is a :attr:`~guffin.roam.node.NodeType.ROAM_EMBED_BLOCK`.
@@ -190,7 +190,7 @@ def vertex_type(node: RoamNode) -> VertexType:
 
 @validate_call
 def to_page_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> PageVertex:
-    """Build a :class:`~guffin.graph.PageVertex` from *node*.
+    """Build a :class:`~guffin.vertex.PageVertex` from *node*.
 
     Args:
         node: A page node with ``node.title`` set.
@@ -198,7 +198,7 @@ def to_page_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> PageVertex:
             used to resolve child and ref stubs to UIDs.
 
     Returns:
-        A :class:`~guffin.graph.PageVertex`.
+        A :class:`~guffin.vertex.PageVertex`.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -217,7 +217,7 @@ def to_page_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> PageVertex:
 
 @validate_call
 def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
-    """Build an :class:`~guffin.graph.ImageVertex` from *node*.
+    """Build an :class:`~guffin.vertex.ImageVertex` from *node*.
 
     Args:
         node: A block node whose ``node.string`` embeds a Firestore image URL.
@@ -225,7 +225,7 @@ def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
             used to resolve child and ref stubs to UIDs.
 
     Returns:
-        An :class:`~guffin.graph.ImageVertex`.
+        An :class:`~guffin.vertex.ImageVertex`.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -252,7 +252,7 @@ def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
 
 @validate_call
 def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: int = 0) -> HeadingVertex:
-    """Build a :class:`~guffin.graph.HeadingVertex` from *node*.
+    """Build a :class:`~guffin.vertex.HeadingVertex` from *node*.
 
     Args:
         node: A block node with an effective heading level (native ``node.heading``
@@ -264,7 +264,7 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset
             heading to level 1; defaults to ``0`` (no adjustment).
 
     Returns:
-        A :class:`~guffin.graph.HeadingVertex`.
+        A :class:`~guffin.vertex.HeadingVertex`.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -287,7 +287,7 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset
 
 @validate_call
 def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextContentVertex:
-    """Build a :class:`~guffin.graph.TextContentVertex` from *node*.
+    """Build a :class:`~guffin.vertex.TextContentVertex` from *node*.
 
     Args:
         node: A plain text block node with ``node.string`` set.
@@ -295,7 +295,7 @@ def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextCo
             used to resolve child and ref stubs to UIDs.
 
     Returns:
-        A :class:`~guffin.graph.TextContentVertex`.
+        A :class:`~guffin.vertex.TextContentVertex`.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -314,9 +314,9 @@ def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextCo
 
 @validate_call
 def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: int = 0) -> Vertex:
-    r"""Transcribe *node* into a normalized :class:`~guffin.graph.Vertex`.
+    r"""Transcribe *node* into a normalized :class:`~guffin.vertex.Vertex`.
 
-    Determines the :class:`~guffin.graph.VertexType` via :func:`vertex_type`,
+    Determines the :class:`~guffin.vertex.VertexType` via :func:`vertex_type`,
     resolves raw :class:`~guffin.roam.primitives.IdObject` stubs in children and refs to
     stable UIDs via *id_map*, and handles both native Roam headings (levels 1–3 via
     ``node.heading``) and Augmented Headings extension levels (4–6 via
@@ -331,7 +331,7 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
             is a heading block.  Defaults to ``0`` (no adjustment).
 
     Returns:
-        A :class:`~guffin.graph.Vertex` representing the normalized node.
+        A :class:`~guffin.vertex.Vertex` representing the normalized node.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -351,7 +351,7 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
 
 @validate_call
 def transcribe(node_tree: NodeTree) -> VertexTree:
-    """Transcribe every node in *node_tree* into a :class:`~guffin.graph.VertexTree`.
+    """Transcribe every node in *node_tree* into a :class:`~guffin.vertex_tree.VertexTree`.
 
     Builds an id-map from *node_tree.tree_network*, then applies :func:`transcribe_node`
     to each node in insertion order.  When :data:`SHOULD_NORMALIZE_HEADING_LEVELS` is
@@ -364,8 +364,8 @@ def transcribe(node_tree: NodeTree) -> VertexTree:
         node_tree: A validated tree of raw Roam nodes.
 
     Returns:
-        A :class:`~guffin.graph.VertexTree` containing one
-        :class:`~guffin.graph.Vertex` per node in *node_tree.tree_network*.
+        A :class:`~guffin.vertex_tree.VertexTree` containing one
+        :class:`~guffin.vertex.Vertex` per node in *node_tree.tree_network*.
 
     Raises:
         ValueError: If any node has neither a ``title`` nor a ``string`` field set.

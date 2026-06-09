@@ -1,4 +1,4 @@
-"""Render a :class:`~guffin.graph.VertexTree` to CommonMark and write Markdown exports to disk.
+"""Render a :class:`~guffin.vertex_tree.VertexTree` to CommonMark and write Markdown exports to disk.
 
 Converts the normalized vertex tree produced by
 :func:`~guffin.roam_tree_to_vertex_tree.transcribe` to a CommonMark document via the
@@ -8,7 +8,7 @@ result to disk as either a plain ``.md`` file or a self-contained
 
 Public symbols:
 
-- :func:`render` — end-to-end: render a :class:`~guffin.graph.VertexTree` to
+- :func:`render` — end-to-end: render a :class:`~guffin.vertex_tree.VertexTree` to
   a ``.mdbundle`` directory or plain ``.md`` file (parallel entry point to
   :func:`~guffin.render.pdf_rendering.render`).
 """
@@ -27,7 +27,7 @@ import pypandoc  # type: ignore[import-untyped]
 from pydantic import validate_call
 
 from guffin.common.filenames import shell_safe_filename
-from guffin.graph import VertexTree
+from guffin.vertex_tree import VertexTree
 from guffin.render.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam.local_api import ApiEndpoint
 from guffin.roam.primitives import Uid
@@ -61,7 +61,7 @@ def render(
       the local filenames.
     - ``bundle=False`` — writes the CommonMark text directly to
       ``<output_dir>/<normalized_filename_stem>.md`` without fetching
-      images.  :class:`~guffin.graph.ImageVertex` nodes fall back to
+      images.  :class:`~guffin.vertex.ImageVertex` nodes fall back to
       hyperlinks pointing at the original Cloud Firestore URLs.
 
     Pandoc must be installed and on ``PATH``.

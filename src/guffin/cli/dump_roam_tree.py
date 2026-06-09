@@ -6,7 +6,7 @@ one or more of the following as a colorized :class:`~rich.tree.Tree` panel
 hierarchy:
 
 - **Vertex tree** (default, ``--vertex-tree`` / ``-v/-V``) — normalized
-  :class:`~guffin.graph.VertexTree` produced by
+  :class:`~guffin.vertex_tree.VertexTree` produced by
   :func:`~guffin.roam_tree_to_vertex_tree.transcribe`.
 - **Node tree** (``--node-tree`` / ``-n/-N``) — raw :class:`~guffin.roam.tree.NodeTree`
   as returned by the Roam Local API; each panel body lists selected
@@ -61,7 +61,7 @@ from guffin.render.rich_rendering import (
 from guffin.roam.node_fetch import RoamNodeNotFoundError
 from guffin.roam.node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec, QueryAnchorKind
 from guffin.cli.load_roam_tree import fetch_roam_trees
-from guffin.graph import VertexTree
+from guffin.vertex_tree import VertexTree
 from guffin.roam.local_api import ApiEndpoint
 from guffin.cli.logging_config import configure_logging
 from guffin.roam.primitives import UID_PATTERN
@@ -132,7 +132,7 @@ def _dump_vertex_tree(vertex_tree: VertexTree | None, console: Console) -> None:
     Logs a warning and returns early when *vertex_tree* is ``None``.
 
     Args:
-        vertex_tree: Normalized :class:`~guffin.graph.VertexTree` to render,
+        vertex_tree: Normalized :class:`~guffin.vertex_tree.VertexTree` to render,
             or ``None`` when vertex tree computation was skipped.
         console: Rich :class:`~rich.console.Console` to print to.
     """
@@ -163,7 +163,7 @@ def dump_trees(
     Args:
         fetch_result: The :class:`~guffin.roam.node_fetch_result.NodeFetchResult` returned
             by the fetch pipeline, carrying the raw node tree and Datalog results.
-        vertex_tree: Normalized :class:`~guffin.graph.VertexTree` produced
+        vertex_tree: Normalized :class:`~guffin.vertex_tree.VertexTree` produced
             by :func:`~guffin.roam_tree_to_vertex_tree.transcribe`, or ``None`` when
             vertex tree computation was skipped.
         node_props: Comma-separated list of :class:`~guffin.roam.node.RoamNode`

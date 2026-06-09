@@ -7,7 +7,8 @@ from typing import Final
 import pytest
 import yaml
 
-from guffin.graph import VertexTree, vertex_adapter
+from guffin.vertex import vertex_adapter
+from guffin.vertex_tree import VertexTree
 from guffin.roam.local_api import ApiEndpoint, ApiEndpointURL
 from guffin.roam.node import NodeType, RoamNode, node_type
 from guffin.roam.tree import NodeTree
@@ -64,7 +65,7 @@ def article1_node_tree() -> NodeTree:
 
 
 def article1_vertex_tree() -> VertexTree:
-    """Load and return the ``[[Test Article]] 1`` :class:`~guffin.graph.VertexTree` from its YAML fixture."""
+    """Load and return the ``[[Test Article]] 1`` :class:`~guffin.vertex_tree.VertexTree` from its YAML fixture."""
     raw: Final[list[dict[str, object]]] = yaml.safe_load(
         (FIXTURES_YAML_DIR / "test_article_1_vertices.yaml").read_text()
     )

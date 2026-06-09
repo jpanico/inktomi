@@ -48,7 +48,8 @@ GUFFIN_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
   - **Core pipeline**
     - `roam_tree_to_vertex_tree.py` — transcribes `NodeTree` → `VertexTree`; applies `to_pandoc_md()` to all text fields
     - `roam_md_to_pandoc_md.py` — converts Roam-flavored Markdown strings to Pandoc Markdown; `to_pandoc_md()` is the main entry point
-    - `graph.py` — `Vertex` union, `VertexTree`, `VertexTreeDFSIterator`, `root_vertex()`; filter helpers `page_vertices()`, `heading_vertices()`, `text_content_vertices()`, `image_vertices()`, `image_urls()`
+    - `vertex.py` — `Vertex` union and all four concrete vertex types (`PageVertex`, `HeadingVertex`, `TextContentVertex`, `ImageVertex`); `VertexType`, `VertexChildren`, `VertexRefs`, `vertex_adapter`
+    - `vertex_tree.py` — `VertexTree`, `VertexTreeDFSIterator`, `root_vertex()`; filter helpers `page_vertices()`, `heading_vertices()`, `text_content_vertices()`, `image_vertices()`, `image_urls()`
   - **`render/` sub-package** (`src/guffin/render/`) — rendering pipeline modules
     - `pandoc_rendering.py` — shared Pandoc/Panflute rendering utilities; `vertex_tree_to_pandoc()` builds a Panflute `Doc` from a `VertexTree` (batch-parsing inline Pandoc Markdown via a single Pandoc call); `fetch_images()` fetches Cloud Firestore image assets
     - `md_rendering.py` — renders a `VertexTree` to Markdown: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to CommonMark via Pandoc, writes a plain `.md` or `.mdbundle/` directory

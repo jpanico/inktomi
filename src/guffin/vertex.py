@@ -1,8 +1,7 @@
-"""Roam Research normalized graph vertex model.
+"""Roam Research normalized graph vertex types.
 
 A :data:`Vertex` is the normalized (transcribed) form of a single
-:class:`~guffin.roam.node.RoamNode`.  A :class:`VertexTree` is the normalized
-form of a :class:`~guffin.roam.tree.NodeTree`.
+:class:`~guffin.roam.node.RoamNode`.
 
 Normalization (transcription) means:
 
@@ -37,25 +36,12 @@ Public symbols:
 - :data:`Vertex` — union of all four concrete vertex types.
 - :data:`vertex_adapter` — Pydantic :class:`~pydantic.TypeAdapter` for validating a
   :data:`Vertex` from a raw dict.
-- :class:`VertexTree` — normalized (transcribed) form of a
-  :class:`~guffin.roam.tree.NodeTree`; a portable tree of :data:`Vertex` instances.
-- :meth:`VertexTree.dfs` — return a :class:`VertexTreeDFSIterator` for pre-order
-  depth-first traversal.
-- :class:`VertexTreeDFSIterator` — pre-order depth-first iterator over a
-  :class:`VertexTree`.
-- :func:`page_vertices` — return all :class:`PageVertex` instances in a :class:`VertexTree`.
-- :func:`heading_vertices` — return all :class:`HeadingVertex` instances in a :class:`VertexTree`.
-- :func:`text_content_vertices` — return all :class:`TextContentVertex` instances in a :class:`VertexTree`.
-- :func:`image_vertices` — return all :class:`ImageVertex` instances in a :class:`VertexTree`.
-- :func:`image_urls` — return all Cloud Firestore image URLs from a :class:`VertexTree`.
-- :func:`root_vertex` — return the single root :data:`Vertex` of a :class:`VertexTree`.
 """
 
-from collections.abc import Iterator
 from enum import StrEnum
-from typing import Annotated, Final, Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, validate_call
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from guffin.common.media_type import MediaType
 from guffin.roam.primitives import HeadingLevel, Uid, Url
@@ -240,17 +226,10 @@ type Vertex = PageVertex | HeadingVertex | TextContentVertex | ImageVertex
 """Union of all four concrete, normalized vertex types.
 
 Use :data:`vertex_adapter` to validate a raw dict into the appropriate concrete
-subtype.  Use :class:`VertexTree` to hold a validated collection of vertices.
+subtype.  Use :class:`~guffin.vertex_tree.VertexTree` to hold a validated collection of vertices.
 """
 
-type _AnnotatedVertex = Annotated[Vertex, Field(discriminator="vertex_type")]
-"""Internal alias: :data:`Vertex` union with ``vertex_type`` discriminator attached.
-
-Shared by :data:`vertex_adapter` and :class:`VertexTree` to avoid repeating the
-full union + discriminator annotation in both places.
-"""
-
-vertex_adapter: TypeAdapter[Vertex] = TypeAdapter(_AnnotatedVertex)
+vertex_adapter: TypeAdapter[Vertex] = TypeAdapter(Annotated[Vertex, Field(discriminator="vertex_type")])
 """Pydantic :class:`~pydantic.TypeAdapter` for validating a raw dict into the correct :data:`Vertex` subtype.
 
 Uses ``vertex_type`` as the discriminator field to select among :class:`PageVertex`,
@@ -261,132 +240,3 @@ Example::
     v = vertex_adapter.validate_python({"vertex_type": "guffin/page", "uid": "abc", "text": "My Page"})
     assert isinstance(v, PageVertex)
 """
-
-
-class VertexTree(BaseModel):
-    """Normalized (transcribed) form of a :class:`~guffin.roam.tree.NodeTree`.
-
-    Produced by :func:`~guffin.roam_tree_to_vertex_tree.transcribe`, which applies
-    :func:`~guffin.roam_tree_to_vertex_tree.transcribe_node` to every node in the source
-    :class:`~guffin.roam.tree.NodeTree` and collects the results here in the
-    same insertion order.  The resulting collection is guaranteed to have exactly
-    one :data:`Vertex` per source :class:`~guffin.roam.node.RoamNode` and
-    inherits the acyclic-tree structure of its origin.
-
-    Attributes:
-        vertices: Transcribed vertices, one per source
-            :class:`~guffin.roam.node.RoamNode`, in insertion order.
-    """
-
-    model_config = ConfigDict(frozen=True, populate_by_name=True)
-
-    vertices: list[_AnnotatedVertex] = Field(..., description="Transcribed vertices, one per source RoamNode.")
-
-    def dfs(self) -> VertexTreeDFSIterator:
-        """Return a pre-order depth-first iterator over this tree.
-
-        Returns:
-            A :class:`VertexTreeDFSIterator` seeded at the root of this tree.
-        """
-        return VertexTreeDFSIterator(self)
-
-
-class VertexTreeDFSIterator(Iterator[Vertex]):
-    """Pre-order depth-first iterator over a :class:`VertexTree`.
-
-    Yields vertices starting from the single root, then recursively yields each
-    child subtree in the order recorded in each vertex's
-    :attr:`~_BaseVertex.children` list (which preserves the original
-    :attr:`~guffin.roam.node.RoamNode.order` sort applied during transcription).
-    The traversal is non-recursive internally (stack-based), so deep trees do not
-    risk hitting Python's recursion limit.
-
-    Usage::
-
-        for vertex in VertexTreeDFSIterator(tree):
-            ...
-
-    Attributes:
-        _uid_map: Mapping from :attr:`~_BaseVertex.uid` to :data:`Vertex`,
-            built once at construction time.
-        _stack: LIFO stack of vertices yet to be visited; initialized with the
-            root vertex.
-    """
-
-    def __init__(self, tree: VertexTree) -> None:
-        """Initialize the iterator from *tree*.
-
-        Builds a uid-map over *tree.vertices* and seeds the stack with the
-        single root vertex — the one whose uid does not appear in any other
-        vertex's :attr:`~_BaseVertex.children` list.
-
-        Args:
-            tree: The :class:`VertexTree` to traverse.
-        """
-        self._uid_map: dict[Uid, Vertex] = {v.uid: v for v in tree.vertices}
-        self._stack: list[Vertex] = [root_vertex(tree)]
-
-    def __iter__(self) -> Iterator[Vertex]:
-        """Return *self* (this object is its own iterator)."""
-        return self
-
-    def __next__(self) -> Vertex:
-        """Return the next vertex in pre-order depth-first traversal.
-
-        Raises:
-            StopIteration: When all vertices have been yielded.
-        """
-        if not self._stack:
-            raise StopIteration
-        vertex: Vertex = self._stack.pop()
-        if vertex.children:
-            children: list[Vertex] = [self._uid_map[uid] for uid in vertex.children if uid in self._uid_map]
-            self._stack.extend(reversed(children))
-        return vertex
-
-
-@validate_call
-def page_vertices(tree: VertexTree) -> list[PageVertex]:
-    """Return all :class:`PageVertex` instances in *tree*, in insertion order."""
-    return [v for v in tree.vertices if isinstance(v, PageVertex)]
-
-
-@validate_call
-def heading_vertices(tree: VertexTree) -> list[HeadingVertex]:
-    """Return all :class:`HeadingVertex` instances in *tree*, in insertion order."""
-    return [v for v in tree.vertices if isinstance(v, HeadingVertex)]
-
-
-@validate_call
-def text_content_vertices(tree: VertexTree) -> list[TextContentVertex]:
-    """Return all :class:`TextContentVertex` instances in *tree*, in insertion order."""
-    return [v for v in tree.vertices if isinstance(v, TextContentVertex)]
-
-
-@validate_call
-def image_vertices(tree: VertexTree) -> list[ImageVertex]:
-    """Return all :class:`ImageVertex` instances in *tree*, in insertion order."""
-    return [v for v in tree.vertices if isinstance(v, ImageVertex)]
-
-
-@validate_call
-def image_urls(tree: VertexTree) -> list[Url]:
-    """Return the Cloud Firestore URL of every :class:`ImageVertex` in *tree*, in insertion order."""
-    return [v.source for v in image_vertices(tree)]
-
-
-@validate_call
-def root_vertex(tree: VertexTree) -> Vertex:
-    """Return the single root :data:`Vertex` of *tree*.
-
-    The root is the unique vertex whose :attr:`~_BaseVertex.uid` does not
-    appear in any other vertex's :attr:`~_BaseVertex.children` list.
-
-    Args:
-        tree: The :class:`VertexTree` to inspect.
-
-    Returns:
-        The root :data:`Vertex`.
-    """
-    child_uids: Final[set[Uid]] = {uid for v in tree.vertices if v.children for uid in v.children}
-    return next(v for v in tree.vertices if v.uid not in child_uids)

@@ -4,7 +4,7 @@ Public symbols:
 
 - :func:`fetch_roam_trees` — fetch nodes for a :class:`~guffin.roam.node_fetch_result.NodeFetchSpec`
   and return a :class:`~guffin.roam.node_fetch_result.NodeFetchResult` paired with an optional
-  :class:`~guffin.graph.VertexTree`, ready for rendering or further processing.
+  :class:`~guffin.vertex_tree.VertexTree`, ready for rendering or further processing.
 """
 
 import logging
@@ -12,7 +12,7 @@ from typing import Final
 
 from pydantic import validate_call
 
-from guffin.graph import VertexTree
+from guffin.vertex_tree import VertexTree
 from guffin.roam.local_api import ApiEndpoint
 from guffin.roam.node_fetch import FetchRoamNodes
 from guffin.roam.node_fetch_result import NodeFetchResult, NodeFetchSpec
@@ -32,7 +32,7 @@ def fetch_roam_trees(
 
     Fetches :class:`~guffin.roam.node.RoamNode` records for *fetch_spec* via
     *api_endpoint*, constructs a :class:`~guffin.roam.tree.NodeTree`, and optionally
-    transcribes it to a :class:`~guffin.graph.VertexTree`.
+    transcribes it to a :class:`~guffin.vertex_tree.VertexTree`.
 
     Propagates any exception raised during fetching or transcription; callers are
     responsible for exit behaviour.
@@ -41,7 +41,7 @@ def fetch_roam_trees(
         fetch_spec: The fetch specification carrying the anchor, include_refs flag, and
             include_node_tree flag.
         include_vertex_tree: When ``True``, transcribes the node tree to a
-            :class:`~guffin.graph.VertexTree` and returns it as the second element of
+            :class:`~guffin.vertex_tree.VertexTree` and returns it as the second element of
             the pair.  When ``False``, skips transcription and returns ``None`` instead.
         api_endpoint: Configured API endpoint used to fetch nodes.
 

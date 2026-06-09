@@ -1,4 +1,4 @@
-"""Shared Pandoc/panflute rendering utilities for :class:`~guffin.graph.VertexTree` → :class:`~panflute.Doc`.
+"""Shared Pandoc/panflute rendering utilities for :class:`~guffin.vertex_tree.VertexTree` → :class:`~panflute.Doc`.
 
 Converts the normalized vertex tree produced by
 :func:`~guffin.roam_tree_to_vertex_tree.transcribe` into a Panflute
@@ -11,8 +11,8 @@ output formats.
 
 Inline parsing:
 
-Text fields on :class:`~guffin.graph.HeadingVertex` and
-:class:`~guffin.graph.TextContentVertex` contain normalized Pandoc Markdown
+Text fields on :class:`~guffin.vertex.HeadingVertex` and
+:class:`~guffin.vertex.TextContentVertex` contain normalized Pandoc Markdown
 (e.g. ``**bold**``, ``*italic*``, `` `code` ``, ``[text]{.mark}``).  The
 private :func:`parse_inline_md` batches all unique text strings into a single
 Pandoc parse call, returning a mapping from text string to the corresponding
@@ -21,17 +21,17 @@ while correctly handling all Pandoc Markdown inline syntax.
 
 Rendering rules:
 
-- :class:`~guffin.graph.PageVertex` — when *title_in_header* is ``True``
+- :class:`~guffin.vertex.PageVertex` — when *title_in_header* is ``True``
   (Markdown path), title rendered as an H1 :class:`~panflute.Header` in
   the document body; when ``False`` (PDF path), title stored as the Pandoc
   document metadata ``title``.  Children rendered at depth 1 in both cases.
-- :class:`~guffin.graph.HeadingVertex` — rendered as a
+- :class:`~guffin.vertex.HeadingVertex` — rendered as a
   :class:`~panflute.Header` at the vertex's recorded heading level.
-- :class:`~guffin.graph.TextContentVertex` — direct children of the page
+- :class:`~guffin.vertex.TextContentVertex` — direct children of the page
   (depth 1) become :class:`~panflute.Para` blocks; deeper vertices are
   coalesced into :class:`~panflute.BulletList` items, with their own
   children rendered as nested :class:`~panflute.BulletList` blocks.
-- :class:`~guffin.graph.ImageVertex` — fetched from Cloud Firestore, written
+- :class:`~guffin.vertex.ImageVertex` — fetched from Cloud Firestore, written
   to a local directory, and embedded as a :class:`~panflute.Image` element.
   Falls back to a :class:`~panflute.Link` if the fetch fails or when
   *image_files* has no entry for the vertex.
@@ -41,13 +41,13 @@ Public symbols:
 - :func:`parse_inline_md` — batch-parse Pandoc Markdown inline text strings into
   panflute inline element lists via a single Pandoc call.
 - :func:`fetch_images` — fetch all
-  :class:`~guffin.graph.ImageVertex` assets from a
-  :class:`~guffin.graph.VertexTree` to a local directory; return a
+  :class:`~guffin.vertex.ImageVertex` assets from a
+  :class:`~guffin.vertex_tree.VertexTree` to a local directory; return a
   ``{uid: path}`` mapping.
 - :func:`build_child_blocks` — convert an ordered list of vertex UIDs to Pandoc
   block elements.
 - :func:`vertex_tree_to_pandoc` — convert a
-  :class:`~guffin.graph.VertexTree` to a Panflute :class:`~panflute.Doc`.
+  :class:`~guffin.vertex_tree.VertexTree` to a Panflute :class:`~panflute.Doc`.
 - :func:`pandoc_to_json` — serialize a Panflute :class:`~panflute.Doc` to a
   Pandoc JSON string, optionally writing it to a file for debugging.
 """
@@ -69,16 +69,15 @@ import pypandoc  # type: ignore[import-untyped]
 
 from pydantic import ConfigDict, validate_call
 
-from guffin.graph import (
+from guffin.vertex import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
     TextContentVertex,
     Vertex,
     VertexChildren,
-    VertexTree,
-    root_vertex,
 )
+from guffin.vertex_tree import VertexTree, root_vertex
 from guffin.roam.asset_fetch import fetch_and_cache_asset
 from guffin.roam.local_api import ApiEndpoint
 from guffin.roam.primitives import Uid
@@ -159,7 +158,7 @@ def fetch_images(
     image_dir: Path,
     cache_dir: Path | None = None,
 ) -> dict[Uid, Path]:
-    """Fetch all :class:`~guffin.graph.ImageVertex` assets to *image_dir*.
+    """Fetch all :class:`~guffin.vertex.ImageVertex` assets to *image_dir*.
 
     Delegates fetching and caching to
     :func:`~guffin.roam.asset_fetch.fetch_and_cache_asset`.  Each fetched
@@ -175,7 +174,7 @@ def fetch_images(
             runs.
 
     Returns:
-        A mapping from :class:`~guffin.graph.ImageVertex` UID to the
+        A mapping from :class:`~guffin.vertex.ImageVertex` UID to the
         local :class:`~pathlib.Path` of the fetched image file.  Vertices
         that could not be fetched are absent from the mapping.
     """
@@ -206,7 +205,7 @@ def _build_list_item(
     inline_map: dict[str, list[pf.Inline]],
     depth: int,
 ) -> pf.ListItem:
-    """Build a Pandoc :class:`~panflute.ListItem` from a :class:`~guffin.graph.TextContentVertex`.
+    """Build a Pandoc :class:`~panflute.ListItem` from a :class:`~guffin.vertex.TextContentVertex`.
 
     The item body is a :class:`~panflute.Plain` inline block.  If the vertex
     has children they are rendered recursively via :func:`build_child_blocks` and
@@ -214,8 +213,8 @@ def _build_list_item(
 
     Args:
         vertex: The text-content vertex to render as a list item.
-        uid_map: Mapping from UID to :data:`~guffin.graph.Vertex`.
-        image_files: Mapping from :class:`~guffin.graph.ImageVertex` UID to
+        uid_map: Mapping from UID to :data:`~guffin.vertex.Vertex`.
+        image_files: Mapping from :class:`~guffin.vertex.ImageVertex` UID to
             local image file path.
         inline_map: Mapping from text string to parsed panflute inline elements.
         depth: Tree depth of *vertex* (≥ 2 when this function is called).
@@ -241,7 +240,7 @@ def build_child_blocks(
 ) -> list[pf.Block]:
     """Build a list of Pandoc block elements from an ordered list of child UIDs.
 
-    Consecutive :class:`~guffin.graph.TextContentVertex` siblings at
+    Consecutive :class:`~guffin.vertex.TextContentVertex` siblings at
     *depth* > 1 are coalesced into a single :class:`~panflute.BulletList`.
     Any non-text vertex (or text vertex at depth 1) flushes the pending list
     and is rendered via :func:`_vertex_to_blocks`.
@@ -250,8 +249,8 @@ def build_child_blocks(
 
     Args:
         child_uids: Ordered list of child UIDs to render.
-        uid_map: Mapping from UID to :data:`~guffin.graph.Vertex`.
-        image_files: Mapping from :class:`~guffin.graph.ImageVertex` UID to
+        uid_map: Mapping from UID to :data:`~guffin.vertex.Vertex`.
+        image_files: Mapping from :class:`~guffin.vertex.ImageVertex` UID to
             local image file path.
         inline_map: Mapping from text string to parsed panflute inline elements.
         depth: Tree depth of the children (1 = direct children of the page root).
@@ -291,27 +290,27 @@ def _vertex_to_blocks(
     inline_map: dict[str, list[pf.Inline]],
     depth: int,
 ) -> list[pf.Block]:
-    """Convert a single :data:`~guffin.graph.Vertex` to Pandoc block elements.
+    """Convert a single :data:`~guffin.vertex.Vertex` to Pandoc block elements.
 
     Dispatches on the concrete vertex type:
 
-    - :class:`~guffin.graph.PageVertex`: renders children at depth 1 (title
+    - :class:`~guffin.vertex.PageVertex`: renders children at depth 1 (title
       handled separately in :func:`vertex_tree_to_pandoc`).
-    - :class:`~guffin.graph.HeadingVertex`: one :class:`~panflute.Header` at
+    - :class:`~guffin.vertex.HeadingVertex`: one :class:`~panflute.Header` at
       the vertex's heading level, followed by children at ``depth + 1``.
-    - :class:`~guffin.graph.TextContentVertex` at depth 1: one
+    - :class:`~guffin.vertex.TextContentVertex` at depth 1: one
       :class:`~panflute.Para`, followed by children.
-    - :class:`~guffin.graph.TextContentVertex` at depth > 1: wrapped in a
+    - :class:`~guffin.vertex.TextContentVertex` at depth > 1: wrapped in a
       single-item :class:`~panflute.BulletList` (normally reached only from
       :func:`build_child_blocks` which handles sibling grouping).
-    - :class:`~guffin.graph.ImageVertex`: a :class:`~panflute.Para`
+    - :class:`~guffin.vertex.ImageVertex`: a :class:`~panflute.Para`
       containing a :class:`~panflute.Image` (local path) if the asset was
       fetched, or a :class:`~panflute.Link` fallback otherwise.
 
     Args:
         vertex: The vertex to convert.
-        uid_map: Mapping from UID to :data:`~guffin.graph.Vertex`.
-        image_files: Mapping from :class:`~guffin.graph.ImageVertex` UID to
+        uid_map: Mapping from UID to :data:`~guffin.vertex.Vertex`.
+        image_files: Mapping from :class:`~guffin.vertex.ImageVertex` UID to
             local image file path.
         inline_map: Mapping from text string to parsed panflute inline elements.
         depth: Tree depth of *vertex* (0 = root, 1 = direct page child, …).
@@ -361,14 +360,14 @@ def vertex_tree_to_pandoc(
     *,
     title_in_header: bool = False,
 ) -> pf.Doc:
-    """Convert a :class:`~guffin.graph.VertexTree` to a Panflute :class:`~panflute.Doc`.
+    """Convert a :class:`~guffin.vertex_tree.VertexTree` to a Panflute :class:`~panflute.Doc`.
 
     Collects all text strings from the tree, parses their inline Pandoc Markdown
     in a single Pandoc call, then walks the tree to build Pandoc block
     elements.
 
     The *title_in_header* flag controls how a root
-    :class:`~guffin.graph.PageVertex` title is rendered:
+    :class:`~guffin.vertex.PageVertex` title is rendered:
 
     - ``False`` (default, PDF path) — title stored as the Pandoc metadata
       ``title`` field; children rendered as body blocks.
@@ -377,7 +376,7 @@ def vertex_tree_to_pandoc(
 
     Args:
         vertex_tree: The normalized vertex tree to convert.
-        image_files: Mapping from :class:`~guffin.graph.ImageVertex` UID to
+        image_files: Mapping from :class:`~guffin.vertex.ImageVertex` UID to
             the local :class:`~pathlib.Path` of the fetched image file.
             Vertices absent from this mapping fall back to hyperlinks.
             Pass relative :class:`~pathlib.Path` values (e.g.
@@ -385,7 +384,7 @@ def vertex_tree_to_pandoc(
             references in the rendered document are relative rather than
             absolute.
         title_in_header: When ``True``, render a root
-            :class:`~guffin.graph.PageVertex` title as an H1 header instead
+            :class:`~guffin.vertex.PageVertex` title as an H1 header instead
             of storing it in document metadata.  Defaults to ``False``.
 
     Returns:

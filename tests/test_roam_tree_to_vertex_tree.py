@@ -6,7 +6,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from guffin.graph import (
+from guffin.vertex import (
     HeadingVertex,
     ImageVertex,
     PageVertex,

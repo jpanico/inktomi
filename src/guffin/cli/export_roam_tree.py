@@ -2,7 +2,7 @@
 """CLI tool for exporting a Roam Research page or node subtree.
 
 Fetches all descendant blocks identified by ``TARGET`` via the Roam Local API,
-transcribes them into a :class:`~guffin.graph.VertexTree`, and writes the
+transcribes them into a :class:`~guffin.vertex_tree.VertexTree`, and writes the
 result in one of two output formats controlled by ``--format``:
 
 - **Markdown** (default, ``--format markdown``) — renders the tree to
@@ -17,7 +17,7 @@ result in one of two output formats controlled by ``--format``:
     to ``<output_dir>/<target>.md``.
 
 - **PDF** (``--format pdf``) — builds a Pandoc object model directly from
-  the :class:`~guffin.graph.VertexTree` via
+  the :class:`~guffin.vertex_tree.VertexTree` via
   :func:`~guffin.render.pdf_rendering.render_pdf` and writes
   ``<output_dir>/<target>.pdf``.  The ``--bundle/--no-bundle`` and
   ``--cache-dir`` options do not apply and are ignored.  Pass
@@ -59,7 +59,7 @@ from typing import Annotated, Final
 
 import typer
 
-from guffin.graph import VertexTree
+from guffin.vertex_tree import VertexTree
 from guffin.cli.logging_config import configure_logging
 from guffin.render.md_rendering import render as render_md
 from guffin.render.pdf_rendering import render as render_pdf
