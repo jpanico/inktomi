@@ -30,6 +30,7 @@ Public symbols:
 
 import importlib.resources
 import logging
+import os
 import tempfile
 from pathlib import Path
 from typing import Final
@@ -48,6 +49,7 @@ logger = logging.getLogger(__name__)
 _TEMPLATE_PACKAGE: Final[str] = "guffin.templates"
 _TEMPLATE_ENTRY: Final[str] = "bergfink.typst"
 _USER_CFG_FILENAME: Final[str] = "user_cfg.typ"
+_TYPST_CALLOUT_FILTER: Final[Path] = Path(__file__).parent / "typst_callout.lua"
 
 
 def _bundled_templates_dir() -> Path:
@@ -122,6 +124,7 @@ def render(
         "--pdf-engine=typst",
         f"--template={template_path}",
         f"--resource-path={bundled_dir}",
+        f"--lua-filter={_TYPST_CALLOUT_FILTER}",
     ]
 
     if template_dir is not None:
@@ -136,6 +139,27 @@ def render(
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files)
         json_str: Final[str] = pandoc_to_json(doc, dump_pandoc_ast, output_dir, stem)
         logger.debug("pandoc JSON length=%d bytes, output_path=%s", len(json_str), output_path)
+
+        if os.environ.get("GUFFIN_DUMP_TYPST"):
+            typst_body: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
+                json_str, "typst", format="json", extra_args=[f"--lua-filter={_TYPST_CALLOUT_FILTER}"]
+            )
+            typst_body_path: Final[Path] = output_dir / f"{stem}.body.typ"
+            typst_body_path.write_text(typst_body, encoding="utf-8")
+            logger.info("Wrote Typst body to %s", typst_body_path)
+            typst_full_extra: list[str] = [
+                f"--template={template_path}",
+                f"--resource-path={bundled_dir}",
+                f"--lua-filter={_TYPST_CALLOUT_FILTER}",
+            ]
+            if template_dir is not None:
+                typst_full_extra.extend(["-V", f"user-config={template_dir / _USER_CFG_FILENAME}"])
+            typst_full: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
+                json_str, "typst", format="json", extra_args=typst_full_extra
+            )
+            typst_full_path: Final[Path] = output_dir / f"{stem}.full.typ"
+            typst_full_path.write_text(typst_full, encoding="utf-8")
+            logger.info("Wrote full Typst (with template) to %s", typst_full_path)
 
         pypandoc.convert_text(  # type: ignore[no-untyped-call]
             json_str, "pdf", format="json", outputfile=str(output_path), extra_args=extra_args

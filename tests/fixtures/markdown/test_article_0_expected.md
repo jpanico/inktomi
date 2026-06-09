@@ -1,13 +1,17 @@
 # Test Article 0
 
-\> !INFO THIS PAGE IS USED FOR TESTING \[GUFFIN\](https://github.com/jpanico/guffin) – DO NOT REMOVE
-This page is a baseline Roam document, with almost no features
-Features:
-- 3 top-level blocks
-- nested blocks
-- italics text
-- bold text
-- this INFO \`Callout box\`, which contains Roam \`page references\`
+> [!NOTE]
+> **THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin) – DO NOT REMOVE**
+>
+> This page is a baseline Roam document, with almost no features
+>
+> Features:
+>
+> - 3 top-level blocks
+> - nested blocks
+> - italics text
+> - bold text
+> - this INFO `Callout box`, which contains Roam `page references`
 
 block 1
 

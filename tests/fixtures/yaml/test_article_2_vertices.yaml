@@ -13,9 +13,10 @@
 - vertex_type: guffin/text-content
   uid: aVVGVVPLE
   text: '{{embed: ((drtANJYTg))}}'
-- vertex_type: guffin/text-content
+- vertex_type: guffin/callout
   uid: I1QOMCtdJ
-  text: '> !INFO THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
+  callout_type: info
+  title: 'THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
     – DO NOT REMOVE
 
     Features:
@@ -32,7 +33,8 @@
 
     - no`headers`
 
-    - this INFO `Callout box`, which contains Roam `page references` '
+    - this INFO `Callout box`, which contains Roam `page references`'
+  body: ''
 - vertex_type: guffin/text-content
   uid: dYYKZExzI
   children:

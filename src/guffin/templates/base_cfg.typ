@@ -82,7 +82,6 @@
   figure-prefix: "Fig.",
   table-prefix: "Table",
   listing-prefix: "Listing",
-  image-width: 100%,
   // Tables
   table-header-bg: luma(200),
   table-striped-bg: luma(230),

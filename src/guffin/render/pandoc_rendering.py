@@ -284,6 +284,206 @@ def build_child_blocks(
     return result
 
 
+def _page_vertex_to_blocks(
+    vertex: PageVertex,
+    uid_map: Mapping[Uid, Vertex],
+    image_files: dict[Uid, Path],
+    inline_map: dict[str, list[pf.Inline]],
+) -> list[pf.Block]:
+    """Render a :class:`~guffin.vertex.PageVertex` to Pandoc block elements.
+
+    Delegates to :func:`build_child_blocks` at depth 1.  The page title is
+    handled separately by :func:`vertex_tree_to_pandoc`.
+
+    Args:
+        vertex: The page vertex to render.
+        uid_map: Mapping from UID to :data:`~guffin.vertex.Vertex`.
+        image_files: Mapping from :class:`~guffin.vertex.ImageVertex` UID to
+            local image file path.
+        inline_map: Mapping from text string to parsed panflute inline elements.
+
+    Returns:
+        Block elements for the page's children, rendered at depth 1.
+    """
+    return build_child_blocks(vertex.children or [], uid_map, image_files, inline_map, 1)
+
+
+def _heading_vertex_to_blocks(
+    vertex: HeadingVertex,
+    uid_map: Mapping[Uid, Vertex],
+    image_files: dict[Uid, Path],
+    inline_map: dict[str, list[pf.Inline]],
+    depth: int,
+) -> list[pf.Block]:
+    """Render a :class:`~guffin.vertex.HeadingVertex` to Pandoc block elements.
+
+    Produces one :class:`~panflute.Header` at the vertex's heading level,
+    followed by the recursively rendered children.
+
+    Args:
+        vertex: The heading vertex to render.
+        uid_map: Mapping from UID to :data:`~guffin.vertex.Vertex`.
+        image_files: Mapping from :class:`~guffin.vertex.ImageVertex` UID to
+            local image file path.
+        inline_map: Mapping from text string to parsed panflute inline elements.
+        depth: Tree depth of *vertex*.
+
+    Returns:
+        A :class:`~panflute.Header` block followed by any child blocks.
+    """
+    inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
+    blocks: list[pf.Block] = [pf.Header(*inlines, level=vertex.heading)]
+    if vertex.children:
+        blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
+    return blocks
+
+
+def _text_content_vertex_to_blocks(
+    vertex: TextContentVertex,
+    uid_map: Mapping[Uid, Vertex],
+    image_files: dict[Uid, Path],
+    inline_map: dict[str, list[pf.Inline]],
+    depth: int,
+) -> list[pf.Block]:
+    """Render a :class:`~guffin.vertex.TextContentVertex` to Pandoc block elements.
+
+    At depth 1: one :class:`~panflute.Para` followed by the recursively rendered
+    children.  At depth > 1: a single-item :class:`~panflute.BulletList` (sibling
+    grouping at list depth is handled by :func:`build_child_blocks`).
+
+    Args:
+        vertex: The text-content vertex to render.
+        uid_map: Mapping from UID to :data:`~guffin.vertex.Vertex`.
+        image_files: Mapping from :class:`~guffin.vertex.ImageVertex` UID to
+            local image file path.
+        inline_map: Mapping from text string to parsed panflute inline elements.
+        depth: Tree depth of *vertex* (1 = direct page child).
+
+    Returns:
+        A :class:`~panflute.Para` with children at depth 1, or a
+        single-item :class:`~panflute.BulletList` at depth > 1.
+    """
+    text_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
+    if depth <= 1:
+        para_blocks: list[pf.Block] = [pf.Para(*text_inlines)]
+        if vertex.children:
+            para_blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
+        return para_blocks
+    else:
+        return [pf.BulletList(_build_list_item(vertex, uid_map, image_files, inline_map, depth))]
+
+
+def _image_vertex_to_blocks(
+    vertex: ImageVertex,
+    image_files: dict[Uid, Path],
+    inline_map: dict[str, list[pf.Inline]],
+) -> list[pf.Block]:
+    """Render an :class:`~guffin.vertex.ImageVertex` to Pandoc block elements.
+
+    Produces a :class:`~panflute.Para` containing a :class:`~panflute.Image`
+    if the asset was fetched, or a :class:`~panflute.Link` fallback otherwise.
+
+    Args:
+        vertex: The image vertex to render.
+        image_files: Mapping from :class:`~guffin.vertex.ImageVertex` UID to
+            local image file path.
+        inline_map: Mapping from text string to parsed panflute inline elements.
+
+    Returns:
+        A :class:`~panflute.Para` wrapping either an embedded image or a
+        hyperlink fallback.
+    """
+    img_path: Path | None = image_files.get(vertex.uid)
+    if img_path is not None:
+        alt: Final[list[pf.Inline]] = (
+            inline_map.get(vertex.alt_text, [pf.Str(vertex.alt_text)]) if vertex.alt_text else []
+        )
+        img: Final[pf.Image] = pf.Image(*alt, url=str(img_path), title=vertex.file_name or "")
+        return [pf.Para(img)]
+    else:
+        label_text: Final[str] = vertex.alt_text or vertex.file_name or str(vertex.source)
+        label: Final[list[pf.Inline]] = inline_map.get(label_text, [pf.Str(label_text)])
+        link: Final[pf.Link] = pf.Link(*label, url=str(vertex.source))
+        logger.warning("Image uid=%r not fetched; rendering as link", vertex.uid)
+        return [pf.Para(link)]
+
+
+def _callout_vertex_to_blocks(
+    vertex: CalloutVertex,
+    uid_map: Mapping[Uid, Vertex],
+    image_files: dict[Uid, Path],
+    inline_map: dict[str, list[pf.Inline]],
+    depth: int,
+) -> list[pf.Block]:
+    """Render a :class:`~guffin.vertex.CalloutVertex` to Pandoc block elements.
+
+    Produces a :class:`~panflute.Div` with classes ``["callout",
+    "callout-{type}"]`` where *type* is the lowercased
+    :class:`~guffin.vertex.CalloutVertex.CalloutType` value (one of the
+    twelve recognised keywords: ``info``, ``note``, ``quote``, ``example``,
+    ``summary``, ``question``, ``tip``, ``success``, ``warning``,
+    ``danger``, ``failure``, ``bug``).  When a title is present, the first
+    child is a ``callout-title`` :class:`~panflute.Div` whose content is a
+    :class:`~panflute.Para` with the parsed first-line inlines.  Subsequent
+    title lines (e.g. a feature list), the body paragraph, and any child
+    vertices follow as sibling blocks inside the outer
+    :class:`~panflute.Div`.
+
+    Output-format-specific transformation is applied by a Lua filter in
+    the respective rendering module (GFM blockquote alert syntax or Typst
+    ``gentle-clues`` callout boxes).
+
+    Args:
+        vertex: The callout vertex to render.
+        uid_map: Mapping from UID to :data:`~guffin.vertex.Vertex`.
+        image_files: Mapping from :class:`~guffin.vertex.ImageVertex` UID to
+            local image file path.
+        inline_map: Mapping from text string to parsed panflute inline elements.
+        depth: Tree depth of *vertex*.
+
+    Returns:
+        A single-element list containing the :class:`~panflute.Div`.
+    """
+    callout_type: Final[str] = vertex.callout_type.value.lower()
+    callout_blocks: list[pf.Block] = []
+    if vertex.title:
+        # The title string may contain \n-separated lines: the first line is the
+        # actual heading; subsequent lines are body content (e.g. a feature list).
+        # Single \n is a soft-break in Pandoc, not a paragraph separator, so the
+        # whole string would parse as one block. Split manually: the first line
+        # goes into a callout-title sub-Div; the rest is re-parsed with selective
+        # blank lines to avoid turning list items into a loose list.
+        nl_idx: Final[int] = vertex.title.find("\n")
+        title_line: Final[str] = vertex.title[:nl_idx] if nl_idx >= 0 else vertex.title
+        title_rest: Final[str] = vertex.title[nl_idx + 1 :] if nl_idx >= 0 else ""
+        title_line_inlines: Final[list[pf.Inline]] = parse_inline_md([title_line]).get(title_line, [pf.Str(title_line)])
+        callout_blocks.append(pf.Div(pf.Para(*title_line_inlines), classes=["callout-title"]))
+        if title_rest:
+            # Insert blank lines only at block-type boundaries: between a non-list
+            # line and any adjacent line, but NOT between consecutive list items
+            # (which would create a loose list with unwanted inter-item blank lines).
+            rest_lines: Final[list[str]] = title_rest.splitlines()
+            joined_lines: list[str] = []
+            for i, line in enumerate(rest_lines):
+                if i > 0:
+                    prev_is_list = rest_lines[i - 1].startswith(("- ", "* ", "+ "))
+                    curr_is_list = line.startswith(("- ", "* ", "+ "))
+                    if not (prev_is_list and curr_is_list):
+                        joined_lines.append("")
+                joined_lines.append(line)
+            rest_json: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
+                "\n".join(joined_lines), "json", format="markdown"
+            )
+            rest_doc: Final[pf.Doc] = pf.load(StringIO(rest_json))
+            callout_blocks.extend(list(rest_doc.content))
+    if vertex.body:
+        body_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.body, [pf.Str(vertex.body)])
+        callout_blocks.append(pf.Para(*body_inlines))
+    if vertex.children:
+        callout_blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
+    return [pf.Div(*callout_blocks, classes=["callout", f"callout-{callout_type}"])]
+
+
 def _vertex_to_blocks(
     vertex: Vertex,
     uid_map: Mapping[Uid, Vertex],
@@ -291,22 +491,7 @@ def _vertex_to_blocks(
     inline_map: dict[str, list[pf.Inline]],
     depth: int,
 ) -> list[pf.Block]:
-    """Convert a single :data:`~guffin.vertex.Vertex` to Pandoc block elements.
-
-    Dispatches on the concrete vertex type:
-
-    - :class:`~guffin.vertex.PageVertex`: renders children at depth 1 (title
-      handled separately in :func:`vertex_tree_to_pandoc`).
-    - :class:`~guffin.vertex.HeadingVertex`: one :class:`~panflute.Header` at
-      the vertex's heading level, followed by children at ``depth + 1``.
-    - :class:`~guffin.vertex.TextContentVertex` at depth 1: one
-      :class:`~panflute.Para`, followed by children.
-    - :class:`~guffin.vertex.TextContentVertex` at depth > 1: wrapped in a
-      single-item :class:`~panflute.BulletList` (normally reached only from
-      :func:`build_child_blocks` which handles sibling grouping).
-    - :class:`~guffin.vertex.ImageVertex`: a :class:`~panflute.Para`
-      containing a :class:`~panflute.Image` (local path) if the asset was
-      fetched, or a :class:`~panflute.Link` fallback otherwise.
+    """Dispatch a single :data:`~guffin.vertex.Vertex` to its type-specific rendering function.
 
     Args:
         vertex: The vertex to convert.
@@ -322,47 +507,15 @@ def _vertex_to_blocks(
     """
     match vertex:
         case PageVertex():
-            return build_child_blocks(vertex.children or [], uid_map, image_files, inline_map, 1)
+            return _page_vertex_to_blocks(vertex, uid_map, image_files, inline_map)
         case HeadingVertex():
-            inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
-            blocks: list[pf.Block] = [pf.Header(*inlines, level=vertex.heading)]
-            if vertex.children:
-                blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
-            return blocks
+            return _heading_vertex_to_blocks(vertex, uid_map, image_files, inline_map, depth)
         case TextContentVertex():
-            text_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
-            if depth <= 1:
-                para_blocks: list[pf.Block] = [pf.Para(*text_inlines)]
-                if vertex.children:
-                    para_blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
-                return para_blocks
-            else:
-                return [pf.BulletList(_build_list_item(vertex, uid_map, image_files, inline_map, depth))]
+            return _text_content_vertex_to_blocks(vertex, uid_map, image_files, inline_map, depth)
         case ImageVertex():
-            img_path: Path | None = image_files.get(vertex.uid)
-            if img_path is not None:
-                alt: Final[list[pf.Inline]] = (
-                    inline_map.get(vertex.alt_text, [pf.Str(vertex.alt_text)]) if vertex.alt_text else []
-                )
-                img: Final[pf.Image] = pf.Image(*alt, url=str(img_path), title=vertex.file_name or "")
-                return [pf.Para(img)]
-            else:
-                label_text: Final[str] = vertex.alt_text or vertex.file_name or str(vertex.source)
-                label: Final[list[pf.Inline]] = inline_map.get(label_text, [pf.Str(label_text)])
-                link: Final[pf.Link] = pf.Link(*label, url=str(vertex.source))
-                logger.warning("Image uid=%r not fetched; rendering as link", vertex.uid)
-                return [pf.Para(link)]
+            return _image_vertex_to_blocks(vertex, image_files, inline_map)
         case CalloutVertex():
-            callout_blocks: list[pf.Block] = []
-            if vertex.title:
-                title_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.title, [pf.Str(vertex.title)])
-                callout_blocks.append(pf.Header(*title_inlines, level=4))
-            if vertex.body:
-                body_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.body, [pf.Str(vertex.body)])
-                callout_blocks.append(pf.Para(*body_inlines))
-            if vertex.children:
-                callout_blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
-            return [pf.Div(*callout_blocks, classes=["callout", f"callout-{vertex.callout_type.value}"])]
+            return _callout_vertex_to_blocks(vertex, uid_map, image_files, inline_map, depth)
 
 
 @validate_call

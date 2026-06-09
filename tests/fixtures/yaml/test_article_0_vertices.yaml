@@ -19,9 +19,10 @@
 - vertex_type: guffin/text-content
   uid: g9mXrLNQd
   text: block 3.1.1
-- vertex_type: guffin/text-content
+- vertex_type: guffin/callout
   uid: qnCiceZgk
-  text: '> !INFO THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
+  callout_type: info
+  title: 'THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
     – DO NOT REMOVE
 
     This page is a baseline Roam document, with almost no features
@@ -37,6 +38,7 @@
     - bold text
 
     - this INFO `Callout box`, which contains Roam `page references`'
+  body: ''
 - vertex_type: guffin/text-content
   uid: 2yQYaKIEV
   text: This para features *italics*

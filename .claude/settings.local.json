@@ -50,7 +50,10 @@
       "Skill(update-config:*)",
       "Bash(gh api *)",
       "Bash(bash -c 'if jq -r '\"'\"'.tool_input.command // \"\"'\"'\"' | grep -q '\"'\"'&&'\"'\"'; then echo \"Chained && commands are not allowed — use separate Bash tool calls\"; exit 2; fi')",
-      "Bash(typst fonts *)"
+      "Bash(typst fonts *)",
+      "Bash(typst compile *)",
+      "Bash(find ~ -maxdepth 5 -name \"*.body.typ\" -o -name \"*.full.typ\" 2>/dev/null | head -10)",
+      "Bash(cat > *)"
     ]
   }
 }

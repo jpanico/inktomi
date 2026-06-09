@@ -1,14 +1,22 @@
 # Test Article 2
 
-\> !INFO THIS PAGE IS USED FOR TESTING \[GUFFIN\](https://github.com/jpanico/guffin) – DO NOT REMOVE
-Features:
-- This page is primarily a demonstration of different kinds of refs:
--- internal block ref (to block on this page)
--- external block ref (to block on a \*different page\*)
--- internal embed (of block from this page)
--- external embed (of block from \*different page\*)
-- no\`headers\`
-- this INFO \`Callout box\`, which contains Roam \`page references\` 
+> [!NOTE]
+> **THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin) – DO NOT REMOVE**
+>
+> Features:
+>
+> - This page is primarily a demonstration of different kinds of refs:
+>
+> – internal block ref (to block on this page)
+>
+> – external block ref (to block on a *different page*)
+>
+> – internal embed (of block from this page)
+>
+> – external embed (of block from *different page*)
+>
+> - no`headers`
+> - this INFO `Callout box`, which contains Roam `page references`
 
 Section 1
 

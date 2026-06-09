@@ -5,7 +5,6 @@
   number-sections: true,
   section-numbering: "1.", // (top level only)
   heading-numbering-start-level: 2,
-  image-width: 50%,
   h1-size: 1.8,
   dateformat: "[day].[month].[year]",
   authors: (),

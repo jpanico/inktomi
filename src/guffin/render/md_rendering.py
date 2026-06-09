@@ -22,6 +22,9 @@ import logging
 from pathlib import Path
 from typing import Final
 
+_RENDER_DIR: Final[Path] = Path(__file__).parent
+_GFM_CALLOUT_FILTER: Final[Path] = _RENDER_DIR / "gfm_callout.lua"
+
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
 from pydantic import validate_call
@@ -99,7 +102,10 @@ def render(
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files, title_in_header=True)
         bundle_json_str: Final[str] = pandoc_to_json(doc, dump_pandoc_ast, output_dir, stem)
         md_text: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
-            bundle_json_str, "gfm", format="json", extra_args=["--wrap=none"]
+            bundle_json_str,
+            "gfm",
+            format="json",
+            extra_args=["--wrap=none", f"--lua-filter={_GFM_CALLOUT_FILTER}"],
         )
         output_file: Final[Path] = bundle_dir / f"{stem}.md"
         output_file.write_text(md_text, encoding="utf-8")
@@ -110,7 +116,10 @@ def render(
         no_bundle_doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, {}, title_in_header=True)
         json_str: Final[str] = pandoc_to_json(no_bundle_doc, dump_pandoc_ast, output_dir, stem)
         no_bundle_md: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
-            json_str, "gfm", format="json", extra_args=["--wrap=none"]
+            json_str,
+            "gfm",
+            format="json",
+            extra_args=["--wrap=none", f"--lua-filter={_GFM_CALLOUT_FILTER}"],
         )
         output_path: Final[Path] = output_dir / f"{stem}.md"
         output_path.write_text(no_bundle_md, encoding="utf-8")
