@@ -9,7 +9,8 @@
 > - 3 top-level `headers`, all H1
 > - nested `headers` down to H4, via *Augmented Headings* extension
 > - a node, (Ma5KGUH9O) “AI assistant (Claude Opus 4.6):” that has property: BLOCK_HEADING = 0, which is not a valid Markdown level. It seems that this can happen when first a valid level value (1-6) is assigned, and then the heading level is removed altogether through the Roam UI.
-> - a single JPEG `image` that has not been resized through the Roam UI
+> - a single JPEG `image` that **has not** been resized through the Roam UI (illustration 1.1)
+> - a single JPEG `image` that **has** been resized through the Roam UI (illustration 2.1)
 > - this INFO `Callout box`, which contains Roam `page references`
 
 # Section 1
@@ -25,6 +26,9 @@
 # Section 2
 
 ## Section 2.1
+
+- illustration 2.1
+  [aOC1FnrcwK.jpeg.enc](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a)
 
 ### Section 2.1.1
 

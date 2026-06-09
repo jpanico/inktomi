@@ -253,7 +253,7 @@ export-roam-tree "Test Article" --format pdf         # PDF
 
 ### `dump-roam-tree` — Inspect a Roam page or node subtree as a Rich tree
 
-Fetches a Roam `Page` or `Node` subtree via the Local API, and renders it as a colorized tree in the terminal. Useful for inspecting the raw node structure or the normalized vertex structure. The positional argument follows the same page-title-vs-node-UID inference as `export-roam-tree`.
+Fetches a Roam `Page` or `Node` subtree via the Local API, and renders it as a colorized tree in the terminal. Useful for inspecting the `RoamNode` structure or the normalized `Vertex`/`VertexTree` structures. The positional argument follows the same page-title-vs-node-UID inference as `export-roam-tree`.
 
 ```bash
 dump-roam-tree <page_title_or_node_uid> --port <port> --graph <graph> --token <token> \

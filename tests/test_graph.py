@@ -8,7 +8,11 @@ from conftest import article1_vertex_tree
 _URL_A = "https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/imgs%2Fa.jpeg?alt=media&token=aaa"
 _URL_B = "https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/imgs%2Fb.jpeg?alt=media&token=bbb"
 
-_ARTICLE_IMAGE_URL = (
+_ARTICLE_IMAGE_URL_0 = (
+    "https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com"
+    "/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a"
+)
+_ARTICLE_IMAGE_URL_1 = (
     "https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com"
     "/o/imgs%2Fapp%2FSCFH%2F_otAwc2B9g.jpeg.enc?alt=media&token=25c3ac2a-f62e-462e-99b4-99b337a476c0"
 )
@@ -53,10 +57,10 @@ class TestImageVertices:
         assert [v.uid for v in result] == ["imguid001", "imguid002"]
 
     def test_article_fixture_has_one_image_vertex(self) -> None:
-        """Test Article 1 fixture contains exactly one image vertex."""
+        """Test Article 1 fixture contains exactly two image vertices."""
         result = image_vertices(article1_vertex_tree())
-        assert len(result) == 1
-        assert isinstance(result[0], ImageVertex)
+        assert len(result) == 2
+        assert all(isinstance(v, ImageVertex) for v in result)
 
 
 # ---------------------------------------------------------------------------
@@ -79,10 +83,11 @@ class TestImageUrls:
         assert image_urls(tree) == []
 
     def test_article_fixture_image_url(self) -> None:
-        """Test Article 1 fixture image URL matches the known fixture value."""
+        """Test Article 1 fixture image URLs match the known fixture values."""
         urls = image_urls(article1_vertex_tree())
-        assert len(urls) == 1
-        assert str(urls[0]) == _ARTICLE_IMAGE_URL
+        assert len(urls) == 2
+        assert str(urls[0]) == _ARTICLE_IMAGE_URL_0
+        assert str(urls[1]) == _ARTICLE_IMAGE_URL_1
 
 
 # ---------------------------------------------------------------------------

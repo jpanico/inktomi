@@ -13,7 +13,7 @@
   user:
     id: 0
   string: Section 2.1.1
-  order: 0
+  order: 1
   heading: 3
   children:
   - id: 4028
@@ -25,6 +25,30 @@
   - id: 3329
   - id: 3332
   props: null
+  title: null
+  attrs: null
+- uid: zZG-BfWvs
+  id: 11164
+  time: 0
+  user:
+    id: 0
+  string: '![](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a)'
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 3327
+  parents:
+  - id: 3327
+  - id: 3329
+  - id: 3332
+  - id: 11163
+  props:
+    image-size:
+      ? https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a
+      : width: 257
+        height: null
   title: null
   attrs: null
 - uid: 0EgPyHSZi
@@ -141,6 +165,26 @@
   props: null
   title: null
   attrs: null
+- uid: OaTXPl93p
+  id: 11163
+  time: 0
+  user:
+    id: 0
+  string: illustration 2.1
+  order: 0
+  heading: null
+  children:
+  - id: 11164
+  refs: null
+  page:
+    id: 3327
+  parents:
+  - id: 3327
+  - id: 3329
+  - id: 3332
+  props: null
+  title: null
+  attrs: null
 - uid: 3BX-iWc-p
   id: 3331
   time: 0
@@ -191,6 +235,7 @@
   heading: 2
   children:
   - id: 4025
+  - id: 11163
   refs: null
   page:
     id: 3327
@@ -221,7 +266,11 @@
     a valid level value (1-6) is assigned, and then the heading level is removed altogether
     through the Roam UI.
 
-    - a single JPEG `image` that has not been resized through the Roam UI
+    - a single JPEG `image` that **has not** been resized through the Roam UI (illustration
+    1.1)
+
+    - a single JPEG `image` that **has** been resized through the Roam UI (illustration
+    2.1)
 
     - this INFO `Callout box`, which contains Roam `page references` '
   order: 0

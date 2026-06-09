@@ -477,14 +477,15 @@ class TestFetchRoamNodesFetchByNodeUid:
     def test_live_fetch_by_node_uid(self, live_api_endpoint: ApiEndpoint) -> None:
         """Live test: fetch the wdMgyBiP9 subtree and compare with the fixture hierarchy.
 
-        The ``wdMgyBiP9`` node (Section 2) has four descendants in the
+        The ``wdMgyBiP9`` node (Section 2) has six descendants in the
         ``test_article_1_nodes.yaml`` fixture: Section 2.1 (``drtANJYTg``),
+        illustration 2.1 (``OaTXPl93p``), its image (``zZG-BfWvs``),
         Section 2.1.1 (``yFUau9Cpg``), Section 2.1.1.1 (``bxkcECGwN``), and
         Section 2.2 (``5f1ahOFdp``).  Transient fields are excluded from the
         comparison.
         """
         node_uid = "wdMgyBiP9"
-        section2_uids: set[str] = {"wdMgyBiP9", "drtANJYTg", "5f1ahOFdp", "yFUau9Cpg", "bxkcECGwN"}
+        section2_uids: set[str] = {"wdMgyBiP9", "drtANJYTg", "5f1ahOFdp", "yFUau9Cpg", "bxkcECGwN", "OaTXPl93p", "zZG-BfWvs"}
 
         all_fixture_nodes = article1_node_tree().tree_network
         expected_nodes: list[RoamNode] = [n for n in all_fixture_nodes if n.uid in section2_uids]
@@ -504,12 +505,21 @@ class TestFetchRoamNodesFetchByNodeUid:
         """Test that fetch_by_node_uid returns the root node and all its descendants.
 
         Uses the test_article_1_nodes.yaml fixture, fetching for node_uid ``'wdMgyBiP9'``
-        (Section 2).  Expects the root node plus its four descendant blocks: Section 2.1
-        (``drtANJYTg``), Section 2.1.1 (``yFUau9Cpg``), Section 2.1.1.1 (``bxkcECGwN``),
+        (Section 2).  Expects the root node plus its six descendant blocks: Section 2.1
+        (``drtANJYTg``), illustration 2.1 (``OaTXPl93p``), its image (``zZG-BfWvs``),
+        Section 2.1.1 (``yFUau9Cpg``), Section 2.1.1.1 (``bxkcECGwN``),
         and Section 2.2 (``5f1ahOFdp``).
         """
         # UIDs in the Section 2 subtree: root + all descendants
-        section2_uids: set[str] = {"wdMgyBiP9", "drtANJYTg", "5f1ahOFdp", "yFUau9Cpg", "bxkcECGwN"}
+        section2_uids: set[str] = {
+            "wdMgyBiP9",
+            "drtANJYTg",
+            "5f1ahOFdp",
+            "yFUau9Cpg",
+            "bxkcECGwN",
+            "OaTXPl93p",
+            "zZG-BfWvs",
+        }
 
         all_fixture_nodes = article1_node_tree().tree_network
         expected_nodes: list[RoamNode] = [n for n in all_fixture_nodes if n.uid in section2_uids]

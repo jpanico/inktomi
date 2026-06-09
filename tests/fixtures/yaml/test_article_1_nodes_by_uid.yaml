@@ -26,7 +26,7 @@ yFUau9Cpg:
   user:
     id: 3
   string: Section 2.1.1
-  order: 0
+  order: 1
   heading: 3
   children:
   - id: 4028
@@ -39,6 +39,35 @@ yFUau9Cpg:
   - id: 3329
   - id: 3332
   props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+zZG-BfWvs:
+  uid: zZG-BfWvs
+  id: 11164
+  time: 1781043221592
+  user:
+    id: 3
+  string: '![](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a)'
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 3327
+  open: null
+  parents:
+  - id: 3327
+  - id: 3329
+  - id: 3332
+  - id: 11163
+  props:
+    image-size:
+      ? https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a
+      : width: 257
+        height: null
   title: null
   sidebar: null
   attrs: null
@@ -208,6 +237,31 @@ uj8YolCoE:
   attrs: null
   lookup: null
   seen_by: null
+OaTXPl93p:
+  uid: OaTXPl93p
+  id: 11163
+  time: 1781043166449
+  user:
+    id: 3
+  string: illustration 2.1
+  order: 0
+  heading: null
+  children:
+  - id: 11164
+  refs: null
+  page:
+    id: 3327
+  open: true
+  parents:
+  - id: 3327
+  - id: 3329
+  - id: 3332
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
 3BX-iWc-p:
   uid: 3BX-iWc-p
   id: 3331
@@ -289,6 +343,7 @@ drtANJYTg:
   heading: 2
   children:
   - id: 4025
+  - id: 11163
   refs: null
   page:
     id: 3327
@@ -305,7 +360,7 @@ drtANJYTg:
 cNW8lmXIM:
   uid: cNW8lmXIM
   id: 11113
-  time: 1780935475280
+  time: 1781043136363
   user:
     id: 3
   string: '[[>]] [[!INFO]] THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
@@ -324,7 +379,11 @@ cNW8lmXIM:
     a valid level value (1-6) is assigned, and then the heading level is removed altogether
     through the Roam UI.
 
-    - a single JPEG `image` that has not been resized through the Roam UI
+    - a single JPEG `image` that **has not** been resized through the Roam UI (illustration
+    1.1)
+
+    - a single JPEG `image` that **has** been resized through the Roam UI (illustration
+    2.1)
 
     - this INFO `Callout box`, which contains Roam `page references` '
   order: 0
