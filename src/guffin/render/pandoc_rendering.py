@@ -424,10 +424,10 @@ def _callout_vertex_to_blocks(
     ``summary``, ``question``, ``tip``, ``success``, ``warning``,
     ``danger``, ``failure``, ``bug``).  When a title is present, the first
     child is a ``callout-title`` :class:`~panflute.Div` whose content is a
-    :class:`~panflute.Para` with the parsed first-line inlines.  Subsequent
-    title lines (e.g. a feature list), the body paragraph, and any child
-    vertices follow as sibling blocks inside the outer
-    :class:`~panflute.Div`.
+    :class:`~panflute.Para` with the parsed inline elements.  The body
+    (if any) is re-parsed as block-level Markdown and appended as sibling
+    blocks inside the outer :class:`~panflute.Div`.  Child vertex blocks
+    follow at the end.
 
     Output-format-specific transformation is applied by a Lua filter in
     the respective rendering module (GFM blockquote alert syntax or Typst
@@ -447,38 +447,25 @@ def _callout_vertex_to_blocks(
     callout_type: Final[str] = vertex.callout_type.value.lower()
     callout_blocks: list[pf.Block] = []
     if vertex.title:
-        # The title string may contain \n-separated lines: the first line is the
-        # actual heading; subsequent lines are body content (e.g. a feature list).
-        # Single \n is a soft-break in Pandoc, not a paragraph separator, so the
-        # whole string would parse as one block. Split manually: the first line
-        # goes into a callout-title sub-Div; the rest is re-parsed with selective
-        # blank lines to avoid turning list items into a loose list.
-        nl_idx: Final[int] = vertex.title.find("\n")
-        title_line: Final[str] = vertex.title[:nl_idx] if nl_idx >= 0 else vertex.title
-        title_rest: Final[str] = vertex.title[nl_idx + 1 :] if nl_idx >= 0 else ""
-        title_line_inlines: Final[list[pf.Inline]] = parse_inline_md([title_line]).get(title_line, [pf.Str(title_line)])
-        callout_blocks.append(pf.Div(pf.Para(*title_line_inlines), classes=["callout-title"]))
-        if title_rest:
-            # Insert blank lines only at block-type boundaries: between a non-list
-            # line and any adjacent line, but NOT between consecutive list items
-            # (which would create a loose list with unwanted inter-item blank lines).
-            rest_lines: Final[list[str]] = title_rest.splitlines()
-            joined_lines: list[str] = []
-            for i, line in enumerate(rest_lines):
-                if i > 0:
-                    prev_is_list = rest_lines[i - 1].startswith(("- ", "* ", "+ "))
-                    curr_is_list = line.startswith(("- ", "* ", "+ "))
-                    if not (prev_is_list and curr_is_list):
-                        joined_lines.append("")
-                joined_lines.append(line)
-            rest_json: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
-                "\n".join(joined_lines), "json", format="markdown"
-            )
-            rest_doc: Final[pf.Doc] = pf.load(StringIO(rest_json))
-            callout_blocks.extend(list(rest_doc.content))
+        title_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.title, [pf.Str(vertex.title)])
+        callout_blocks.append(pf.Div(pf.Para(*title_inlines), classes=["callout-title"]))
     if vertex.body:
-        body_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.body, [pf.Str(vertex.body)])
-        callout_blocks.append(pf.Para(*body_inlines))
+        # Insert blank lines at block-type boundaries except between consecutive
+        # list items (which would create a loose list with unwanted inter-item spacing).
+        body_lines: Final[list[str]] = vertex.body.splitlines()
+        joined_lines: list[str] = []
+        for i, line in enumerate(body_lines):
+            if i > 0:
+                prev_is_list: bool = body_lines[i - 1].startswith(("- ", "* ", "+ "))
+                curr_is_list: bool = line.startswith(("- ", "* ", "+ "))
+                if not (prev_is_list and curr_is_list):
+                    joined_lines.append("")
+            joined_lines.append(line)
+        body_json: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
+            "\n".join(joined_lines), "json", format="markdown"
+        )
+        body_doc: Final[pf.Doc] = pf.load(StringIO(body_json))
+        callout_blocks.extend(list(body_doc.content))
     if vertex.children:
         callout_blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
     return [pf.Div(*callout_blocks, classes=["callout", f"callout-{callout_type}"])]
@@ -570,6 +557,8 @@ def vertex_tree_to_pandoc(
             case TextContentVertex(text=t):
                 texts.append(t)
             case ImageVertex(alt_text=t) if t is not None:
+                texts.append(t)
+            case CalloutVertex(title=t) if t:
                 texts.append(t)
             case _:
                 pass

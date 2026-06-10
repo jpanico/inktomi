@@ -362,12 +362,14 @@ def to_callout_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> CalloutVert
     if m is None:
         raise ValueError(f"RoamNode uid={node.uid!r} string does not match callout marker: {node.string!r}")
     callout_type: Final[CalloutVertex.CalloutType] = CalloutVertex.CalloutType(m.group(1).lower())
-    title: Final[str] = to_pandoc_md(node.string[m.end() :].strip())
+    parts: Final[list[str]] = node.string[m.end() :].split("\n", 1)
+    title: Final[str] = to_pandoc_md(parts[0].strip())
+    body: Final[str] = to_pandoc_md(parts[1].strip()) if len(parts) > 1 else ""
     return CalloutVertex(
         uid=node.uid,
         callout_type=callout_type,
         title=title,
-        body="",
+        body=body,
         children=_resolve_children(node, id_map),
         refs=_resolve_refs(node, id_map),
     )

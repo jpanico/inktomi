@@ -7,6 +7,7 @@ import yaml
 from pydantic import ValidationError
 
 from guffin.vertex import (
+    CalloutVertex,
     HeadingVertex,
     ImageVertex,
     PageVertex,
@@ -18,6 +19,7 @@ from guffin.vertex import (
 from guffin.roam.network import min_effective_heading_level
 from guffin.roam.node import RoamNode
 from guffin.roam_tree_to_vertex_tree import (
+    to_callout_vertex,
     to_heading_vertex,
     to_image_vertex,
     to_page_vertex,
@@ -35,6 +37,7 @@ _FIRESTORE_URL = (
     "https://firebasestorage.googleapis.com/v0/b/test.appspot.com" "/o/imgs%2Fphoto.jpeg?alt=media&token=abc123"
 )
 _IMAGE_STRING = f"![A flower]({_FIRESTORE_URL})"
+_CALLOUT_STRING: str = "[[>]] [[!NOTE]] This is a note"
 
 from conftest import FIXTURES_JSON_DIR, FIXTURES_YAML_DIR, STUB_TIME, STUB_USER, article1_node_tree
 
@@ -105,6 +108,23 @@ def _make_text(
     string: str = "Some plain text",
 ) -> RoamNode:
     """Return a minimal plain-text RoamNode."""
+    return RoamNode(
+        uid=uid,
+        id=id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=string,
+        parents=[IdObject(id=99)],
+        page=IdObject(id=99),
+    )
+
+
+def _make_callout(
+    uid: str = "caluid001",
+    id: int = 105,
+    string: str = _CALLOUT_STRING,
+) -> RoamNode:
+    """Return a minimal callout block RoamNode."""
     return RoamNode(
         uid=uid,
         id=id,
@@ -443,6 +463,112 @@ class TestToTextContentVertex:
         """Test that passing None as node raises a ValidationError."""
         with pytest.raises(ValidationError):
             to_text_content_vertex(None, _id_map())  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# TestToCalloutVertex
+# ---------------------------------------------------------------------------
+
+
+class TestToCalloutVertex:
+    """Tests for to_callout_vertex."""
+
+    def test_returns_guffin_callout_vertex_type(self) -> None:
+        """Test that to_callout_vertex produces a vertex with type GUFFIN_CALLOUT."""
+        node = _make_callout()
+        assert to_callout_vertex(node, _id_map(node)).vertex_type is VertexType.GUFFIN_CALLOUT
+
+    def test_uid_preserved(self) -> None:
+        """Test that the vertex uid matches the source node uid."""
+        node = _make_callout(uid="caluid002")
+        assert to_callout_vertex(node, _id_map(node)).uid == "caluid002"
+
+    def test_callout_type_parsed(self) -> None:
+        """Test that the callout type is extracted from the marker keyword."""
+        node = _make_callout(string="[[>]] [[!WARNING]] Watch out")
+        assert to_callout_vertex(node, _id_map(node)).callout_type is CalloutVertex.CalloutType.WARNING
+
+    def test_title_extracted(self) -> None:
+        """Test that the title is the text following the callout marker."""
+        node = _make_callout()
+        assert to_callout_vertex(node, _id_map(node)).title == "This is a note"
+
+    def test_title_stripped_of_surrounding_whitespace(self) -> None:
+        """Test that leading and trailing whitespace is stripped from the title."""
+        node = _make_callout(string="[[>]] [[!NOTE]] Hello World  ")
+        assert to_callout_vertex(node, _id_map(node)).title == "Hello World"
+
+    def test_body_is_empty_string(self) -> None:
+        """Test that body is always an empty string (populated later, not by this function)."""
+        node = _make_callout()
+        assert to_callout_vertex(node, _id_map(node)).body == ""
+
+    def test_children_none_when_no_children(self) -> None:
+        """Test that children is None when the node has no children."""
+        node = _make_callout()
+        assert to_callout_vertex(node, _id_map(node)).children is None
+
+    def test_refs_none_when_no_refs(self) -> None:
+        """Test that refs is None when the node has no refs."""
+        node = _make_callout()
+        assert to_callout_vertex(node, _id_map(node)).refs is None
+
+    def test_missing_string_raises_value_error(self) -> None:
+        """Test that a node without a string raises ValueError."""
+        node = _make_page()
+        with pytest.raises(ValueError, match="no 'string'"):
+            to_callout_vertex(node, _id_map(node))
+
+    def test_non_callout_string_raises_value_error(self) -> None:
+        """Test that a string not matching the callout marker raises ValueError."""
+        node = _make_callout(string="Just a plain block")
+        with pytest.raises(ValueError, match="does not match callout marker"):
+            to_callout_vertex(node, _id_map(node))
+
+    def test_null_node_raises_validation_error(self) -> None:
+        """Test that passing None as node raises a ValidationError."""
+        with pytest.raises(ValidationError):
+            to_callout_vertex(None, _id_map())  # type: ignore[arg-type]
+
+    def test_article_0_fixture_callout_type(self) -> None:
+        """Test that the Article 0 callout node (qnCiceZgk) yields CalloutType.INFO."""
+        raw: list[dict[str, object]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_0_nodes.yaml").read_text())
+        nodes: list[RoamNode] = [RoamNode.model_validate(r) for r in raw]
+        fixture_node: RoamNode = next(n for n in nodes if n.uid == "qnCiceZgk")
+        id_map: dict[Id, RoamNode] = {n.id: n for n in nodes}
+        assert to_callout_vertex(fixture_node, id_map).callout_type is CalloutVertex.CalloutType.INFO
+
+    def test_article_0_fixture_title(self) -> None:
+        """Test that the Article 0 callout node (qnCiceZgk) yields the expected title.
+
+        The title is the first line after the marker and contains a U+2013 en dash.
+        """
+        raw: list[dict[str, object]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_0_nodes.yaml").read_text())
+        nodes: list[RoamNode] = [RoamNode.model_validate(r) for r in raw]
+        fixture_node: RoamNode = next(n for n in nodes if n.uid == "qnCiceZgk")
+        id_map: dict[Id, RoamNode] = {n.id: n for n in nodes}
+        expected: str = "THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin) – DO NOT REMOVE"
+        assert to_callout_vertex(fixture_node, id_map).title == expected
+
+    def test_article_0_fixture_body(self) -> None:
+        """Test that the Article 0 callout node (qnCiceZgk) yields the expected body.
+
+        The body is everything after the first newline in the block string, stripped.
+        """
+        raw: list[dict[str, object]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_0_nodes.yaml").read_text())
+        nodes: list[RoamNode] = [RoamNode.model_validate(r) for r in raw]
+        fixture_node: RoamNode = next(n for n in nodes if n.uid == "qnCiceZgk")
+        id_map: dict[Id, RoamNode] = {n.id: n for n in nodes}
+        expected: str = (
+            "A baseline Roam document, with almost no features\n"
+            "Features:\n"
+            "- 3 top-level blocks\n"
+            "- nested blocks\n"
+            "- italics text\n"
+            "- bold text\n"
+            "- this INFO `Callout box`, which contains Roam `page references`"
+        )
+        assert to_callout_vertex(fixture_node, id_map).body == expected
 
 
 # ---------------------------------------------------------------------------

@@ -81,10 +81,9 @@
 - vertex_type: guffin/callout
   uid: cNW8lmXIM
   callout_type: info
-  title: 'THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
+  title: THIS PAGE IS USED FOR TESTING [GUFFIN](https://github.com/jpanico/guffin)
     – DO NOT REMOVE
-
-    Features:
+  body: 'Features:
 
     - Page is completely self-contained – there are `no Roam embeds` of any kind
 
@@ -104,7 +103,6 @@
     2.1)
 
     - this INFO `Callout box`, which contains Roam `page references`'
-  body: ''
 - vertex_type: guffin/heading
   uid: 5f1ahOFdp
   text: Section 2.2

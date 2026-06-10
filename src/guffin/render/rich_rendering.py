@@ -2,7 +2,8 @@
 
 Public symbols:
 
-- :data:`DEFAULT_NODE_PANEL_PROPS` — the property names rendered in a panel body by default.
+- :data:`DEFAULT_NODE_PANEL_PROPS` — the node property names rendered in a panel body by default.
+- :data:`DEFAULT_VERTEX_PANEL_PROPS` — the vertex property names rendered in a panel body by default.
 - :func:`build_node_panel` — render a :class:`~guffin.roam.node.RoamNode` as a Rich
   :class:`~rich.panel.Panel`.
 - :func:`build_rich_node_tree` — build a Rich :class:`~rich.tree.Tree` from a
@@ -30,6 +31,8 @@ from rich.text import Text
 from rich.tree import Tree as RichTree
 
 from guffin.vertex import (
+    ImageVertex,
+    PageVertex,
     Vertex,
     VertexType,
 )
@@ -47,6 +50,13 @@ DEFAULT_NODE_PANEL_PROPS: Final[list[str]] = ["heading", "order", "children", "p
 ``string``/``title`` and ``id`` are always shown in the panel title and are not
 included here.  All other :class:`~guffin.roam.node.RoamNode` field names are
 valid entries.
+"""
+
+DEFAULT_VERTEX_PANEL_PROPS: Final[list[str]] = ["vertex_type.value", "children", "refs"]
+"""Property names rendered in the panel body by :func:`build_vertex_panel` when no explicit list is given.
+
+Entries may use dotted-path notation (e.g. ``"vertex_type.value"``) to reach
+nested attributes on the :data:`~guffin.vertex.Vertex`.
 """
 
 
@@ -214,6 +224,42 @@ def build_rich_refs_box(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PR
         row.add_row(build_node_panel(ref_node, props), back_refs_panel)
         ref_rows.append(row)
     return Panel(Group(*ref_rows), title="refs")
+
+
+def _format_vertex_prop(vertex: Vertex, prop: str) -> str:  # pyright: ignore[reportUnusedFunction]
+    """Return a ``name=value`` string for *prop* on *vertex*, for use in a panel body.
+
+    Args:
+        vertex: The vertex whose property is to be formatted.
+        prop: A :data:`~guffin.vertex.Vertex` field name, or a dotted-path expression
+            such as ``"vertex_type.value"``.
+
+    Returns:
+        A ``"name=value"`` string.  Unknown *prop* names produce ``"name=?"``.
+    """
+    match prop:
+        case "vertex_type.value":
+            return f"vertex_type.value={vertex.vertex_type.value}"
+        case "vertex_type":
+            return f"vertex_type={vertex.vertex_type.value}"
+        case "uid":
+            return f"uid={vertex.uid}"
+        case "title":
+            return f"title={vertex.title}" if isinstance(vertex, PageVertex) else "title=N/A"
+        case "file_name":
+            return f"file_name={vertex.file_name}" if isinstance(vertex, ImageVertex) else "file_name=N/A"
+        case "media_type":
+            return f"media_type={vertex.media_type.value}" if isinstance(vertex, ImageVertex) else "media_type=N/A"
+        case "image_size":
+            return f"image_size={vertex.image_size}" if isinstance(vertex, ImageVertex) else "image_size=N/A"
+        case "children":
+            val: str = f"[{', '.join(vertex.children)}]" if vertex.children else "None"
+            return f"children={val}"
+        case "refs":
+            val = f"[{', '.join(vertex.refs)}]" if vertex.refs else "None"
+            return f"refs={val}"
+        case _:
+            return f"{prop}=?"
 
 
 @validate_call
