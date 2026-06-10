@@ -19,7 +19,7 @@ root_node:
   parents: null
   props: null
   title: '[[Test Article]] 2'
-  sidebar: 19
+  sidebar: 20
   attrs: null
   lookup: null
   seen_by: null
@@ -44,7 +44,7 @@ tree_network:
   parents: null
   props: null
   title: '[[Test Article]] 2'
-  sidebar: 19
+  sidebar: 20
   attrs: null
   lookup: null
   seen_by: null
@@ -485,6 +485,7 @@ refs_by_id:
     heading: 2
     children:
     - id: 4025
+    - id: 11163
     refs: null
     page:
       id: 3327
@@ -519,7 +520,7 @@ refs_by_id:
     parents: null
     props: null
     title: '[[Test Article]] 1'
-    sidebar: 18
+    sidebar: 19
     attrs: null
     lookup: null
     seen_by: null
@@ -530,7 +531,7 @@ refs_by_id:
     user:
       id: 3
     string: Section 2.1.1
-    order: 0
+    order: 1
     heading: 3
     children:
     - id: 4028
@@ -542,6 +543,86 @@ refs_by_id:
     - id: 3327
     - id: 3329
     - id: 3332
+    props: null
+    title: null
+    sidebar: null
+    attrs: null
+    lookup: null
+    seen_by: null
+  '11163':
+    uid: OaTXPl93p
+    id: 11163
+    time: 1781043166449
+    user:
+      id: 3
+    string: illustration 2.1
+    order: 0
+    heading: null
+    children:
+    - id: 11164
+    - id: 11167
+    refs: null
+    page:
+      id: 3327
+    open: true
+    parents:
+    - id: 3327
+    - id: 3329
+    - id: 3332
+    props: null
+    title: null
+    sidebar: null
+    attrs: null
+    lookup: null
+    seen_by: null
+  '11164':
+    uid: zZG-BfWvs
+    id: 11164
+    time: 1781043221592
+    user:
+      id: 3
+    string: '![](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a)'
+    order: 1
+    heading: null
+    children: null
+    refs: null
+    page:
+      id: 3327
+    open: null
+    parents:
+    - id: 3327
+    - id: 3329
+    - id: 3332
+    - id: 11163
+    props:
+      image-size:
+        ? https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a
+        : width: 257
+          height: null
+    title: null
+    sidebar: null
+    attrs: null
+    lookup: null
+    seen_by: null
+  '11167':
+    uid: tWkumkdUE
+    id: 11167
+    time: 1781089401093
+    user:
+      id: 3
+    string: this image **has been resized** through the Roam UI (width:257, height:None)
+    order: 0
+    heading: null
+    children: null
+    refs: null
+    page:
+      id: 3327
+    open: true
+    parents:
+    - id: 3327
+    - id: 3329
+    - id: 3332
+    - id: 11163
     props: null
     title: null
     sidebar: null

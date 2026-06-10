@@ -6,7 +6,7 @@
     - id: 11133
     user:
       id: 3
-    sidebar: 19
+    sidebar: 20
     id: 4225
     uid: SYZfEd44O
     word-count: 102
@@ -45,8 +45,27 @@
     - id: 3329
     - id: 3332
     time: 1771515468425
-    order: 0
+    order: 1
     open: true
+    page:
+      id: 3327
+- - string: '![](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a)'
+    user:
+      id: 3
+    id: 11164
+    uid: zZG-BfWvs
+    parents:
+    - id: 3327
+    - id: 3329
+    - id: 3332
+    - id: 11163
+    time: 1781043221592
+    props:
+      image-size:
+        ? https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a
+        : width: 257
+          height: null
+    order: 1
     page:
       id: 3327
 - - string: '{{[[embed]]: ((drtANJYTg))}}'
@@ -212,6 +231,23 @@
     open: true
     page:
       id: 4225
+- - string: illustration 2.1
+    children:
+    - id: 11164
+    - id: 11167
+    user:
+      id: 3
+    id: 11163
+    uid: OaTXPl93p
+    parents:
+    - id: 3327
+    - id: 3329
+    - id: 3332
+    time: 1781043166449
+    order: 0
+    open: true
+    page:
+      id: 3327
 - - string: 'external block ref: '
     user:
       id: 3
@@ -242,7 +278,7 @@
     open: false
     page:
       id: 3327
-- - prevent-clean: 1780944726720
+- - prevent-clean: 1781017794586
     user:
       id: 3
     id: 5462
@@ -258,6 +294,7 @@
     string: Section 2.1
     children:
     - id: 4025
+    - id: 11163
     user:
       id: 3
     id: 3332
@@ -278,19 +315,19 @@
     - id: 11113
     user:
       id: 3
-    sidebar: 18
+    sidebar: 19
     id: 3327
     uid: 6olpFWiw1
-    word-count: 135
+    word-count: 176
     edit-user:
       id: 3
     time: 1780882773773
     title: '[[Test Article]] 1'
     seen-by:
     - id: 3
-    edit-nonce: 6AwV9hui_
+    edit-nonce: 0Ror_KL_Y
     view-type: bullet
-    edit-time: 1780935475280
+    edit-time: 1781089401093
     refs:
     - id: 4223
 - - string: external block embed (from [[[[Test Article]] 1]])
@@ -341,3 +378,18 @@
     open: true
     page:
       id: 4225
+- - string: this image **has been resized** through the Roam UI (width:257, height:None)
+    user:
+      id: 3
+    id: 11167
+    uid: tWkumkdUE
+    parents:
+    - id: 3327
+    - id: 3329
+    - id: 3332
+    - id: 11163
+    time: 1781089401093
+    order: 0
+    open: true
+    page:
+      id: 3327

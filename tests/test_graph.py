@@ -1,5 +1,6 @@
 """Tests for graph module utility functions."""
 
+from guffin.common.geometry import ImageSize
 from guffin.common.media_type import MediaType
 from guffin.vertex import ImageVertex, PageVertex, TextContentVertex
 from guffin.vertex_tree import VertexTree, image_urls, image_vertices, root_vertex
@@ -24,7 +25,7 @@ def _page(uid: str = "pageuid01") -> PageVertex:
 
 
 def _image(uid: str = "imguid001", url: str = _URL_A) -> ImageVertex:
-    return ImageVertex(uid=uid, source=url, media_type=MediaType.JPEG)  # type: ignore[arg-type]
+    return ImageVertex(uid=uid, source=url, media_type=MediaType.JPEG, image_size=ImageSize())  # type: ignore[arg-type]
 
 
 def _text(uid: str = "textuid01") -> TextContentVertex:

@@ -44,6 +44,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
+from guffin.common.geometry import ImageSize
 from guffin.common.media_type import MediaType, is_image_type
 from guffin.roam.primitives import HeadingLevel, Uid, Url
 
@@ -204,6 +205,9 @@ class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
             filename cannot be extracted.
         media_type: IANA media type inferred from *file_name*'s extension.
             Serialized as ``'media-type'``.
+        image_size: Pixel dimensions from the source node's ``image-size`` block
+            prop. Both axes are ``None`` when no ``image-size`` prop is recorded.
+            Serialized as ``'image-size'``.
     """
 
     vertex_type: Literal[VertexType.GUFFIN_IMAGE] = Field(
@@ -222,6 +226,11 @@ class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
         ...,
         serialization_alias="media-type",
         description="IANA media type inferred from file_name's extension (serialized as 'media-type').",
+    )
+    image_size: ImageSize = Field(
+        ...,
+        serialization_alias="image-size",
+        description="Pixel dimensions from the node's image-size prop (serialized as 'image-size').",
     )
 
     @field_validator("media_type")

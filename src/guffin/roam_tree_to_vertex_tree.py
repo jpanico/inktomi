@@ -43,8 +43,9 @@ from guffin.vertex import (
 from guffin.vertex_tree import VertexTree
 from guffin.roam_md_to_pandoc_md import to_pandoc_md
 from guffin.roam.network import min_effective_heading_level
-from guffin.roam.node import NodeType, RoamNode, effective_heading_level, node_type
+from guffin.roam.node import NodeType, RoamNode, effective_heading_level, image_size, node_type
 from guffin.roam.tree import NodeTree
+from guffin.common.geometry import ImageSize
 from guffin.common.media_type import MediaType
 from guffin.roam.primitives import IMAGE_LINK_RE, HeadingLevel, Id, Url
 
@@ -258,12 +259,16 @@ def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
     if resolved_type is None:
         raise ValueError(f"RoamNode uid={node.uid!r} media type cannot be determined from file_name={file_name!r}")
     media_type: Final[MediaType] = resolved_type
+    size: Final[ImageSize | None] = image_size(node)
+    if size is None:
+        raise ValueError(f"RoamNode uid={node.uid!r} image_size returned None for an image block")
     return ImageVertex(
         uid=node.uid,
         source=_url_adapter.validate_python(firestore_url),
         alt_text=_extract_alt_text(node.string),
         file_name=file_name,
         media_type=media_type,
+        image_size=size,
         children=_resolve_children(node, id_map),
         refs=_resolve_refs(node, id_map),
     )

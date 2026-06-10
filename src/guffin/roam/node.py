@@ -8,6 +8,9 @@ Public symbols:
 - :func:`node_type` — return the :class:`NodeType` of a :class:`RoamNode`.
 - :func:`effective_heading_level` — return the effective heading level for a
   :class:`RoamNode`, or ``None`` if it is not a heading.
+- :func:`image_size` — return the :class:`~guffin.common.geometry.ImageSize` recorded in
+  a :attr:`NodeType.ROAM_IMAGE_BLOCK` node's ``image-size`` prop, or ``None`` if the node
+  is not an image block.
 - :data:`NodesByUid` — ``dict`` mapping each :attr:`~RoamNode.uid` to its :class:`RoamNode`.
 """
 
@@ -16,8 +19,17 @@ import logging
 import re
 from typing import Final
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator, validate_call
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    field_validator,
+    model_validator,
+    validate_call,
+)
 
+from guffin.common.geometry import ImageSize
 from guffin.roam.primitives import (
     IMAGE_LINK_RE,
     HeadingLevel,
@@ -33,6 +45,15 @@ from guffin.roam.primitives import (
 from guffin.roam.schema import RoamAttribute
 
 logger = logging.getLogger(__name__)
+
+_IMAGE_SIZE_PROP_ADAPTER: Final[TypeAdapter[dict[str, dict[str, int | None]]]] = TypeAdapter(
+    dict[str, dict[str, int | None]]
+)
+"""Pydantic :class:`~pydantic.TypeAdapter` for validating the ``image-size`` block prop.
+
+The ``image-size`` prop maps an image URL string to a ``{"width": int|None, "height": int|None}``
+dict.  Used by :func:`image_size` to extract dimensions without Unknown-type propagation.
+"""
 
 _CALLOUT_PREFIX: Final[str] = "[[>]]"
 """String prefix that identifies a potential Roam callout block."""
@@ -266,6 +287,41 @@ def effective_heading_level(node: RoamNode) -> HeadingLevel | None:
             except ValueError:
                 pass
     return None
+
+
+@validate_call
+def image_size(node: RoamNode) -> ImageSize | None:
+    """Return the pixel dimensions recorded in *node*'s ``image-size`` block property.
+
+    Args:
+        node: The node to inspect.
+
+    Returns:
+        ``None`` if *node* is not a :attr:`~NodeType.ROAM_IMAGE_BLOCK`.
+        An :class:`~guffin.common.geometry.ImageSize` with both dimensions ``None``
+        if the node has no ``image-size`` prop or the prop is an empty map.
+        Otherwise an :class:`~guffin.common.geometry.ImageSize` populated from the
+        first URL entry in the ``image-size`` map.
+
+    Raises:
+        ValidationError: If the ``image-size`` prop exists but does not match the
+            expected ``{url: {width, height}}`` structure.
+    """
+    if node_type(node) != NodeType.ROAM_IMAGE_BLOCK:
+        return None
+    if node.props is None:
+        return ImageSize()
+    raw: Final[object | None] = node.props.get("image-size")
+    if raw is None:
+        return ImageSize()
+    size_map: Final[dict[str, dict[str, int | None]]] = _IMAGE_SIZE_PROP_ADAPTER.validate_python(raw)
+    first_entry: Final[dict[str, int | None] | None] = next(iter(size_map.values()), None)
+    if first_entry is None:
+        return ImageSize()
+    return ImageSize(
+        width=first_entry.get("width"),
+        height=first_entry.get("height"),
+    )
 
 
 type NodesByUid = dict[Uid, RoamNode]

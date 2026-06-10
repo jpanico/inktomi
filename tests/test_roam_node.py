@@ -1,16 +1,19 @@
 """Tests for the roam_node module."""
 
+import yaml
 import pytest
 from pydantic import ValidationError
 
+from guffin.common.geometry import ImageSize
 from guffin.roam.node import (
     NodeType,
     RoamNode,
+    image_size,
     node_type,
 )
 from guffin.roam.primitives import IdObject
 
-from conftest import STUB_TIME, STUB_USER
+from conftest import FIXTURES_YAML_DIR, STUB_TIME, STUB_USER
 
 _FIRESTORE_URL = (
     "https://firebasestorage.googleapis.com/v0/b/test.appspot.com" "/o/imgs%2Fphoto.jpeg?alt=media&token=abc123"
@@ -474,3 +477,51 @@ class TestRoamNodeCalloutValidation:
         """Test that a plain block string with no '[[>]]' prefix is not affected."""
         node = self._make_block("just some text")
         assert node.string == "just some text"
+
+
+# ---------------------------------------------------------------------------
+# TestImageSize
+# ---------------------------------------------------------------------------
+
+
+class TestImageSize:
+    """Tests for the image_size() function."""
+
+    def test_returns_none_for_non_image_node(self) -> None:
+        """Test that image_size returns None for any non-ROAM_IMAGE_BLOCK node."""
+        assert image_size(_make_text()) is None
+
+    def test_returns_empty_image_size_when_no_image_size_prop(self) -> None:
+        """Test that image_size returns ImageSize() when the node has no image-size prop."""
+        assert image_size(_make_image()) == ImageSize()
+
+    def test_returns_dimensions_from_fixture(self) -> None:
+        """Test that image_size extracts width and height from the Article 1 fixture node zZG-BfWvs.
+
+        zZG-BfWvs has ``image-size: {<url>: {width: 257, height: null}}``, so the expected
+        result is ``ImageSize(width=257, height=None)``.
+        """
+        raw: list[dict[str, object]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_1_nodes.yaml").read_text())
+        nodes: list[RoamNode] = [RoamNode.model_validate(r) for r in raw]
+        fixture_node: RoamNode = next(n for n in nodes if n.uid == "zZG-BfWvs")
+        assert image_size(fixture_node) == ImageSize(width=257, height=None)
+
+    def test_raises_validation_error_for_invalid_image_size_prop(self) -> None:
+        """Test that image_size raises ValidationError when image-size prop has an invalid structure.
+
+        The expected structure is ``dict[str, dict[str, int | None]]``; passing a plain
+        string value triggers ``_IMAGE_SIZE_PROP_ADAPTER.validate_python`` to raise
+        ``ValidationError``.
+        """
+        node = RoamNode(
+            uid="imageuid1",
+            id=101,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string=_IMAGE_STRING,
+            parents=[IdObject(id=99)],
+            page=IdObject(id=99),
+            props={"image-size": "not-a-dict"},
+        )
+        with pytest.raises(ValidationError):
+            image_size(node)
