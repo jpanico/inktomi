@@ -37,7 +37,7 @@ from guffin.vertex import (
     VertexType,
 )
 from guffin.vertex_tree import VertexTree, VertexTreeDFSIterator
-from guffin.roam.node import RoamNode
+from guffin.roam.node import NodeType, RoamNode, effective_heading_level, node_type
 from guffin.roam.node_fetch_result import NodeFetchResult
 from guffin.roam.tree import NodeTree, NodeTreeDFSIterator
 from guffin.roam.primitives import Id, IdObject, IMAGE_LINK_RE, Uid
@@ -121,15 +121,16 @@ def _format_node_prop(node: RoamNode, prop: str) -> str:
 def build_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS) -> Panel:
     """Render *node* as a Rich Panel for display in a terminal tree.
 
-    The panel title always shows the block string or page title with the node
-    ``id`` in parentheses.  The title text is determined as follows:
+    The panel title has the form ``<node_type> title_text (id)`` where
+    ``node_type`` is the :attr:`~guffin.roam.node.NodeType` value string.
+    ``title_text`` is determined by :func:`~guffin.roam.node.node_type`:
 
-    - If the block string contains a Cloud Firestore image link matching
-      :data:`~guffin.roam.primitives.IMAGE_LINK_RE`, the title reads
-      ``IMAGE [<alt>](FIRESTORE_URL)``.
-    - Otherwise, if ``"heading"`` is in *props* and the node has a heading level,
-      an ``H{n}:`` prefix is prepended.
-    - Otherwise the raw block string or page title is used as-is.
+    - :attr:`~guffin.roam.node.NodeType.ROAM_IMAGE_BLOCK` — ``[<alt>](<firestore_url>)``.
+    - :attr:`~guffin.roam.node.NodeType.ROAM_HEADING_BLOCK` — when ``"heading"``
+      is in *props*, ``H{n}: <string>`` (level from
+      :func:`~guffin.roam.node.effective_heading_level`); otherwise the raw
+      block string.
+    - All other node types — the raw block string or page title.
 
     The panel body shows the remaining properties named in *props* as a single
     formatted line of ``name=value`` pairs; ``heading`` is excluded from the body
@@ -138,7 +139,7 @@ def build_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS
     Args:
         node: The node to render.
         props: Ordered list of :class:`~guffin.roam.node.RoamNode` field names
-            to include.  Controls both the ``H{n}:`` title prefix (shown only when
+            to include.  Controls the ``H{n}:`` title prefix (shown only when
             ``"heading"`` is present) and the body pairs (``heading`` itself is
             never written to the body).  Defaults to :data:`DEFAULT_NODE_PANEL_PROPS`.
 
@@ -146,14 +147,33 @@ def build_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS
         A :class:`~rich.panel.Panel` with a labelled title and metadata body.
     """
     logger.debug("node=%r, props=%r", node, props)
-    text: Final[str] = node.string or node.title or f"(uid={node.uid})"
-    if node.string is not None and (m := IMAGE_LINK_RE.search(node.string)):
-        title: str = f"[bold #00aa00]IMAGE [{m.group('alt')}](<firestore_url>) ({node.id})[/bold #00aa00]"
-    elif node.heading is not None and "heading" in props:
-        title = f"[bold #00aa00]H{node.heading}: {text} ({node.id})[/bold #00aa00]"
-    else:
-        title = f"[bold #00aa00]{text} ({node.id})[/bold #00aa00]"
-    content: Final[str] = "  ".join(_format_node_prop(node, p) for p in props if p != "heading")
+    nt: Final[NodeType] = node_type(node)
+    title_text: str
+    match nt:
+        case NodeType.ROAM_IMAGE_BLOCK:
+            assert node.string is not None
+            m = IMAGE_LINK_RE.search(node.string)
+            assert m is not None
+            title_text = f"[{m.group('alt')}](<firestore_url>)"
+        case NodeType.ROAM_HEADING_BLOCK:
+            level: Final[int | None] = effective_heading_level(node)
+            title_text = f"H{level}: {node.string}"
+        case NodeType.ROAM_PAGE:
+            assert node.title is not None
+            title_text = node.title
+        case NodeType.ROAM_EMBED_BLOCK:
+            assert node.string is not None
+            title_text = node.string
+        case NodeType.ROAM_CALLOUT_BLOCK:
+            assert node.string is not None
+            title_text = node.string
+        case NodeType.ROAM_PLAIN_BLOCK:
+            assert node.string is not None
+            title_text = node.string
+        case _ as unreachable:
+            assert_never(unreachable)
+    title: Final[str] = f"[bold #00aa00]<{nt.value}> {title_text} ({node.id})[/bold #00aa00]"
+    content: Final[str] = "  ".join(_format_node_prop(node, p) for p in props)
     return Panel(Text(content), title=title, expand=False)
 
 

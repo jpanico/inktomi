@@ -16,7 +16,6 @@ Public symbols:
 
 import enum
 import logging
-import re
 from typing import Final
 
 from pydantic import (
@@ -31,6 +30,8 @@ from pydantic import (
 
 from guffin.common.geometry import ImageSize
 from guffin.roam.primitives import (
+    CALLOUT_PREFIX,
+    CALLOUT_RE,
     IMAGE_LINK_RE,
     HeadingLevel,
     Id,
@@ -53,19 +54,6 @@ _IMAGE_SIZE_PROP_ADAPTER: Final[TypeAdapter[dict[str, dict[str, int | None]]]] =
 
 The ``image-size`` prop maps an image URL string to a ``{"width": int|None, "height": int|None}``
 dict.  Used by :func:`image_size` to extract dimensions without Unknown-type propagation.
-"""
-
-_CALLOUT_PREFIX: Final[str] = "[[>]]"
-"""String prefix that identifies a potential Roam callout block."""
-
-_CALLOUT_RE: Final[re.Pattern[str]] = re.compile(
-    r"\[\[>\]\] \[\[!(?:INFO|QUOTE|EXAMPLE|NOTE|WARNING|DANGER|TIP|SUMMARY|SUCCESS|QUESTION|FAILURE|BUG)\]\]"
-)
-"""Compiled regex matching a valid Roam callout marker at the start of a block string.
-
-Matches ``[[>]] [[!<TYPE>]]`` where ``<TYPE>`` is one of the twelve recognised callout
-type keywords.  Used both for model validation (rejecting malformed ``[[>]]``-prefixed
-strings) and for node-type detection in :func:`node_type`.
 """
 
 
@@ -198,8 +186,8 @@ class RoamNode(BaseModel):
     @field_validator("string", mode="after")
     @classmethod
     def _validate_callout_string(cls, v: str | None) -> str | None:
-        if v is not None and v.startswith(_CALLOUT_PREFIX):
-            if not _CALLOUT_RE.match(v):
+        if v is not None and v.startswith(CALLOUT_PREFIX):
+            if not CALLOUT_RE.match(v):
                 raise ValueError(
                     f"block string starts with '[[>]]' but does not match callout marker "
                     f"'[[>]] [[!<TYPE>]]' with a valid callout type; got {v!r}"
@@ -339,7 +327,7 @@ def node_type(node: RoamNode) -> NodeType:
     link (as matched by :data:`~guffin.roam.primitives.IMAGE_LINK_RE`),
     :attr:`NodeType.ROAM_HEADING_BLOCK` when :func:`effective_heading_level` is non-``None``,
     :attr:`NodeType.ROAM_CALLOUT_BLOCK` when ``string`` starts with a valid callout marker
-    (as matched by the module-private ``_CALLOUT_RE``),
+    (as matched by :data:`~guffin.roam.primitives.CALLOUT_RE`),
     and :attr:`NodeType.ROAM_PLAIN_BLOCK` otherwise.
 
     Args:
@@ -361,6 +349,6 @@ def node_type(node: RoamNode) -> NodeType:
         return NodeType.ROAM_IMAGE_BLOCK
     if effective_heading_level(node) is not None:
         return NodeType.ROAM_HEADING_BLOCK
-    if node.string is not None and _CALLOUT_RE.match(node.string):
+    if node.string is not None and CALLOUT_RE.match(node.string):
         return NodeType.ROAM_CALLOUT_BLOCK
     return NodeType.ROAM_PLAIN_BLOCK

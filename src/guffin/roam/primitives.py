@@ -1,20 +1,26 @@
 """Foundational Roam Research primitives: type aliases, stub models, and pattern constants.
 
-Public symbols are organized into three groups:
+Public symbols are organized into five groups:
 
 - **Primitive type aliases**: :data:`Uid`, :data:`Id`, :data:`Order`, :data:`HeadingLevel`,
   :data:`PageTitle`, :data:`Url`.
 - **Composite type aliases**: :data:`UidPair`, :data:`RawChildren`, :data:`RawRefs`.
 - **Stub models**: :class:`IdObject`, :class:`LinkObject`.
 - **Pattern constants**: :data:`UID_PATTERN` — raw regex string for a Roam node UID;
-  :data:`UID_RE` — compiled form; :data:`IMAGE_LINK_RE` — compiled regex matching a Roam
-  markdown image link whose URL is a Cloud Firestore storage URL.
+  :data:`UID_RE` — compiled form; :data:`CALLOUT_PREFIX` — string prefix that identifies a
+  potential callout block; :data:`CALLOUT_RE` — compiled regex that matches and decomposes a
+  full callout block string; :data:`IMAGE_LINK_RE` — compiled regex matching a Roam markdown
+  image link whose URL is a Cloud Firestore storage URL.
+- **Enumerations**: :class:`CalloutType` — the twelve Roam callout type keywords.
+- **Callout model**: :class:`RoamCallout` — parsed decomposition of a callout block string.
+- **Callout parser**: :func:`callout` — parse a raw block string as a :class:`RoamCallout`.
 """
 
+import enum
 import re
 from typing import Annotated, Final, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, validate_call
 
 UID_PATTERN: Final[str] = r"^[A-Za-z0-9_-]{9}$"
 """Raw regex pattern string for a Roam node UID: exactly 9 alphanumeric/dash/underscore characters."""
@@ -99,6 +105,111 @@ type RawRefs = list[IdObject]
 
 Same shape as :data:`RawChildren` — :class:`IdObject` stubs awaiting normalization.
 """
+
+
+class CalloutType(enum.StrEnum):
+    """The twelve Roam callout type keywords as they appear in the raw block string marker.
+
+    The marker format is ``[[>]] [[!<TYPE>]]`` where ``<TYPE>`` is one of these values
+    (always uppercase in the Roam source).
+
+    These map one-to-one to the lowercase :class:`~guffin.vertex.CalloutVertex.CalloutType`
+    values in the export model; convert with ``CalloutVertex.CalloutType(member.lower())``.
+    """
+
+    INFO = "INFO"
+    QUOTE = "QUOTE"
+    EXAMPLE = "EXAMPLE"
+    NOTE = "NOTE"
+    WARNING = "WARNING"
+    DANGER = "DANGER"
+    TIP = "TIP"
+    SUMMARY = "SUMMARY"
+    SUCCESS = "SUCCESS"
+    QUESTION = "QUESTION"
+    FAILURE = "FAILURE"
+    BUG = "BUG"
+
+
+CALLOUT_PREFIX: Final[str] = "[[>]]"
+"""String prefix that identifies a potential Roam callout block.
+
+Used as a fast pre-filter before applying :data:`CALLOUT_RE`.
+"""
+
+CALLOUT_RE: Final[re.Pattern[str]] = re.compile(
+    rf"(?P<prefix>{re.escape(CALLOUT_PREFIX)})"
+    r" \[\[!(?P<callout_type>INFO|QUOTE|EXAMPLE|NOTE|WARNING|DANGER|TIP|SUMMARY|SUCCESS|QUESTION|FAILURE|BUG)\]\]"
+    r"\s*(?P<title>[^\n]*)(?:\n(?P<body>.*))?",
+    re.DOTALL,
+)
+"""Compiled regex matching and decomposing a full Roam callout block string.
+
+Named groups:
+
+- ``prefix`` — the literal ``[[>]]`` opener.
+- ``callout_type`` — one of the twelve recognised type keywords (``INFO``, ``QUOTE``,
+  ``EXAMPLE``, ``NOTE``, ``WARNING``, ``DANGER``, ``TIP``, ``SUMMARY``, ``SUCCESS``,
+  ``QUESTION``, ``FAILURE``, ``BUG``).
+- ``title`` — the remainder of the first line after the marker and any intervening
+  whitespace; may be an empty string when no title text is present.
+- ``body`` — everything after the first newline; ``None`` when the string contains no
+  newline.  ``re.DOTALL`` is set so ``.`` matches embedded newlines within the body.
+"""
+
+
+class RoamCallout(BaseModel):
+    """Parsed decomposition of a callout block string.
+
+    Captures the three semantic components extracted from the raw block string
+    by :data:`CALLOUT_RE`.
+
+    Attributes:
+        callout_type: Callout category keyword from the ``[[>]] [[!<TYPE>]]`` marker.
+        title: Callout heading text — the remainder of the first line after the marker.
+        body: Callout body text — everything after the first newline in the block string;
+            empty string when absent.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    callout_type: CalloutType = Field(..., description="Callout category keyword from the [[>]] [[!<TYPE>]] marker.")
+    title: str = Field(..., description="Callout heading text — the remainder of the first line after the marker.")
+    body: str = Field(
+        ..., description="Callout body text — everything after the first newline; empty string when absent."
+    )
+
+
+@validate_call
+def callout(block_string: str) -> RoamCallout | None:
+    """Parse *block_string* as a :class:`RoamCallout`, or return ``None`` if it is not a callout.
+
+    Returns ``None`` when *block_string* does not start with :data:`CALLOUT_PREFIX`.
+
+    Args:
+        block_string: The raw block string to parse.
+
+    Returns:
+        A :class:`RoamCallout` when *block_string* matches :data:`CALLOUT_RE`; ``None`` otherwise.
+        The ``body`` field is an empty string when *block_string* contains no newline.
+
+    Raises:
+        ValueError: When *block_string* starts with :data:`CALLOUT_PREFIX` but does not match
+            :data:`CALLOUT_RE` (malformed callout marker).
+    """
+    if not block_string.startswith(CALLOUT_PREFIX):
+        return None
+    m: Final[re.Match[str] | None] = CALLOUT_RE.match(block_string)
+    if m is None:
+        raise ValueError(
+            f"block string starts with {CALLOUT_PREFIX!r} " f"but does not match callout pattern; got {block_string!r}"
+        )
+    return RoamCallout(
+        callout_type=CalloutType(m.group("callout_type")),
+        title=m.group("title"),
+        body=m.group("body") or "",
+    )
+
 
 IMAGE_LINK_RE: Final[re.Pattern[str]] = re.compile(
     r"!\[(?P<alt>(?:[^\]]|\n)*?)\]\((?P<url>https://firebasestorage\.googleapis\.com/[^\)]+)\)"
