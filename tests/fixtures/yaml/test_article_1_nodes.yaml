@@ -33,7 +33,7 @@
   user:
     id: 0
   string: '![](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a)'
-  order: 0
+  order: 1
   heading: null
   children: null
   refs: null
@@ -98,6 +98,7 @@
   heading: 3
   children:
   - id: 11124
+  - id: 11165
   refs: null
   page:
     id: 3327
@@ -151,6 +152,26 @@
   user:
     id: 0
   string: '![A flower](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F_otAwc2B9g.jpeg.enc?alt=media&token=25c3ac2a-f62e-462e-99b4-99b337a476c0)'
+  order: 1
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 3327
+  parents:
+  - id: 3327
+  - id: 3328
+  - id: 3331
+  - id: 3334
+  props: null
+  title: null
+  attrs: null
+- uid: 4_GrZ9su6
+  id: 11165
+  time: 0
+  user:
+    id: 0
+  string: this image **has not been resized** through the Roam UI.
   order: 0
   heading: null
   children: null
@@ -175,6 +196,7 @@
   heading: null
   children:
   - id: 11164
+  - id: 11167
   refs: null
   page:
     id: 3327
@@ -339,6 +361,26 @@
   parents:
   - id: 3327
   - id: 3330
+  props: null
+  title: null
+  attrs: null
+- uid: tWkumkdUE
+  id: 11167
+  time: 0
+  user:
+    id: 0
+  string: this image **has been resized** through the Roam UI (width:257, height:None)
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 3327
+  parents:
+  - id: 3327
+  - id: 3329
+  - id: 3332
+  - id: 11163
   props: null
   title: null
   attrs: null

@@ -29,6 +29,7 @@
 - vertex_type: guffin/heading
   uid: TaN67WqnA
   children:
+  - 4_GrZ9su6
   - uj8YolCoE
   text: illustration 1.1
   heading: 3
@@ -49,8 +50,12 @@
   file_name: _otAwc2B9g.jpeg.enc
   media_type: image/jpeg
 - vertex_type: guffin/text-content
+  uid: 4_GrZ9su6
+  text: this image **has not been resized** through the Roam UI.
+- vertex_type: guffin/text-content
   uid: OaTXPl93p
   children:
+  - tWkumkdUE
   - zZG-BfWvs
   text: illustration 2.1
 - vertex_type: guffin/heading
@@ -113,3 +118,6 @@
   uid: JW5PswS6v
   text: Section 3.1
   heading: 2
+- vertex_type: guffin/text-content
+  uid: tWkumkdUE
+  text: this image **has been resized** through the Roam UI (width:257, height:None)

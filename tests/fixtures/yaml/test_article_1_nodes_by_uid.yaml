@@ -51,7 +51,7 @@ zZG-BfWvs:
   user:
     id: 3
   string: '![](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a)'
-  order: 0
+  order: 1
   heading: null
   children: null
   refs: null
@@ -151,6 +151,7 @@ TaN67WqnA:
   heading: 3
   children:
   - id: 11124
+  - id: 11165
   refs: null
   page:
     id: 3327
@@ -219,13 +220,38 @@ uj8YolCoE:
   user:
     id: 3
   string: '![A flower](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F_otAwc2B9g.jpeg.enc?alt=media&token=25c3ac2a-f62e-462e-99b4-99b337a476c0)'
-  order: 0
+  order: 1
   heading: null
   children: null
   refs: null
   page:
     id: 3327
   open: null
+  parents:
+  - id: 3327
+  - id: 3328
+  - id: 3331
+  - id: 3334
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+4_GrZ9su6:
+  uid: 4_GrZ9su6
+  id: 11165
+  time: 1781088515943
+  user:
+    id: 3
+  string: this image **has not been resized** through the Roam UI.
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 3327
+  open: true
   parents:
   - id: 3327
   - id: 3328
@@ -248,6 +274,7 @@ OaTXPl93p:
   heading: null
   children:
   - id: 11164
+  - id: 11167
   refs: null
   page:
     id: 3327
@@ -447,7 +474,7 @@ cNW8lmXIM:
   parents: null
   props: null
   title: '[[Test Article]] 1'
-  sidebar: 18
+  sidebar: 19
   attrs: null
   lookup: null
   seen_by: null
@@ -468,6 +495,31 @@ JW5PswS6v:
   parents:
   - id: 3327
   - id: 3330
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+tWkumkdUE:
+  uid: tWkumkdUE
+  id: 11167
+  time: 1781089401093
+  user:
+    id: 3
+  string: this image **has been resized** through the Roam UI (width:257, height:None)
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 3327
+  open: true
+  parents:
+  - id: 3327
+  - id: 3329
+  - id: 3332
+  - id: 11163
   props: null
   title: null
   sidebar: null

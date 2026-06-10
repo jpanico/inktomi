@@ -477,12 +477,12 @@ class TestFetchRoamNodesFetchByNodeUid:
     def test_live_fetch_by_node_uid(self, live_api_endpoint: ApiEndpoint) -> None:
         """Live test: fetch the wdMgyBiP9 subtree and compare with the fixture hierarchy.
 
-        The ``wdMgyBiP9`` node (Section 2) has six descendants in the
+        The ``wdMgyBiP9`` node (Section 2) has seven descendants in the
         ``test_article_1_nodes.yaml`` fixture: Section 2.1 (``drtANJYTg``),
-        illustration 2.1 (``OaTXPl93p``), its image (``zZG-BfWvs``),
-        Section 2.1.1 (``yFUau9Cpg``), Section 2.1.1.1 (``bxkcECGwN``), and
-        Section 2.2 (``5f1ahOFdp``).  Transient fields are excluded from the
-        comparison.
+        illustration 2.1 (``OaTXPl93p``), its caption (``tWkumkdUE``), its image
+        (``zZG-BfWvs``), Section 2.1.1 (``yFUau9Cpg``), Section 2.1.1.1
+        (``bxkcECGwN``), and Section 2.2 (``5f1ahOFdp``).  Transient fields are
+        excluded from the comparison.
         """
         node_uid = "wdMgyBiP9"
         section2_uids: set[str] = {
@@ -492,6 +492,7 @@ class TestFetchRoamNodesFetchByNodeUid:
             "yFUau9Cpg",
             "bxkcECGwN",
             "OaTXPl93p",
+            "tWkumkdUE",
             "zZG-BfWvs",
         }
 
@@ -513,10 +514,10 @@ class TestFetchRoamNodesFetchByNodeUid:
         """Test that fetch_by_node_uid returns the root node and all its descendants.
 
         Uses the test_article_1_nodes.yaml fixture, fetching for node_uid ``'wdMgyBiP9'``
-        (Section 2).  Expects the root node plus its six descendant blocks: Section 2.1
-        (``drtANJYTg``), illustration 2.1 (``OaTXPl93p``), its image (``zZG-BfWvs``),
-        Section 2.1.1 (``yFUau9Cpg``), Section 2.1.1.1 (``bxkcECGwN``),
-        and Section 2.2 (``5f1ahOFdp``).
+        (Section 2).  Expects the root node plus its seven descendant blocks: Section 2.1
+        (``drtANJYTg``), illustration 2.1 (``OaTXPl93p``), its caption (``tWkumkdUE``),
+        its image (``zZG-BfWvs``), Section 2.1.1 (``yFUau9Cpg``),
+        Section 2.1.1.1 (``bxkcECGwN``), and Section 2.2 (``5f1ahOFdp``).
         """
         # UIDs in the Section 2 subtree: root + all descendants
         section2_uids: set[str] = {
@@ -526,6 +527,7 @@ class TestFetchRoamNodesFetchByNodeUid:
             "yFUau9Cpg",
             "bxkcECGwN",
             "OaTXPl93p",
+            "tWkumkdUE",
             "zZG-BfWvs",
         }
 
