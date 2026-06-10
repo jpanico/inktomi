@@ -250,7 +250,14 @@ def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
     if firestore_url is None:
         raise ValueError(f"RoamNode uid={node.uid!r} 'string' contains no Firestore URL")
     file_name: Final[str | None] = _extract_file_name(firestore_url)
-    media_type: Final[MediaType | None] = MediaType.from_file_name(file_name) if file_name is not None else None
+    if file_name is None:
+        raise ValueError(f"RoamNode uid={node.uid!r} filename cannot be extracted from URL {firestore_url!r}")
+    # Roam encrypts hosted images with a double .enc extension; strip it to resolve the base media type.
+    base_name: Final[str] = file_name.removesuffix(".enc")
+    resolved_type: Final[MediaType | None] = MediaType.from_file_name(base_name)
+    if resolved_type is None:
+        raise ValueError(f"RoamNode uid={node.uid!r} media type cannot be determined from file_name={file_name!r}")
+    media_type: Final[MediaType] = resolved_type
     return ImageVertex(
         uid=node.uid,
         source=_url_adapter.validate_python(firestore_url),

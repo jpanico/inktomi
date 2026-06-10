@@ -42,9 +42,9 @@ Public symbols:
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
-from guffin.common.media_type import MediaType
+from guffin.common.media_type import MediaType, is_image_type
 from guffin.roam.primitives import HeadingLevel, Uid, Url
 
 type VertexChildren = list[Uid]
@@ -203,7 +203,6 @@ class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
         file_name: Original filename decoded from *source*. ``None`` if the
             filename cannot be extracted.
         media_type: IANA media type inferred from *file_name*'s extension.
-            ``None`` if the type cannot be determined.
             Serialized as ``'media-type'``.
     """
 
@@ -219,11 +218,29 @@ class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
         description="Alt text from the Markdown image link, stripped. None when absent or empty.",
     )
     file_name: str | None = Field(default=None, description="Original filename decoded from source.")
-    media_type: MediaType | None = Field(
-        default=None,
+    media_type: MediaType = Field(
+        ...,
         serialization_alias="media-type",
         description="IANA media type inferred from file_name's extension (serialized as 'media-type').",
     )
+
+    @field_validator("media_type")
+    @classmethod
+    def media_type_must_be_image(cls, v: MediaType) -> MediaType:
+        """Reject any non-image MediaType.
+
+        Args:
+            v: The candidate media type value.
+
+        Returns:
+            *v* unchanged when it is an image MIME type.
+
+        Raises:
+            ValueError: If *v* is a non-image :class:`~guffin.common.media_type.MediaType`.
+        """
+        if not is_image_type(v):
+            raise ValueError(f"media_type must be an image MIME type; got {v!r}")
+        return v
 
 
 class CalloutVertex(_BaseVertex[Literal[VertexType.GUFFIN_CALLOUT]]):

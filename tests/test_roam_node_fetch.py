@@ -485,7 +485,15 @@ class TestFetchRoamNodesFetchByNodeUid:
         comparison.
         """
         node_uid = "wdMgyBiP9"
-        section2_uids: set[str] = {"wdMgyBiP9", "drtANJYTg", "5f1ahOFdp", "yFUau9Cpg", "bxkcECGwN", "OaTXPl93p", "zZG-BfWvs"}
+        section2_uids: set[str] = {
+            "wdMgyBiP9",
+            "drtANJYTg",
+            "5f1ahOFdp",
+            "yFUau9Cpg",
+            "bxkcECGwN",
+            "OaTXPl93p",
+            "zZG-BfWvs",
+        }
 
         all_fixture_nodes = article1_node_tree().tree_network
         expected_nodes: list[RoamNode] = [n for n in all_fixture_nodes if n.uid in section2_uids]

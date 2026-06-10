@@ -9,6 +9,7 @@ from pathlib import Path
 import panflute as pf  # type: ignore[import-untyped]
 from pydantic import HttpUrl
 
+from guffin.common.media_type import MediaType
 from guffin.vertex import (
     HeadingVertex,
     ImageVertex,
@@ -281,7 +282,7 @@ class TestVertexTreeToPandocImageVertex:
         fake_img = tmp_path / "photo.jpg"
         fake_img.write_bytes(b"")
         page = PageVertex(uid="page00001", title="P", children=["img00001a"])
-        image = ImageVertex(uid="img00001a", source=_IMAGE_URL, alt_text="A flower")
+        image = ImageVertex(uid="img00001a", source=_IMAGE_URL, alt_text="A flower", media_type=MediaType.JPEG)
         tree = VertexTree(vertices=[page, image])
         doc = vertex_tree_to_pandoc(tree, {"img00001a": fake_img})
         blocks = list(doc.content)
@@ -294,7 +295,7 @@ class TestVertexTreeToPandocImageVertex:
     def test_unfetched_image_falls_back_to_link(self) -> None:
         """When image_files has no entry for the vertex, a pf.Link is used."""
         page = PageVertex(uid="page00001", title="P", children=["img00001a"])
-        image = ImageVertex(uid="img00001a", source=_IMAGE_URL, alt_text="A flower")
+        image = ImageVertex(uid="img00001a", source=_IMAGE_URL, alt_text="A flower", media_type=MediaType.JPEG)
         tree = VertexTree(vertices=[page, image])
         doc = vertex_tree_to_pandoc(tree, {})
         blocks = list(doc.content)
@@ -307,7 +308,7 @@ class TestVertexTreeToPandocImageVertex:
     def test_unfetched_image_link_label_uses_alt_text(self) -> None:
         """The fallback link label uses alt_text when present."""
         page = PageVertex(uid="page00001", title="P", children=["img00001a"])
-        image = ImageVertex(uid="img00001a", source=_IMAGE_URL, alt_text="A flower")
+        image = ImageVertex(uid="img00001a", source=_IMAGE_URL, alt_text="A flower", media_type=MediaType.JPEG)
         tree = VertexTree(vertices=[page, image])
         doc = vertex_tree_to_pandoc(tree, {})
         inline = list(list(doc.content)[0].content)[0]
@@ -317,7 +318,7 @@ class TestVertexTreeToPandocImageVertex:
     def test_unfetched_image_link_label_falls_back_to_file_name(self) -> None:
         """The fallback link label uses file_name when alt_text is absent."""
         page = PageVertex(uid="page00001", title="P", children=["img00001a"])
-        image = ImageVertex(uid="img00001a", source=_IMAGE_URL, file_name="photo.jpg")
+        image = ImageVertex(uid="img00001a", source=_IMAGE_URL, file_name="photo.jpg", media_type=MediaType.JPEG)
         tree = VertexTree(vertices=[page, image])
         doc = vertex_tree_to_pandoc(tree, {})
         inline = list(list(doc.content)[0].content)[0]
