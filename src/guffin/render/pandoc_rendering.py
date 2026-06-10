@@ -332,7 +332,7 @@ def _heading_vertex_to_blocks(
         A :class:`~panflute.Header` block followed by any child blocks.
     """
     inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
-    blocks: list[pf.Block] = [pf.Header(*inlines, level=vertex.heading)]
+    blocks: list[pf.Block] = [pf.Header(*inlines, level=vertex.heading_level)]
     if vertex.children:
         blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
     return blocks

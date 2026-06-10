@@ -3,13 +3,13 @@
 Public symbols:
 
 - :data:`DEFAULT_NODE_PANEL_PROPS` — the property names rendered in a panel body by default.
-- :func:`make_node_panel` — render a :class:`~guffin.roam.node.RoamNode` as a Rich
+- :func:`build_node_panel` — render a :class:`~guffin.roam.node.RoamNode` as a Rich
   :class:`~rich.panel.Panel`.
 - :func:`build_rich_node_tree` — build a Rich :class:`~rich.tree.Tree` from a
   :class:`~guffin.roam.tree.NodeTree` using a depth-first traversal.
 - :func:`build_rich_refs_box` — build a Rich :class:`~rich.panel.Panel` summarising the
   back-reference nodes in a :class:`~guffin.roam.tree.NodeTree`.
-- :func:`make_vertex_panel` — render a :data:`~guffin.vertex.Vertex` as a Rich
+- :func:`build_vertex_panel` — render a :data:`~guffin.vertex.Vertex` as a Rich
   :class:`~rich.panel.Panel`.
 - :func:`build_rich_vertex_tree` — build a Rich :class:`~rich.tree.Tree` from a
   :class:`~guffin.vertex_tree.VertexTree` using a depth-first traversal.
@@ -19,7 +19,7 @@ Public symbols:
 
 import logging
 import re
-from typing import Final, TypeGuard
+from typing import Final, TypeGuard, assert_never
 
 from pydantic import validate_call
 
@@ -30,11 +30,8 @@ from rich.text import Text
 from rich.tree import Tree as RichTree
 
 from guffin.vertex import (
-    HeadingVertex,
-    ImageVertex,
-    PageVertex,
-    TextContentVertex,
     Vertex,
+    VertexType,
 )
 from guffin.vertex_tree import VertexTree, VertexTreeDFSIterator
 from guffin.roam.node import RoamNode
@@ -45,7 +42,7 @@ from guffin.roam.primitives import Id, IdObject, IMAGE_LINK_RE, Uid
 logger = logging.getLogger(__name__)
 
 DEFAULT_NODE_PANEL_PROPS: Final[list[str]] = ["heading", "order", "children", "parents", "page"]
-"""Property names rendered in the panel body by :func:`make_node_panel` when no explicit list is given.
+"""Property names rendered in the panel body by :func:`build_node_panel` when no explicit list is given.
 
 ``string``/``title`` and ``id`` are always shown in the panel title and are not
 included here.  All other :class:`~guffin.roam.node.RoamNode` field names are
@@ -111,7 +108,7 @@ def _format_node_prop(node: RoamNode, prop: str) -> str:
 
 
 @validate_call
-def make_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS) -> Panel:
+def build_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS) -> Panel:
     """Render *node* as a Rich Panel for display in a terminal tree.
 
     The panel title always shows the block string or page title with the node
@@ -171,11 +168,11 @@ def build_rich_node_tree(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_P
     rich_node_map: Final[dict[Id, RichTree]] = {}
     dfs_iter: Final[NodeTreeDFSIterator] = tree.dfs()
     root_node: Final[RoamNode] = next(dfs_iter)
-    root_rich: Final[RichTree] = RichTree(make_node_panel(root_node, props))
+    root_rich: Final[RichTree] = RichTree(build_node_panel(root_node, props))
     rich_node_map[root_node.id] = root_rich
     for node in dfs_iter:
         parent_rich: RichTree = rich_node_map[child_to_parent[node.id]]
-        rich_node_map[node.id] = parent_rich.add(make_node_panel(node, props))
+        rich_node_map[node.id] = parent_rich.add(build_node_panel(node, props))
     return root_rich
 
 
@@ -184,7 +181,7 @@ def build_rich_refs_box(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PR
     """Build a Rich :class:`~rich.panel.Panel` summarising the back-reference nodes in *tree*.
 
     For each node in :attr:`~guffin.roam.tree.NodeTree.refs_by_id`, renders a
-    two-column grid row containing a :func:`make_node_panel` on the left and a
+    two-column grid row containing a :func:`build_node_panel` on the left and a
     *referenced by* panel listing the ids of tree nodes that cite it on the right.
     All rows are collected into a single ``refs`` panel.
 
@@ -214,13 +211,13 @@ def build_rich_refs_box(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PR
         row: Table = Table.grid(padding=(0, 1))
         row.add_column()
         row.add_column()
-        row.add_row(make_node_panel(ref_node, props), back_refs_panel)
+        row.add_row(build_node_panel(ref_node, props), back_refs_panel)
         ref_rows.append(row)
     return Panel(Group(*ref_rows), title="refs")
 
 
 @validate_call
-def make_vertex_panel(vertex: Vertex) -> Panel:
+def build_vertex_panel(vertex: Vertex) -> Panel:
     """Render *vertex* as a Rich Panel for display in a terminal tree.
 
     The panel title shows a type-specific summary with the vertex ``uid`` in
@@ -240,16 +237,20 @@ def make_vertex_panel(vertex: Vertex) -> Panel:
         A :class:`~rich.panel.Panel` with a labelled title and metadata body.
     """
     logger.debug("vertex=%r", vertex)
-    if isinstance(vertex, PageVertex):
-        text: str = vertex.title
-    elif isinstance(vertex, HeadingVertex):
-        text = f"H{vertex.heading}: {vertex.text}"
-    elif isinstance(vertex, TextContentVertex):
-        text = vertex.text
-    elif isinstance(vertex, ImageVertex):
-        text = f"IMAGE [{vertex.alt_text or ''}](<firestore_url>)"
-    else:
-        text = f"CALLOUT [{vertex.callout_type.value}]: {vertex.title}"
+    text: str
+    match vertex.vertex_type:
+        case VertexType.GUFFIN_PAGE:
+            text = vertex.title
+        case VertexType.GUFFIN_HEADING:
+            text = f"H{vertex.heading_level}: {vertex.text}"
+        case VertexType.GUFFIN_TEXT_CONTENT:
+            text = vertex.text
+        case VertexType.GUFFIN_IMAGE:
+            text = f"IMAGE [{vertex.alt_text or ''}](<firestore_url>)"
+        case VertexType.GUFFIN_CALLOUT:
+            text = f"CALLOUT [{vertex.callout_type.value}]: {vertex.title}"
+        case _ as unreachable:
+            assert_never(unreachable)
     title: Final[str] = f"[bold #00aa00]{text} ({vertex.uid})[/bold #00aa00]"
     children_str: Final[str] = f"[{', '.join(vertex.children)}]" if vertex.children else "None"
     refs_str: Final[str] = f"[{', '.join(vertex.refs)}]" if vertex.refs else "None"
@@ -279,11 +280,11 @@ def build_rich_vertex_tree(vertex_tree: VertexTree) -> RichTree:
     rich_map: Final[dict[Uid, RichTree]] = {}
     dfs_iter: Final[VertexTreeDFSIterator] = vertex_tree.dfs()
     root: Final[Vertex] = next(dfs_iter)
-    root_rich: Final[RichTree] = RichTree(make_vertex_panel(root))
+    root_rich: Final[RichTree] = RichTree(build_vertex_panel(root))
     rich_map[root.uid] = root_rich
     for vertex in dfs_iter:
         parent_rich: RichTree = rich_map[child_to_parent[vertex.uid]]
-        rich_map[vertex.uid] = parent_rich.add(make_vertex_panel(vertex))
+        rich_map[vertex.uid] = parent_rich.add(build_vertex_panel(vertex))
     return root_rich
 
 

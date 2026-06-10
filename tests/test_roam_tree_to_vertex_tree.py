@@ -369,13 +369,13 @@ class TestToHeadingVertex:
         """Test that native heading levels 1–3 are preserved in the vertex."""
         for level in (1, 2, 3):
             node = _make_heading(heading=level)
-            assert to_heading_vertex(node, _id_map(node)).heading == level
+            assert to_heading_vertex(node, _id_map(node)).heading_level == level
 
     def test_ah_level_heading_levels_resolved(self) -> None:
         """Test that Augmented Headings levels h4–h6 are resolved to integers 4–6."""
         for level_str, expected in (("h4", 4), ("h5", 5), ("h6", 6)):
             node = _make_ah_heading(level=level_str)
-            assert to_heading_vertex(node, _id_map(node)).heading == expected
+            assert to_heading_vertex(node, _id_map(node)).heading_level == expected
 
     def test_children_none_when_no_children(self) -> None:
         """Test that children is None when the heading node has no children."""
@@ -477,7 +477,7 @@ class TestTranscribeNode:
         assert isinstance(v, HeadingVertex)
         assert v.vertex_type is VertexType.GUFFIN_HEADING
         assert v.text == "Intro"
-        assert v.heading == 1
+        assert v.heading_level == 1
 
     def test_transcribes_text_content_node(self) -> None:
         """Test that a plain text block node is transcribed to a GUFFIN_TEXT_CONTENT vertex."""

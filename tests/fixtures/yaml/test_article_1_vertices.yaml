@@ -7,7 +7,7 @@
   children:
   - bxkcECGwN
   text: Section 2.1.1
-  heading: 3
+  heading_level: 3
 - vertex_type: guffin/image
   uid: zZG-BfWvs
   source: https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a
@@ -21,20 +21,20 @@
   - 3BX-iWc-p
   - Ma5KGUH9O
   text: Section 1
-  heading: 1
+  heading_level: 1
 - vertex_type: guffin/heading
   uid: 40bvW14UU
   children:
   - JW5PswS6v
   text: Section 3
-  heading: 1
+  heading_level: 1
 - vertex_type: guffin/heading
   uid: TaN67WqnA
   children:
   - 4_GrZ9su6
   - uj8YolCoE
   text: illustration 1.1
-  heading: 3
+  heading_level: 3
 - vertex_type: guffin/text-content
   uid: Ma5KGUH9O
   text: 'AI assistant (Claude Opus 4.6): '
@@ -44,7 +44,7 @@
   - drtANJYTg
   - 5f1ahOFdp
   text: Section 2
-  heading: 1
+  heading_level: 1
 - vertex_type: guffin/image
   uid: uj8YolCoE
   source: https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2F_otAwc2B9g.jpeg.enc?alt=media&token=25c3ac2a-f62e-462e-99b4-99b337a476c0
@@ -66,18 +66,18 @@
   children:
   - TaN67WqnA
   text: Section 1.1
-  heading: 2
+  heading_level: 2
 - vertex_type: guffin/heading
   uid: bxkcECGwN
   text: Section 2.1.1.1
-  heading: 4
+  heading_level: 4
 - vertex_type: guffin/heading
   uid: drtANJYTg
   children:
   - OaTXPl93p
   - yFUau9Cpg
   text: Section 2.1
-  heading: 2
+  heading_level: 2
 - vertex_type: guffin/callout
   uid: cNW8lmXIM
   callout_type: info
@@ -108,7 +108,7 @@
 - vertex_type: guffin/heading
   uid: 5f1ahOFdp
   text: Section 2.2
-  heading: 2
+  heading_level: 2
 - vertex_type: guffin/page
   uid: 6olpFWiw1
   children:
@@ -120,7 +120,7 @@
 - vertex_type: guffin/heading
   uid: JW5PswS6v
   text: Section 3.1
-  heading: 2
+  heading_level: 2
 - vertex_type: guffin/text-content
   uid: tWkumkdUE
   text: this image **has been resized** through the Roam UI (width:257, height:None)

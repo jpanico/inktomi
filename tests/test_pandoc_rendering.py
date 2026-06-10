@@ -134,7 +134,7 @@ class TestVertexTreeToPandocPageVertex:
 
     def test_non_page_root_produces_no_metadata_title(self) -> None:
         """When the root is not a PageVertex, no metadata title is set."""
-        tree = VertexTree(vertices=[HeadingVertex(uid="head00001", text="Intro", heading=1)])
+        tree = VertexTree(vertices=[HeadingVertex(uid="head00001", text="Intro", heading_level=1)])
         doc = vertex_tree_to_pandoc(tree, {})
         assert "title" not in doc.metadata
 
@@ -152,7 +152,7 @@ class TestVertexTreeToPandocPageVertex:
     def test_title_in_header_includes_children_after_h1(self) -> None:
         """title_in_header=True: H1 is followed by rendered children."""
         page = PageVertex(uid="page00001", title="Doc", children=["head0001a"])
-        heading = HeadingVertex(uid="head0001a", text="Section", heading=2)
+        heading = HeadingVertex(uid="head0001a", text="Section", heading_level=2)
         tree = VertexTree(vertices=[page, heading])
         doc = vertex_tree_to_pandoc(tree, {}, title_in_header=True)
         blocks = list(doc.content)
@@ -174,7 +174,7 @@ class TestVertexTreeToPandocHeadingVertex:
     def test_heading_level_preserved(self) -> None:
         """HeadingVertex produces a Header block at the recorded heading level."""
         page = PageVertex(uid="page00001", title="P", children=["head0001a"])
-        heading = HeadingVertex(uid="head0001a", text="Section 1", heading=2)
+        heading = HeadingVertex(uid="head0001a", text="Section 1", heading_level=2)
         tree = VertexTree(vertices=[page, heading])
         blocks = list(vertex_tree_to_pandoc(tree, {}).content)
         assert len(blocks) == 1
@@ -185,7 +185,7 @@ class TestVertexTreeToPandocHeadingVertex:
     def test_h3_heading(self) -> None:
         """HeadingVertex at level 3 produces an H3 Header."""
         page = PageVertex(uid="page00001", title="P", children=["head0001a"])
-        heading = HeadingVertex(uid="head0001a", text="Subsection", heading=3)
+        heading = HeadingVertex(uid="head0001a", text="Subsection", heading_level=3)
         tree = VertexTree(vertices=[page, heading])
         blocks = list(vertex_tree_to_pandoc(tree, {}).content)
         assert isinstance(blocks[0], pf.Header)
@@ -194,9 +194,9 @@ class TestVertexTreeToPandocHeadingVertex:
     def test_h4_through_h6(self) -> None:
         """HeadingVertices at levels 4, 5, 6 produce Headers at the correct levels."""
         page = PageVertex(uid="page00001", title="P", children=["head0004a", "head0005a", "head0006a"])
-        h4 = HeadingVertex(uid="head0004a", text="H4", heading=4)
-        h5 = HeadingVertex(uid="head0005a", text="H5", heading=5)
-        h6 = HeadingVertex(uid="head0006a", text="H6", heading=6)
+        h4 = HeadingVertex(uid="head0004a", text="H4", heading_level=4)
+        h5 = HeadingVertex(uid="head0005a", text="H5", heading_level=5)
+        h6 = HeadingVertex(uid="head0006a", text="H6", heading_level=6)
         tree = VertexTree(vertices=[page, h4, h5, h6])
         blocks = list(vertex_tree_to_pandoc(tree, {}).content)
         assert [b.level for b in blocks] == [4, 5, 6]
@@ -204,8 +204,8 @@ class TestVertexTreeToPandocHeadingVertex:
     def test_nested_headings_flattened_into_document(self) -> None:
         """Children of a HeadingVertex are rendered as sibling blocks, not nested."""
         page = PageVertex(uid="page00001", title="P", children=["head0001a"])
-        h2 = HeadingVertex(uid="head0001a", text="Chapter", heading=2, children=["head0001b"])
-        h3 = HeadingVertex(uid="head0001b", text="Section", heading=3)
+        h2 = HeadingVertex(uid="head0001a", text="Chapter", heading_level=2, children=["head0001b"])
+        h3 = HeadingVertex(uid="head0001b", text="Section", heading_level=3)
         tree = VertexTree(vertices=[page, h2, h3])
         blocks = list(vertex_tree_to_pandoc(tree, {}).content)
         assert len(blocks) == 2
@@ -238,7 +238,7 @@ class TestVertexTreeToPandocTextContentVertex:
     def test_depth_2_text_under_heading_is_bullet(self) -> None:
         """A TextContentVertex under a HeadingVertex (depth 2) renders as a BulletList."""
         page = PageVertex(uid="page00001", title="P", children=["head0001a"])
-        heading = HeadingVertex(uid="head0001a", text="Section", heading=2, children=["txt00001a"])
+        heading = HeadingVertex(uid="head0001a", text="Section", heading_level=2, children=["txt00001a"])
         block = TextContentVertex(uid="txt00001a", text="Body text")
         tree = VertexTree(vertices=[page, heading, block])
         blocks = list(vertex_tree_to_pandoc(tree, {}).content)
@@ -254,7 +254,7 @@ class TestVertexTreeToPandocTextContentVertex:
     def test_nested_text_produces_nested_bullet_list(self) -> None:
         """A TextContentVertex child of another TextContentVertex renders as a nested BulletList."""
         page = PageVertex(uid="page00001", title="P", children=["head0001a"])
-        heading = HeadingVertex(uid="head0001a", text="S", heading=2, children=["txt00001a"])
+        heading = HeadingVertex(uid="head0001a", text="S", heading_level=2, children=["txt00001a"])
         parent = TextContentVertex(uid="txt00001a", text="Parent", children=["txt00001b"])
         child = TextContentVertex(uid="txt00001b", text="Child")
         tree = VertexTree(vertices=[page, heading, parent, child])
@@ -356,7 +356,7 @@ class TestBuildBlocksCoalescing:
     def test_heading_between_text_siblings_splits_bullet_lists(self) -> None:
         """A HeadingVertex between two TextContentVertices produces two separate BulletLists."""
         t1 = TextContentVertex(uid="txt000001", text="Before")
-        h = HeadingVertex(uid="head00001", text="Break", heading=3)
+        h = HeadingVertex(uid="head00001", text="Break", heading_level=3)
         t2 = TextContentVertex(uid="txt000002", text="After")
         uid_map = {"txt000001": t1, "head00001": h, "txt000002": t2}
         blocks = build_child_blocks(["txt000001", "head00001", "txt000002"], uid_map, {}, {}, depth=2)

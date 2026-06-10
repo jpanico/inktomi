@@ -61,7 +61,7 @@ class TestVertexTreeDFSIterator:
     def test_preorder_visits_subtree_before_sibling(self) -> None:
         """Test that a child's full subtree is visited before the next sibling (pre-order)."""
         root = PageVertex(uid="root00001", title="Root", children=["nodeA0001", "nodeB0001"])
-        node_a = HeadingVertex(uid="nodeA0001", text="A", heading=2, children=["nodeA1001"])
+        node_a = HeadingVertex(uid="nodeA0001", text="A", heading_level=2, children=["nodeA1001"])
         node_a1 = TextContentVertex(uid="nodeA1001", text="A1")
         node_b = TextContentVertex(uid="nodeB0001", text="B")
         tree = VertexTree(vertices=[root, node_a, node_a1, node_b])

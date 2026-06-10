@@ -24,7 +24,7 @@ Public symbols:
 
 import logging
 import re
-from typing import Final
+from typing import Final, assert_never
 from urllib.parse import unquote, urlparse
 
 from pydantic import TypeAdapter, validate_call
@@ -303,7 +303,7 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset
     return HeadingVertex(
         uid=node.uid,
         text=to_pandoc_md(node.string),
-        heading=heading + heading_offset,
+        heading_level=heading + heading_offset,
         children=_resolve_children(node, id_map),
         refs=_resolve_refs(node, id_map),
     )
@@ -410,6 +410,8 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
             return to_text_content_vertex(node, id_map)
         case VertexType.GUFFIN_CALLOUT:
             return to_callout_vertex(node, id_map)
+        case _ as unreachable:
+            assert_never(unreachable)
 
 
 @validate_call

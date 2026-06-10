@@ -96,7 +96,7 @@ def _dump_node_tree(fetch_result: NodeFetchResult, node_props: str | None, conso
     Logs a warning and returns early when
     :attr:`~guffin.roam.node_fetch_result.NodeFetchResult.anchor_tree` is ``None``.
     After the tree, prints a ``refs`` box containing one
-    :func:`~guffin.render.rich_rendering.make_node_panel` panel per node in
+    :func:`~guffin.render.rich_rendering.build_node_panel` panel per node in
     :attr:`~guffin.roam.tree.NodeTree.refs_by_id` (omitted when empty).
 
     Args:

@@ -155,7 +155,7 @@ class HeadingVertex(_BaseVertex[Literal[VertexType.GUFFIN_HEADING]]):
         vertex_type: Always :attr:`~VertexType.GUFFIN_HEADING`.
             Serialized as ``'vertex-type'``.
         text: Block string from the source node's ``string`` field.
-        heading: Effective heading level in the range 1–6.
+        heading_level: Effective heading level in the range 1–6.
     """
 
     vertex_type: Literal[VertexType.GUFFIN_HEADING] = Field(
@@ -164,7 +164,7 @@ class HeadingVertex(_BaseVertex[Literal[VertexType.GUFFIN_HEADING]]):
         description="Always VertexType.GUFFIN_HEADING (serialized as 'vertex-type').",
     )
     text: str = Field(..., description="Block string from the source node's string field.")
-    heading: HeadingLevel = Field(..., description="Effective heading level (1–6).")
+    heading_level: HeadingLevel = Field(..., description="Effective heading level (1–6).")
 
 
 class TextContentVertex(_BaseVertex[Literal[VertexType.GUFFIN_TEXT_CONTENT]]):
