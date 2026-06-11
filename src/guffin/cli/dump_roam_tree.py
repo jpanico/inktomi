@@ -7,7 +7,8 @@ hierarchy:
 
 - **Vertex tree** (default, ``--vertex-tree`` / ``-v/-V``) — normalized
   :class:`~guffin.vertex_tree.VertexTree` produced by
-  :func:`~guffin.roam_tree_to_vertex_tree.transcribe`.
+  :func:`~guffin.roam_tree_to_vertex_tree.transcribe`; image vertices are
+  enriched with their native pixel size (fetched via the Local API) before display.
 - **Node tree** (``--node-tree`` / ``-n/-N``) — raw :class:`~guffin.roam.tree.NodeTree`
   as returned by the Roam Local API; each panel body lists selected
   :class:`~guffin.roam.node.RoamNode` fields, configurable via
@@ -43,6 +44,8 @@ Example::
 """
 
 import logging
+import tempfile
+from pathlib import Path
 from typing import Annotated, Final
 
 import typer
@@ -59,6 +62,7 @@ from guffin.render.rich_rendering import (
     build_rich_refs_box,
     build_rich_vertex_tree,
 )
+from guffin.render.image_fetch import fetch_and_enrich_images
 from guffin.roam.node_fetch import RoamNodeNotFoundError
 from guffin.roam.node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec, QueryAnchorKind
 from guffin.cli.load_roam_tree import fetch_roam_trees
@@ -127,10 +131,16 @@ def _dump_node_tree(fetch_result: NodeFetchResult, node_props: str | None, conso
     )
 
 
-def _dump_vertex_tree(vertex_tree: VertexTree | None, vertex_props: str | None, console: Console) -> None:
-    """Render and print *vertex_tree* as a Rich tree.
+def _dump_vertex_tree(
+    vertex_tree: VertexTree | None, vertex_props: str | None, api_endpoint: ApiEndpoint, console: Console
+) -> None:
+    """Fetch image sizes, enrich *vertex_tree*, then render and print it as a Rich tree.
 
-    Logs a warning and returns early when *vertex_tree* is ``None``.
+    Logs a warning and returns early when *vertex_tree* is ``None``.  Otherwise
+    fetches every :class:`~guffin.vertex.ImageVertex` asset (to a temporary
+    directory) via :func:`~guffin.render.image_fetch.fetch_and_enrich_images` so
+    each image's :attr:`~guffin.vertex.ImageVertex.original_image_size` is
+    populated before rendering.
 
     Args:
         vertex_tree: Normalized :class:`~guffin.vertex_tree.VertexTree` to render,
@@ -138,20 +148,24 @@ def _dump_vertex_tree(vertex_tree: VertexTree | None, vertex_props: str | None, 
         vertex_props: Comma-separated :class:`~guffin.vertex.Vertex` field names
             to include in each panel body, or ``None`` to use
             :data:`~guffin.render.rich_rendering.DEFAULT_VERTEX_PANEL_PROPS`.
+        api_endpoint: Roam Local API endpoint used to fetch image assets for
+            original-size enrichment.
         console: Rich :class:`~rich.console.Console` to print to.
     """
     if vertex_tree is None:
         logger.warning("show_vertex_tree=True but vertex_tree is None; skipping vertex tree output")
         return
+    with tempfile.TemporaryDirectory() as tmp:
+        enriched_tree: Final[VertexTree] = fetch_and_enrich_images(vertex_tree, api_endpoint, Path(tmp))[0]
     effective_props: Final[list[str]] = (
         [p.strip() for p in vertex_props.split(",")] if vertex_props is not None else list(DEFAULT_VERTEX_PANEL_PROPS)
     )
-    vertex_rich_tree: Final[RichTree] = build_rich_vertex_tree(vertex_tree, effective_props)
+    vertex_rich_tree: Final[RichTree] = build_rich_vertex_tree(enriched_tree, effective_props)
     logger.debug("vertex_rich_tree=%r", vertex_rich_tree)
     console.rule("[bold]Vertex Tree[/bold]")
     console.print()
     console.print(vertex_rich_tree)
-    console.print(f"{len(vertex_tree.vertices)} vertices in vertex tree")
+    console.print(f"{len(enriched_tree.vertices)} vertices in vertex tree")
 
 
 def dump_trees(
@@ -159,6 +173,7 @@ def dump_trees(
     vertex_tree: VertexTree | None,
     node_props: str | None,
     vertex_props: str | None,
+    api_endpoint: ApiEndpoint,
     show_raw_results: bool,
     show_node_tree: bool,
     show_vertex_tree: bool,
@@ -180,6 +195,8 @@ def dump_trees(
         vertex_props: Comma-separated list of :class:`~guffin.vertex.Vertex`
             field names to include in each vertex panel body, or ``None`` to use
             :data:`~guffin.render.rich_rendering.DEFAULT_VERTEX_PANEL_PROPS`.
+        api_endpoint: Roam Local API endpoint (URL + bearer token), forwarded
+            to :func:`_dump_vertex_tree`.
         show_raw_results: When ``True``, call :func:`_dump_raw_table`.
         show_node_tree: When ``True``, call :func:`_dump_node_tree`.
         show_vertex_tree: When ``True``, call :func:`_dump_vertex_tree`.
@@ -190,7 +207,7 @@ def dump_trees(
     if show_node_tree:
         _dump_node_tree(fetch_result, node_props, console)
     if show_vertex_tree:
-        _dump_vertex_tree(vertex_tree, vertex_props, console)
+        _dump_vertex_tree(vertex_tree, vertex_props, api_endpoint, console)
 
 
 @app.command()
@@ -349,6 +366,7 @@ def main(
         vertex_tree=vertex_tree,
         node_props=node_props,
         vertex_props=vertex_props,
+        api_endpoint=api_endpoint,
         show_raw_results=show_raw_results,
         show_node_tree=show_node_tree,
         show_vertex_tree=show_vertex_tree,

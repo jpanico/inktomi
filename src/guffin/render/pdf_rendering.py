@@ -7,7 +7,7 @@ then exports the document to PDF by serializing the Doc to Pandoc JSON and
 invoking Pandoc via :mod:`pypandoc`.
 
 Cloud Firestore image assets are fetched via
-:func:`~guffin.render.pandoc_rendering.fetch_images`, written to a temporary
+:func:`~guffin.render.image_fetch.fetch_and_enrich_images`, written to a temporary
 directory, and embedded in the PDF as local-path
 :class:`~panflute.Image` elements.  An optional *cache_dir* avoids
 re-downloading unchanged assets across runs.
@@ -40,9 +40,8 @@ import pypandoc  # type: ignore[import-untyped]
 from pydantic import validate_call
 
 from guffin.common.filenames import shell_safe_filename
-from guffin.common.geometry import ImageSize
-from guffin.vertex_tree import VertexTree, enrich_image_original_sizes
-from guffin.render.image_fetch import ImageRef, fetch_images
+from guffin.vertex_tree import VertexTree
+from guffin.render.image_fetch import ImageRef, fetch_and_enrich_images
 from guffin.render.pandoc_rendering import pandoc_to_json, vertex_tree_to_pandoc
 from guffin.roam.local_api import ApiEndpoint
 from guffin.roam.primitives import Uid
@@ -78,10 +77,9 @@ def render(
     Derives the output filename from *filename_stem* via
     :func:`~guffin.common.filenames.shell_safe_filename`, creating
     ``<output_dir>/<normalized_filename_stem>.pdf``.  Fetches all Cloud
-    Firestore image assets into a temporary directory via
-    :func:`~guffin.render.pandoc_rendering.fetch_images`, enriches the vertex
+    Firestore image assets into a temporary directory and enriches the vertex
     tree with each image's native pixel size via
-    :func:`~guffin.vertex_tree.enrich_image_original_sizes`, builds a Panflute
+    :func:`~guffin.render.image_fetch.fetch_and_enrich_images`, builds a Panflute
     :class:`~panflute.Doc` via
     :func:`~guffin.render.pandoc_rendering.vertex_tree_to_pandoc`, serializes it
     to Pandoc JSON, and invokes Pandoc (with the Typst PDF engine and the
@@ -140,9 +138,11 @@ def render(
         logger.debug("using user_cfg override: %s", user_cfg_path)
 
     with tempfile.TemporaryDirectory() as tmp:
-        image_refs: Final[dict[Uid, ImageRef]] = fetch_images(vertex_tree, api_endpoint, Path(tmp), cache_dir)
-        original_sizes: Final[dict[Uid, ImageSize]] = {uid: ref.size for uid, ref in image_refs.items()}
-        enriched_tree: Final[VertexTree] = enrich_image_original_sizes(vertex_tree, original_sizes)
+        fetched: Final[tuple[VertexTree, dict[Uid, ImageRef]]] = fetch_and_enrich_images(
+            vertex_tree, api_endpoint, Path(tmp), cache_dir
+        )
+        enriched_tree: Final[VertexTree] = fetched[0]
+        image_refs: Final[dict[Uid, ImageRef]] = fetched[1]
         image_files: Final[dict[Uid, Path]] = {uid: ref.path for uid, ref in image_refs.items()}
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(enriched_tree, image_files)
         json_str: Final[str] = pandoc_to_json(doc, dump_pandoc_ast, output_dir, stem)

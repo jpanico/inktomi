@@ -56,6 +56,16 @@ def live_api_endpoint() -> ApiEndpoint:
     )
 
 
+@pytest.fixture
+def live_cache_dir() -> pathlib.Path:
+    """Return the asset cache directory from ``GUFFIN_CACHE_DIR`` for live tests.
+
+    Requires ``GUFFIN_CACHE_DIR`` to be set in the environment.  Intended for use in
+    tests marked ``@pytest.mark.live``.
+    """
+    return pathlib.Path(os.environ["GUFFIN_CACHE_DIR"])
+
+
 def article1_node_tree() -> NodeTree:
     """Load and return the ``[[Test Article]] 1`` :class:`~guffin.roam.tree.NodeTree` from its YAML fixture."""
     raw: Final[list[dict[str, object]]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_1_nodes.yaml").read_text())

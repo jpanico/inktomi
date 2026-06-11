@@ -14,17 +14,19 @@ Public symbols:
 - :class:`ImageRef` — 3-way association of an image vertex's UID, on-disk path, and pixel size.
 - :func:`fetch_images` — fetch all :class:`~guffin.vertex.ImageVertex` assets from a
   :class:`~guffin.vertex_tree.VertexTree` to a local directory; return a ``{uid: ImageRef}`` mapping.
+- :func:`fetch_and_enrich_images` — :func:`fetch_images` plus tree enrichment; returns the
+  ``original_image_size``-populated tree together with the ``{uid: ImageRef}`` mapping.
 """
 
 import logging
 from pathlib import Path
-from typing import NamedTuple
+from typing import Final, NamedTuple
 
 from pydantic import validate_call
 
 from guffin.common.geometry import ImageSize
 from guffin.vertex import ImageVertex
-from guffin.vertex_tree import VertexTree
+from guffin.vertex_tree import VertexTree, enrich_image_original_sizes
 from guffin.roam.asset import RoamAsset, RoamImageAsset
 from guffin.roam.asset_fetch import fetch_and_cache_asset
 from guffin.roam.local_api import ApiEndpoint
@@ -93,3 +95,35 @@ def fetch_images(
         except Exception as e:
             logger.warning("Failed to fetch image uid=%r source=%s: %s", vertex.uid, vertex.source, e)
     return image_refs
+
+
+@validate_call
+def fetch_and_enrich_images(
+    vertex_tree: VertexTree,
+    api_endpoint: ApiEndpoint,
+    image_dir: Path,
+    cache_dir: Path | None = None,
+) -> tuple[VertexTree, dict[Uid, ImageRef]]:
+    """Fetch every image asset and return the tree enriched with their native sizes.
+
+    Convenience wrapper over :func:`fetch_images`: after fetching, populates
+    :attr:`~guffin.vertex.ImageVertex.original_image_size` on each image vertex
+    from the corresponding :class:`ImageRef` size via
+    :func:`~guffin.vertex_tree.enrich_image_original_sizes`.
+
+    Args:
+        vertex_tree: The vertex tree whose image assets to fetch.
+        api_endpoint: Roam Local API endpoint (URL + bearer token).
+        image_dir: Directory where fetched image files are written.
+        cache_dir: Optional directory for caching downloaded assets across runs.
+
+    Returns:
+        A ``(enriched_tree, image_refs)`` pair: *enriched_tree* is a copy of
+        *vertex_tree* with every :class:`~guffin.vertex.ImageVertex`'s
+        ``original_image_size`` populated from its fetched image; *image_refs*
+        is the ``{uid: ImageRef}`` mapping as returned by :func:`fetch_images`.
+    """
+    image_refs: Final[dict[Uid, ImageRef]] = fetch_images(vertex_tree, api_endpoint, image_dir, cache_dir)
+    original_sizes: Final[dict[Uid, ImageSize]] = {uid: ref.size for uid, ref in image_refs.items()}
+    enriched_tree: Final[VertexTree] = enrich_image_original_sizes(vertex_tree, original_sizes)
+    return enriched_tree, image_refs
