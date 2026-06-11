@@ -53,7 +53,8 @@
       "Bash(typst fonts *)",
       "Bash(typst compile *)",
       "Bash(find ~ -maxdepth 5 -name \"*.body.typ\" -o -name \"*.full.typ\" 2>/dev/null | head -10)",
-      "Bash(cat > *)"
+      "Bash(cat > *)",
+      "Bash(/Users/jpanico/Documents/github/guffin/.venv/bin/pip install *)"
     ]
   }
 }

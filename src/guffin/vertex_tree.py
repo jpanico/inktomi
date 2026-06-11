@@ -15,13 +15,20 @@ Public symbols:
 - :func:`image_vertices` — return all :class:`~guffin.vertex.ImageVertex` instances in a :class:`VertexTree`.
 - :func:`image_urls` — return all Cloud Firestore image URLs from a :class:`VertexTree`.
 - :func:`root_vertex` — return the single root :data:`~guffin.vertex.Vertex` of a :class:`VertexTree`.
+- :func:`map_vertices` — return a new :class:`VertexTree` with a mapping function applied to every vertex.
+- :func:`enrich_image_original_sizes` — return a new :class:`VertexTree` with
+  :attr:`~guffin.vertex.ImageVertex.original_image_size` populated from a UID→ImageSize map.
 """
 
-from collections.abc import Iterator
+import logging
+from collections.abc import Callable, Iterator
 from typing import Annotated, Final
 
 from pydantic import BaseModel, ConfigDict, Field, validate_call
 
+from guffin.common.geometry import ImageSize
+
+logger = logging.getLogger(__name__)
 from guffin.roam.primitives import Uid, Url
 from guffin.vertex import (
     HeadingVertex,
@@ -161,3 +168,49 @@ def root_vertex(tree: VertexTree) -> Vertex:
     """
     child_uids: Final[set[Uid]] = {uid for v in tree.vertices if v.children for uid in v.children}
     return next(v for v in tree.vertices if v.uid not in child_uids)
+
+
+@validate_call
+def map_vertices(tree: VertexTree, fn: Callable[[Vertex], Vertex]) -> VertexTree:
+    """Return a new :class:`VertexTree` with *fn* applied to every vertex.
+
+    The original *tree* is not modified; immutability is preserved via
+    :meth:`~pydantic.BaseModel.model_copy`.
+
+    Args:
+        tree: The source :class:`VertexTree`.
+        fn: A callable that maps each :data:`~guffin.vertex.Vertex` to a
+            (possibly new) :data:`~guffin.vertex.Vertex`.
+
+    Returns:
+        A new :class:`VertexTree` whose vertices are ``[fn(v) for v in tree.vertices]``.
+    """
+    return tree.model_copy(update={"vertices": [fn(v) for v in tree.vertices]})
+
+
+@validate_call
+def enrich_image_original_sizes(tree: VertexTree, sizes: dict[Uid, ImageSize]) -> VertexTree:
+    """Return a new :class:`VertexTree` with :attr:`~guffin.vertex.ImageVertex.original_image_size` populated.
+
+    Each :class:`~guffin.vertex.ImageVertex` whose UID appears in *sizes* receives a
+    copy with :attr:`~guffin.vertex.ImageVertex.original_image_size` set to the
+    corresponding :class:`~guffin.common.geometry.ImageSize`.  All other vertices pass
+    through unchanged.
+
+    Args:
+        tree: The source :class:`VertexTree`.
+        sizes: Mapping from :class:`~guffin.vertex.ImageVertex` UID to its native pixel dimensions.
+
+    Returns:
+        A new :class:`VertexTree` with :attr:`~guffin.vertex.ImageVertex.original_image_size`
+        populated for all UIDs present in *sizes*.
+    """
+
+    def _enrich(v: Vertex) -> Vertex:
+        if isinstance(v, ImageVertex):
+            if v.uid in sizes:
+                return v.model_copy(update={"original_image_size": sizes[v.uid]})
+            logger.warning("ImageVertex uid=%r absent from sizes map; original_image_size left unset", v.uid)
+        return v
+
+    return map_vertices(tree, _enrich)
