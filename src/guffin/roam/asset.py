@@ -3,14 +3,30 @@
 Public symbols:
 
 - :class:`RoamAsset` — immutable representation of an asset fetched from Cloud Firestore
-  through the Roam API.
+  through the Roam API; :meth:`~RoamAsset.create` is the factory entry point.
+- :class:`RoamImageAsset` — :class:`RoamAsset` subclass for image assets; adds
+  :attr:`~RoamImageAsset.image_size`.
 """
 
+import io
+import logging
 from datetime import datetime
+from typing import Final
 
+import imagesize  # pyright: ignore[reportMissingTypeStubs]
 from pydantic import BaseModel, ConfigDict, Field
 
-from guffin.common.media_type import MediaType
+from guffin.common.geometry import ImageSize
+from guffin.common.media_type import MediaType, is_image_type
+
+logger = logging.getLogger(__name__)
+
+
+def _imagesize_get(data: bytes) -> tuple[int, int]:
+    result: Final[tuple[int, int]] = imagesize.get(io.BytesIO(data))  # type: ignore[no-untyped-call, assignment]
+    if result == (-1, -1):
+        logger.error("imagesize could not parse image contents (len=%d bytes)", len(data))
+    return result
 
 
 class RoamAsset(BaseModel):
@@ -18,6 +34,9 @@ class RoamAsset(BaseModel):
 
     Roam uploads all user assets (files, media) to Cloud Firestore, and stores only Cloud Firestore
     locators (URLs) within the Roam graph DB itself (nodes).
+
+    Use :meth:`create` to construct instances — it dispatches to the appropriate subclass based
+    on *media_type*.
 
     Once created, instances cannot be modified (frozen). All fields are required
     and validated at construction time.
@@ -29,3 +48,59 @@ class RoamAsset(BaseModel):
     last_modified: datetime = Field(..., description="Last modification timestamp")
     media_type: MediaType = Field(..., description="MIME type (e.g., 'image/jpeg')")
     contents: bytes = Field(..., description="Binary file contents")
+
+    @classmethod
+    def create(
+        cls,
+        file_name: str,
+        last_modified: datetime,
+        media_type: MediaType,
+        contents: bytes,
+    ) -> RoamAsset:
+        """Construct a :class:`RoamAsset` or the appropriate subclass for *media_type*.
+
+        For image media types, pixel dimensions are extracted from *contents* via
+        ``imagesize`` and a :class:`RoamImageAsset` is returned.  For all other types
+        a plain :class:`RoamAsset` is returned.
+
+        Args:
+            file_name: Name of the file.
+            last_modified: Last modification timestamp.
+            media_type: IANA media type of the asset.
+            contents: Binary file contents.
+
+        Returns:
+            A :class:`RoamImageAsset` when *media_type* is an image type; a
+            :class:`RoamAsset` otherwise.
+        """
+        if is_image_type(media_type):
+            raw_size: Final[tuple[int, int]] = _imagesize_get(contents)
+            image_size: Final[ImageSize] = ImageSize(
+                width=raw_size[0] if raw_size[0] != -1 else None,
+                height=raw_size[1] if raw_size[1] != -1 else None,
+            )
+            return RoamImageAsset(
+                file_name=file_name,
+                last_modified=last_modified,
+                media_type=media_type,
+                contents=contents,
+                image_size=image_size,
+            )
+        return RoamAsset(
+            file_name=file_name,
+            last_modified=last_modified,
+            media_type=media_type,
+            contents=contents,
+        )
+
+
+class RoamImageAsset(RoamAsset):
+    """Immutable representation of an image asset fetched from Cloud Firestore through the Roam API.
+
+    Extends :class:`RoamAsset` with pixel dimensions extracted from the image file contents.
+
+    Attributes:
+        image_size: Pixel dimensions of the image.
+    """
+
+    image_size: ImageSize = Field(..., description="Pixel dimensions of the image.")
