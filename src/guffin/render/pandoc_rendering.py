@@ -5,46 +5,40 @@ Converts the normalized vertex tree produced by
 :class:`~panflute.Doc` (the Pandoc object model), with inline Pandoc Markdown
 properly parsed into structured panflute inline elements.
 
-Both :mod:`~guffin.md_rendering` and :mod:`~guffin.pdf_rendering` delegate
-their tree-walking logic here, ensuring a single rendering path for all
-output formats.
+The resulting :class:`~panflute.Doc` is an output-format-neutral intermediate
+representation; serializing it to a concrete target format is left to the
+caller.
 
 Inline parsing:
 
 Text fields on :class:`~guffin.vertex.HeadingVertex` and
 :class:`~guffin.vertex.TextContentVertex` contain normalized Pandoc Markdown
-(e.g. ``**bold**``, ``*italic*``, `` `code` ``, ``[text]{.mark}``).  The
-private :func:`parse_inline_md` batches all unique text strings into a single
+(e.g. ``**bold**``, ``*italic*``, `` `code` ``, ``[text]{.mark}``).
+:func:`parse_inline_md` batches all unique text strings into a single
 Pandoc parse call, returning a mapping from text string to the corresponding
 list of panflute inline elements.  This avoids per-block subprocess overhead
 while correctly handling all Pandoc Markdown inline syntax.
 
 Rendering rules:
 
-- :class:`~guffin.vertex.PageVertex` — when *title_in_header* is ``True``
-  (Markdown path), title rendered as an H1 :class:`~panflute.Header` in
-  the document body; when ``False`` (PDF path), title stored as the Pandoc
-  document metadata ``title``.  Children rendered at depth 1 in both cases.
+- :class:`~guffin.vertex.PageVertex` — when *title_in_header* is ``True``,
+  title rendered as an H1 :class:`~panflute.Header` in the document body;
+  when ``False``, title stored as the Pandoc document metadata ``title``.
+  Children rendered at depth 1 in both cases.
 - :class:`~guffin.vertex.HeadingVertex` — rendered as a
   :class:`~panflute.Header` at the vertex's recorded heading level.
 - :class:`~guffin.vertex.TextContentVertex` — direct children of the page
   (depth 1) become :class:`~panflute.Para` blocks; deeper vertices are
   coalesced into :class:`~panflute.BulletList` items, with their own
   children rendered as nested :class:`~panflute.BulletList` blocks.
-- :class:`~guffin.vertex.ImageVertex` — fetched from Cloud Firestore, written
-  to a local directory, and embedded as a :class:`~panflute.Image` element.
-  Falls back to a :class:`~panflute.Link` if the fetch fails or when
-  *image_files* has no entry for the vertex.
+- :class:`~guffin.vertex.ImageVertex` — embedded as a :class:`~panflute.Image`
+  element pointing at the local path from *image_files*; falls back to a
+  :class:`~panflute.Link` when *image_files* has no entry for the vertex.
 
 Public symbols:
 
 - :func:`parse_inline_md` — batch-parse Pandoc Markdown inline text strings into
   panflute inline element lists via a single Pandoc call.
-- :class:`ImageRef` — 3-way association of an image vertex's UID, on-disk path, and pixel size.
-- :func:`fetch_images` — fetch all
-  :class:`~guffin.vertex.ImageVertex` assets from a
-  :class:`~guffin.vertex_tree.VertexTree` to a local directory; return a
-  ``{uid: ImageRef}`` mapping.
 - :func:`build_child_blocks` — convert an ordered list of vertex UIDs to Pandoc
   block elements.
 - :func:`vertex_tree_to_pandoc` — convert a
@@ -63,7 +57,7 @@ import logging
 import uuid
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Final, NamedTuple
+from typing import Final
 
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
@@ -80,10 +74,6 @@ from guffin.vertex import (
     VertexChildren,
 )
 from guffin.vertex_tree import VertexTree, root_vertex
-from guffin.common.geometry import ImageSize
-from guffin.roam.asset import RoamAsset, RoamImageAsset
-from guffin.roam.asset_fetch import fetch_and_cache_asset
-from guffin.roam.local_api import ApiEndpoint
 from guffin.roam.primitives import Uid
 
 logger = logging.getLogger(__name__)
@@ -148,73 +138,6 @@ def parse_inline_md(texts: list[str]) -> dict[str, list[pf.Inline]]:
             result[unique[text_idx]] = block_inlines
 
     return result
-
-
-# ---------------------------------------------------------------------------
-# Image fetching
-# ---------------------------------------------------------------------------
-
-
-class ImageRef(NamedTuple):
-    """An :class:`~guffin.vertex.ImageVertex`'s fetched asset: its UID, on-disk path, and pixel size.
-
-    The 3-way association produced by :func:`fetch_images` for every image
-    successfully fetched from Cloud Firestore.
-
-    Attributes:
-        uid: The source :class:`~guffin.vertex.ImageVertex` UID.
-        path: Local filesystem path of the written image file.
-        size: Native pixel dimensions of the image, or an empty
-            :class:`~guffin.common.geometry.ImageSize` when they could not be determined.
-    """
-
-    uid: Uid
-    path: Path
-    size: ImageSize
-
-
-@validate_call
-def fetch_images(
-    vertex_tree: VertexTree,
-    api_endpoint: ApiEndpoint,
-    image_dir: Path,
-    cache_dir: Path | None = None,
-) -> dict[Uid, ImageRef]:
-    """Fetch all :class:`~guffin.vertex.ImageVertex` assets to *image_dir*.
-
-    Delegates fetching and caching to
-    :func:`~guffin.roam.asset_fetch.fetch_and_cache_asset`.  Each fetched
-    asset is written to *image_dir* under its deterministic
-    ``<sha256>.<ext>`` filename.  Vertices that fail to fetch are skipped
-    with a warning and will fall back to a hyperlink in the rendered output.
-
-    Args:
-        vertex_tree: The vertex tree whose image assets to fetch.
-        api_endpoint: Roam Local API endpoint (URL + bearer token).
-        image_dir: Directory where fetched image files are written.
-        cache_dir: Optional directory for caching downloaded assets across
-            runs.
-
-    Returns:
-        A mapping from :class:`~guffin.vertex.ImageVertex` UID to an
-        :class:`ImageRef` bundling the local path and native pixel size of
-        the fetched image.  Vertices that could not be fetched are absent
-        from the mapping.
-    """
-    image_refs: dict[Uid, ImageRef] = {}
-    for vertex in vertex_tree.vertices:
-        if not isinstance(vertex, ImageVertex):
-            continue
-        try:
-            asset: RoamAsset = fetch_and_cache_asset(vertex.source, api_endpoint, cache_dir)
-            img_path: Path = image_dir / asset.file_name
-            img_path.write_bytes(asset.contents)
-            size: ImageSize = asset.image_size if isinstance(asset, RoamImageAsset) else ImageSize()
-            image_refs[vertex.uid] = ImageRef(uid=vertex.uid, path=img_path, size=size)
-            logger.info("Fetched image uid=%r -> %s", vertex.uid, img_path.name)
-        except Exception as e:
-            logger.warning("Failed to fetch image uid=%r source=%s: %s", vertex.uid, vertex.source, e)
-    return image_refs
 
 
 # ---------------------------------------------------------------------------

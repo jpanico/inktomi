@@ -51,7 +51,8 @@ GUFFIN_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `vertex.py` — `Vertex` union and all five concrete vertex types (`PageVertex`, `HeadingVertex`, `TextContentVertex`, `ImageVertex`, `CalloutVertex`); `VertexType`, `VertexChildren`, `VertexRefs`, `vertex_adapter`
     - `vertex_tree.py` — `VertexTree`, `VertexTreeDFSIterator`, `root_vertex()`; filter helpers `page_vertices()`, `heading_vertices()`, `text_content_vertices()`, `image_vertices()`, `image_urls()`
   - **`render/` sub-package** (`src/guffin/render/`) — rendering pipeline modules
-    - `pandoc_rendering.py` — shared Pandoc/Panflute rendering utilities; `vertex_tree_to_pandoc()` builds a Panflute `Doc` from a `VertexTree` (batch-parsing inline Pandoc Markdown via a single Pandoc call); `fetch_images()` fetches Cloud Firestore image assets
+    - `image_fetch.py` — Pandoc-free image-asset fetching shared by all renderers; `ImageRef` (UID + on-disk path + `ImageSize`) and `fetch_images()` (fetches a `VertexTree`'s Cloud Firestore image assets to a local dir, returning `{uid: ImageRef}`)
+    - `pandoc_rendering.py` — shared Pandoc/Panflute rendering utilities; `vertex_tree_to_pandoc()` builds a Panflute `Doc` from a `VertexTree` (batch-parsing inline Pandoc Markdown via a single Pandoc call)
     - `md_rendering.py` — renders a `VertexTree` to Markdown: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to GFM via Pandoc, writes a plain `.md` or `.mdbundle/` directory
     - `pdf_rendering.py` — renders a `VertexTree` to PDF: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to PDF via Pandoc + Typst
     - `rich_rendering.py` — Rich panel/tree rendering for `NodeTree` and `VertexTree`
@@ -120,6 +121,7 @@ python tests/regen_fixtures.py "[[Test Article]] 2" --prefix test_article_2
 - Src layout: package lives under `src/guffin/`
 - Line length: 120 chars (Black + Ruff)
 - Docstrings: PEP 257 format (pydocstringformatter), Google style convention (Ruff)
+- **Dependent-agnostic documentation**: a module, class, or function must document what it offers on its own terms — never how its dependents (importers/callers) consume it. Don't name downstream modules or describe their usage in upstream docstrings or comments (e.g. avoid "X and Y delegate their logic here" or "shared by Z"); describe behaviour through the API's own parameters and contract, so the documentation reads identically regardless of who depends on it.
 - Tests: pytest, files named `test_*.py`
 - **Strong typing**: all Python code must use type annotations throughout; no `Any` types; enforced by pyright in strict mode
 - **Bash tool calls**: never chain multiple commands with `&&` in a single Bash tool call; use separate Bash tool calls instead. Never use heredoc embeds (`$(cat <<'EOF'...EOF)`) in Bash tool calls; use plain `-m "..."` strings with `\n` for newlines instead.
