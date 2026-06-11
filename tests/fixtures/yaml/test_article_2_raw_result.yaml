@@ -231,7 +231,8 @@
     open: true
     page:
       id: 4225
-- - string: illustration 2.1
+- - heading: 3
+    string: illustration 2.1
     children:
     - id: 11164
     - id: 11167
@@ -325,9 +326,9 @@
     title: '[[Test Article]] 1'
     seen-by:
     - id: 3
-    edit-nonce: 0Ror_KL_Y
+    edit-nonce: tsZNP3aVL
     view-type: bullet
-    edit-time: 1781089401093
+    edit-time: 1781136935270
     refs:
     - id: 4223
 - - string: external block embed (from [[[[Test Article]] 1]])

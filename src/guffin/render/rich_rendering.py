@@ -277,8 +277,12 @@ def _format_vertex_prop(vertex: Vertex, prop: str) -> str:
             return f"file_name={vertex.file_name}" if isinstance(vertex, ImageVertex) else "file_name=N/A"
         case "media_type":
             return f"media_type={vertex.media_type.value}" if isinstance(vertex, ImageVertex) else "media_type=N/A"
-        case "image_size":
-            return f"image_size={vertex.image_size}" if isinstance(vertex, ImageVertex) else "image_size=N/A"
+        case "scaled_image_size":
+            return (
+                f"scaled_image_size=({vertex.scaled_image_size})"
+                if isinstance(vertex, ImageVertex)
+                else "scaled_image_size=N/A"
+            )
         case "source":
             return f"source={vertex.source}" if isinstance(vertex, ImageVertex) else "source=N/A"
         case "alt_text":
@@ -319,21 +323,30 @@ def build_vertex_panel(vertex: Vertex, props: list[str] = DEFAULT_VERTEX_PANEL_P
         A :class:`~rich.panel.Panel` with a labelled title and metadata body.
     """
     logger.debug("vertex=%r", vertex)
-    text: str
+    title_content: str
     match vertex.vertex_type:
         case VertexType.GUFFIN_PAGE:
-            text = vertex.title
+            title_content = f"[bold #00aa00]{markup_escape(vertex.title)}[/bold #00aa00]"
         case VertexType.GUFFIN_HEADING:
-            text = f"H{vertex.heading_level}: {vertex.text}"
+            title_content = (
+                f"[bold orange1]H{vertex.heading_level}[/bold orange1]"
+                f"[bold #00aa00]{markup_escape(f': {vertex.text}')}[/bold #00aa00]"
+            )
         case VertexType.GUFFIN_TEXT_CONTENT:
-            text = vertex.text
+            title_content = f"[bold #00aa00]{markup_escape(vertex.text)}[/bold #00aa00]"
         case VertexType.GUFFIN_IMAGE:
-            text = f"IMAGE [{vertex.alt_text or ''}](<firestore_url>)"
+            title_content = (
+                f"[bold orange1]{markup_escape(f'IMAGE [{vertex.alt_text or ""}]')}[/bold orange1]"
+                f"[bold #00aa00](<firestore_url>)[/bold #00aa00]"
+            )
         case VertexType.GUFFIN_CALLOUT:
-            text = f"CALLOUT [{vertex.callout_type.value}]: {vertex.title}"
+            title_content = (
+                f"[bold orange1]{markup_escape(f'CALLOUT [{vertex.callout_type.value}]:')}[/bold orange1]"
+                f" [bold #00aa00]{markup_escape(vertex.title)}[/bold #00aa00]"
+            )
         case _ as unreachable:
             assert_never(unreachable)
-    title: Final[str] = f"[bold #00aa00]{markup_escape(text)} ({vertex.uid})[/bold #00aa00]"
+    title: Final[str] = f"{title_content} [dim]({vertex.uid})[/dim]"
     content: Final[str] = "  ".join(_format_vertex_prop(vertex, p) for p in props)
     return Panel(Text(content), title=title, expand=False)
 

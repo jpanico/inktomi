@@ -259,7 +259,7 @@ def to_image_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> ImageVertex:
         alt_text=_extract_alt_text(node.string),
         file_name=file_name,
         media_type=media_type,
-        image_size=size,
+        scaled_image_size=size,
         children=_resolve_children(node, id_map),
         refs=_resolve_refs(node, id_map),
     )

@@ -205,7 +205,7 @@ class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
             filename cannot be extracted.
         media_type: IANA media type inferred from *file_name*'s extension.
             Serialized as ``'media-type'``.
-        image_size: Pixel dimensions from the source node's ``image-size`` block
+        scaled_image_size: Pixel dimensions from the source node's ``image-size`` block
             prop. Both axes are ``None`` when no ``image-size`` prop is recorded.
             Serialized as ``'image-size'``.
     """
@@ -227,7 +227,7 @@ class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
         serialization_alias="media-type",
         description="IANA media type inferred from file_name's extension (serialized as 'media-type').",
     )
-    image_size: ImageSize = Field(
+    scaled_image_size: ImageSize = Field(
         ...,
         serialization_alias="image-size",
         description="Pixel dimensions from the node's image-size prop (serialized as 'image-size').",

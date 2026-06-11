@@ -13,7 +13,7 @@
   source: https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a
   file_name: aOC1FnrcwK.jpeg.enc
   media_type: image/jpeg
-  image_size:
+  scaled_image_size:
     width: 257
 - vertex_type: guffin/heading
   uid: 0EgPyHSZi
@@ -51,7 +51,7 @@
   alt_text: A flower
   file_name: _otAwc2B9g.jpeg.enc
   media_type: image/jpeg
-  image_size: {}
+  scaled_image_size: {}
 - vertex_type: guffin/text-content
   uid: 4_GrZ9su6
   text: this image **has not been resized** through the Roam UI.

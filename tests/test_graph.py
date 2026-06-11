@@ -25,7 +25,7 @@ def _page(uid: str = "pageuid01") -> PageVertex:
 
 
 def _image(uid: str = "imguid001", url: str = _URL_A) -> ImageVertex:
-    return ImageVertex(uid=uid, source=url, media_type=MediaType.JPEG, image_size=ImageSize())  # type: ignore[arg-type]
+    return ImageVertex(uid=uid, source=url, media_type=MediaType.JPEG, scaled_image_size=ImageSize())  # type: ignore[arg-type]
 
 
 def _text(uid: str = "textuid01") -> TextContentVertex:
