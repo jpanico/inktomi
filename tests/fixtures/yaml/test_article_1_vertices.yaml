@@ -55,12 +55,13 @@
 - vertex_type: guffin/text-content
   uid: 4_GrZ9su6
   text: this image **has not been resized** through the Roam UI.
-- vertex_type: guffin/text-content
+- vertex_type: guffin/heading
   uid: OaTXPl93p
   children:
   - tWkumkdUE
   - zZG-BfWvs
   text: illustration 2.1
+  heading_level: 3
 - vertex_type: guffin/heading
   uid: 3BX-iWc-p
   children:
