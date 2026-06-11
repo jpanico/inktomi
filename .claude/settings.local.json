@@ -55,7 +55,10 @@
       "Bash(find ~ -maxdepth 5 -name \"*.body.typ\" -o -name \"*.full.typ\" 2>/dev/null | head -10)",
       "Bash(cat > *)",
       "Bash(/Users/jpanico/Documents/github/guffin/.venv/bin/pip install *)",
-      "Bash(GUFFIN_LIVE_TESTS=1 .venv/bin/pytest tests/test_export_roam_tree.py::TestExportRoamTreeMdbundleLive -v)"
+      "Bash(GUFFIN_LIVE_TESTS=1 .venv/bin/pytest tests/test_export_roam_tree.py::TestExportRoamTreeMdbundleLive -v)",
+      "Bash(GUFFIN_LIVE_TESTS=1 .venv/bin/python tests/regen_fixtures.py \"[[Test Article]] 1\" --prefix test_article_1 --mdbundle)",
+      "Bash(GUFFIN_LIVE_TESTS=1 .venv/bin/pytest tests/test_export_roam_tree.py -v)",
+      "Bash(GUFFIN_LIVE_TESTS=1 .venv/bin/python tests/regen_fixtures.py \"[[Test Article]] 1\" --prefix test_article_1 --mdbundle --pdf)"
     ]
   }
 }

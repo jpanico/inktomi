@@ -24,6 +24,7 @@ from typing import Final
 
 _RENDER_DIR: Final[Path] = Path(__file__).parent
 _GFM_CALLOUT_FILTER: Final[Path] = _RENDER_DIR / "gfm_callout.lua"
+_GFM_IMAGE_FILTER: Final[Path] = _RENDER_DIR / "gfm_image.lua"
 
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
@@ -111,7 +112,7 @@ def render(
             bundle_json_str,
             "gfm",
             format="json",
-            extra_args=["--wrap=none", f"--lua-filter={_GFM_CALLOUT_FILTER}"],
+            extra_args=["--wrap=none", f"--lua-filter={_GFM_CALLOUT_FILTER}", f"--lua-filter={_GFM_IMAGE_FILTER}"],
         )
         output_file: Final[Path] = bundle_dir / f"{stem}.md"
         output_file.write_text(md_text, encoding="utf-8")

@@ -64,6 +64,7 @@ import pypandoc  # type: ignore[import-untyped]
 
 from pydantic import ConfigDict, validate_call
 
+from guffin.common.geometry import ImageSize
 from guffin.vertex import (
     CalloutVertex,
     HeadingVertex,
@@ -344,7 +345,14 @@ def _image_vertex_to_blocks(
         alt: Final[list[pf.Inline]] = (
             inline_map.get(vertex.alt_text, [pf.Str(vertex.alt_text)]) if vertex.alt_text else []
         )
-        img: Final[pf.Image] = pf.Image(*alt, url=str(img_path), title=vertex.file_name or "")
+        attrs: Final[dict[str, str]] = {}
+        size: Final[ImageSize] = vertex.scaled_image_size
+        if size.width is not None or size.height is not None:
+            if size.width is not None:
+                attrs["width"] = str(size.width)
+            if size.height is not None:
+                attrs["height"] = str(size.height)
+        img: Final[pf.Image] = pf.Image(*alt, url=str(img_path), title=vertex.file_name or "", attributes=attrs)
         return [pf.Para(img)]
     else:
         label_text: Final[str] = vertex.alt_text or vertex.file_name or str(vertex.source)
