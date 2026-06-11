@@ -208,6 +208,9 @@ class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
         scaled_image_size: Pixel dimensions from the source node's ``image-size`` block
             prop. Both axes are ``None`` when no ``image-size`` prop is recorded.
             Serialized as ``'image-size'``.
+        original_image_size: Native pixel dimensions of the image file before any
+            Roam scaling is applied. ``None`` when the original size is unknown.
+            Serialized as ``'original-image-size'``.
     """
 
     vertex_type: Literal[VertexType.GUFFIN_IMAGE] = Field(
@@ -231,6 +234,11 @@ class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
         ...,
         serialization_alias="image-size",
         description="Pixel dimensions from the node's image-size prop (serialized as 'image-size').",
+    )
+    original_image_size: ImageSize | None = Field(
+        default=None,
+        serialization_alias="original-image-size",
+        description="Native dimensions before Roam scaling. None when unknown (serialized as 'original-image-size').",
     )
 
     @field_validator("media_type")

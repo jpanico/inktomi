@@ -31,6 +31,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree as RichTree
 
+from guffin.common.geometry import ImageSize
 from guffin.vertex import (
     CalloutVertex,
     ImageVertex,
@@ -283,6 +284,11 @@ def _format_vertex_prop(vertex: Vertex, prop: str) -> str:
                 if isinstance(vertex, ImageVertex)
                 else "scaled_image_size=N/A"
             )
+        case "original_image_size":
+            if not isinstance(vertex, ImageVertex):
+                return "original_image_size=N/A"
+            size: Final[ImageSize | None] = vertex.original_image_size
+            return f"original_image_size=({size})" if size is not None else "original_image_size=None"
         case "source":
             return f"source={vertex.source}" if isinstance(vertex, ImageVertex) else "source=N/A"
         case "alt_text":
