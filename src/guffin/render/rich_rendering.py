@@ -40,7 +40,7 @@ from guffin.vertex_tree import VertexTree, VertexTreeDFSIterator
 from guffin.roam.node import NodeType, RoamNode, effective_heading_level, node_type
 from guffin.roam.node_fetch_result import NodeFetchResult
 from guffin.roam.tree import NodeTree, NodeTreeDFSIterator
-from guffin.roam.primitives import Id, IdObject, IMAGE_LINK_RE, Uid
+from guffin.roam.primitives import Id, IdObject, IMAGE_LINK_RE, Uid, RoamCallout, parse_callout
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +166,9 @@ def build_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS
             title_text = node.string
         case NodeType.ROAM_CALLOUT_BLOCK:
             assert node.string is not None
-            title_text = node.string
+            callout: Final[RoamCallout | None] = parse_callout(node.string)
+            assert callout is not None
+            title_text = callout.title
         case NodeType.ROAM_PLAIN_BLOCK:
             assert node.string is not None
             title_text = node.string

@@ -2,7 +2,7 @@
 
 #let user_cfg = (
   toc: false,
-  number-sections: true,
+  number-sections: false,
   section-numbering: "1.", // (top level only)
   heading-numbering-start-level: 2,
   h1-size: 1.8,

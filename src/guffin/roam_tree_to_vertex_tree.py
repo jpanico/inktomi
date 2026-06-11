@@ -47,7 +47,7 @@ from guffin.roam.node import NodeType, RoamNode, effective_heading_level, image_
 from guffin.roam.tree import NodeTree
 from guffin.common.geometry import ImageSize
 from guffin.common.media_type import MediaType
-from guffin.roam.primitives import IMAGE_LINK_RE, HeadingLevel, Id, Url
+from guffin.roam.primitives import IMAGE_LINK_RE, HeadingLevel, Id, RoamCallout, Url, parse_callout
 
 logger = logging.getLogger(__name__)
 
@@ -58,15 +58,6 @@ _url_adapter: TypeAdapter[Url] = TypeAdapter(Url)
 """Pydantic :class:`~pydantic.TypeAdapter` for validating and coercing URL strings to.
 
 :data:`~guffin.roam.primitives.Url`.
-"""
-
-_CALLOUT_MARKER_RE: Final[re.Pattern[str]] = re.compile(
-    r"\[\[>\]\] \[\[!(INFO|QUOTE|EXAMPLE|NOTE|WARNING|DANGER|TIP|SUMMARY|SUCCESS|QUESTION|FAILURE|BUG)\]\]\s*"
-)
-"""Captures the callout type keyword from ``[[>]] [[!<TYPE>]]`` at the start of a block string.
-
-Group 1 is the ``<TYPE>`` keyword (e.g. ``"NOTE"``); the trailing whitespace pattern consumes
-any space between the marker and the title text so that ``string[m.end():]`` is the raw title.
 """
 
 
@@ -358,13 +349,12 @@ def to_callout_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> CalloutVert
     logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
     if node.string is None:
         raise ValueError(f"RoamNode uid={node.uid!r} has no 'string'")
-    m: Final[re.Match[str] | None] = _CALLOUT_MARKER_RE.match(node.string)
-    if m is None:
+    parsed: Final[RoamCallout | None] = parse_callout(node.string)
+    if parsed is None:
         raise ValueError(f"RoamNode uid={node.uid!r} string does not match callout marker: {node.string!r}")
-    callout_type: Final[CalloutVertex.CalloutType] = CalloutVertex.CalloutType(m.group(1).lower())
-    parts: Final[list[str]] = node.string[m.end() :].split("\n", 1)
-    title: Final[str] = to_pandoc_md(parts[0].strip())
-    body: Final[str] = to_pandoc_md(parts[1].strip()) if len(parts) > 1 else ""
+    callout_type: Final[CalloutVertex.CalloutType] = CalloutVertex.CalloutType(parsed.callout_type.lower())
+    title: Final[str] = to_pandoc_md(parsed.title.strip())
+    body: Final[str] = to_pandoc_md(parsed.body.strip()) if parsed.body else ""
     return CalloutVertex(
         uid=node.uid,
         callout_type=callout_type,

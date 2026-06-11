@@ -13,7 +13,7 @@ Public symbols are organized into five groups:
   image link whose URL is a Cloud Firestore storage URL.
 - **Enumerations**: :class:`CalloutType` — the twelve Roam callout type keywords.
 - **Callout model**: :class:`RoamCallout` — parsed decomposition of a callout block string.
-- **Callout parser**: :func:`callout` — parse a raw block string as a :class:`RoamCallout`.
+- **Callout parser**: :func:`parse_callout` — parse a raw block string as a :class:`RoamCallout`.
 """
 
 import enum
@@ -139,7 +139,7 @@ Used as a fast pre-filter before applying :data:`CALLOUT_RE`.
 
 CALLOUT_RE: Final[re.Pattern[str]] = re.compile(
     rf"(?P<prefix>{re.escape(CALLOUT_PREFIX)})"
-    r" \[\[!(?P<callout_type>INFO|QUOTE|EXAMPLE|NOTE|WARNING|DANGER|TIP|SUMMARY|SUCCESS|QUESTION|FAILURE|BUG)\]\]"
+    rf" \[\[!(?P<callout_type>{'|'.join(ct.value for ct in CalloutType)})\]\]"
     r"\s*(?P<title>[^\n]*)(?:\n(?P<body>.*))?",
     re.DOTALL,
 )
@@ -181,7 +181,7 @@ class RoamCallout(BaseModel):
 
 
 @validate_call
-def callout(block_string: str) -> RoamCallout | None:
+def parse_callout(block_string: str) -> RoamCallout | None:
     """Parse *block_string* as a :class:`RoamCallout`, or return ``None`` if it is not a callout.
 
     Returns ``None`` when *block_string* does not start with :data:`CALLOUT_PREFIX`.

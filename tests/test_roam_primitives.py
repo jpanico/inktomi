@@ -4,7 +4,7 @@ import pytest
 from typing import Final
 from pydantic import ValidationError
 
-from guffin.roam.primitives import CALLOUT_RE, CalloutType, RoamCallout, callout
+from guffin.roam.primitives import CALLOUT_RE, CalloutType, RoamCallout, parse_callout
 
 _FIRESTORE_URL: Final[str] = (
     "https://firebasestorage.googleapis.com/v0/b/test.appspot.com" "/o/imgs%2Fphoto.jpeg?alt=media&token=abc123"
@@ -149,62 +149,62 @@ class TestCallout:
 
     def test_returns_none_for_empty_string(self) -> None:
         """Returns None for an empty string."""
-        assert callout("") is None
+        assert parse_callout("") is None
 
     def test_returns_none_for_plain_text(self) -> None:
         """Returns None when block_string does not start with CALLOUT_PREFIX."""
-        assert callout("Some plain text") is None
+        assert parse_callout("Some plain text") is None
 
     def test_returns_none_for_image_link(self) -> None:
         """Returns None when block_string is a Firestore image link."""
-        assert callout(_IMAGE_STRING) is None
+        assert parse_callout(_IMAGE_STRING) is None
 
     # --- returns RoamCallout ---
 
     def test_returns_roam_callout_instance(self) -> None:
         """Returns a RoamCallout instance for a valid callout string."""
-        assert isinstance(callout("[[>]] [[!INFO]]"), RoamCallout)
+        assert isinstance(parse_callout("[[>]] [[!INFO]]"), RoamCallout)
 
     def test_callout_type_field(self) -> None:
         """callout_type matches the marker keyword as a CalloutType member."""
-        result = callout("[[>]] [[!WARNING]]")
+        result = parse_callout("[[>]] [[!WARNING]]")
         assert result is not None
         assert result.callout_type is CalloutType.WARNING
 
     @pytest.mark.parametrize("ct", list(CalloutType))
     def test_all_twelve_callout_types(self, ct: CalloutType) -> None:
         """All twelve callout type keywords are parsed to the correct CalloutType member."""
-        result = callout(f"[[>]] [[!{ct}]]")
+        result = parse_callout(f"[[>]] [[!{ct}]]")
         assert result is not None
         assert result.callout_type is CalloutType(ct)
 
     def test_title_with_text(self) -> None:
         """Title captures the text on the first line after the marker."""
-        result = callout("[[>]] [[!INFO]] This is the title")
+        result = parse_callout("[[>]] [[!INFO]] This is the title")
         assert result is not None
         assert result.title == "This is the title"
 
     def test_title_empty_when_marker_only(self) -> None:
         """Title is an empty string when nothing follows the marker."""
-        result = callout("[[>]] [[!INFO]]")
+        result = parse_callout("[[>]] [[!INFO]]")
         assert result is not None
         assert result.title == ""
 
     def test_body_empty_when_no_newline(self) -> None:
         """Body is an empty string when the block string contains no newline."""
-        result = callout("[[>]] [[!INFO]] Title only")
+        result = parse_callout("[[>]] [[!INFO]] Title only")
         assert result is not None
         assert result.body == ""
 
     def test_body_single_line(self) -> None:
         """Body captures the single line after the first newline."""
-        result = callout("[[>]] [[!INFO]] Title\nBody line")
+        result = parse_callout("[[>]] [[!INFO]] Title\nBody line")
         assert result is not None
         assert result.body == "Body line"
 
     def test_body_multiline(self) -> None:
         """Body captures all lines after the first newline, preserving embedded newlines."""
-        result = callout("[[>]] [[!INFO]] Title\nLine 1\nLine 2\nLine 3")
+        result = parse_callout("[[>]] [[!INFO]] Title\nLine 1\nLine 2\nLine 3")
         assert result is not None
         assert result.body == "Line 1\nLine 2\nLine 3"
 
@@ -213,9 +213,9 @@ class TestCallout:
     def test_raises_value_error_for_malformed_marker(self) -> None:
         """Raises ValueError when block_string starts with CALLOUT_PREFIX but has a malformed marker."""
         with pytest.raises(ValueError, match="does not match callout pattern"):
-            callout("[[>]] [[!INVALID]]")
+            parse_callout("[[>]] [[!INVALID]]")
 
     def test_raises_validation_error_for_null_input(self) -> None:
         """Raises ValidationError when None is passed."""
         with pytest.raises(ValidationError):
-            callout(None)  # type: ignore[arg-type]
+            parse_callout(None)  # type: ignore[arg-type]
