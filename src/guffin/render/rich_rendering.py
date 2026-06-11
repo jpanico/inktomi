@@ -25,14 +25,17 @@ from typing import Final, TypeGuard, assert_never
 from pydantic import validate_call
 
 from rich.console import Group
+from rich.markup import escape as markup_escape
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree as RichTree
 
 from guffin.vertex import (
+    CalloutVertex,
     ImageVertex,
     PageVertex,
+    TextContentVertex,
     Vertex,
     VertexType,
 )
@@ -248,7 +251,7 @@ def build_rich_refs_box(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PR
     return Panel(Group(*ref_rows), title="refs")
 
 
-def _format_vertex_prop(vertex: Vertex, prop: str) -> str:  # pyright: ignore[reportUnusedFunction]
+def _format_vertex_prop(vertex: Vertex, prop: str) -> str:
     """Return a ``name=value`` string for *prop* on *vertex*, for use in a panel body.
 
     Args:
@@ -261,19 +264,27 @@ def _format_vertex_prop(vertex: Vertex, prop: str) -> str:  # pyright: ignore[re
     """
     match prop:
         case "vertex_type.value":
-            return f"vertex_type.value={vertex.vertex_type.value}"
+            return f"type={vertex.vertex_type.value}"
         case "vertex_type":
             return f"vertex_type={vertex.vertex_type.value}"
         case "uid":
             return f"uid={vertex.uid}"
         case "title":
             return f"title={vertex.title}" if isinstance(vertex, PageVertex) else "title=N/A"
+        case "text":
+            return f"text={vertex.text}" if isinstance(vertex, TextContentVertex) else "text=N/A"
         case "file_name":
             return f"file_name={vertex.file_name}" if isinstance(vertex, ImageVertex) else "file_name=N/A"
         case "media_type":
             return f"media_type={vertex.media_type.value}" if isinstance(vertex, ImageVertex) else "media_type=N/A"
         case "image_size":
             return f"image_size={vertex.image_size}" if isinstance(vertex, ImageVertex) else "image_size=N/A"
+        case "source":
+            return f"source={vertex.source}" if isinstance(vertex, ImageVertex) else "source=N/A"
+        case "alt_text":
+            return f"alt_text={vertex.alt_text}" if isinstance(vertex, ImageVertex) else "alt_text=N/A"
+        case "body":
+            return f"body={vertex.body}" if isinstance(vertex, CalloutVertex) else "body=N/A"
         case "children":
             val: str = f"[{', '.join(vertex.children)}]" if vertex.children else "None"
             return f"children={val}"
@@ -285,7 +296,7 @@ def _format_vertex_prop(vertex: Vertex, prop: str) -> str:  # pyright: ignore[re
 
 
 @validate_call
-def build_vertex_panel(vertex: Vertex) -> Panel:
+def build_vertex_panel(vertex: Vertex, props: list[str] = DEFAULT_VERTEX_PANEL_PROPS) -> Panel:
     """Render *vertex* as a Rich Panel for display in a terminal tree.
 
     The panel title shows a type-specific summary with the vertex ``uid`` in
@@ -295,11 +306,14 @@ def build_vertex_panel(vertex: Vertex) -> Panel:
     - :class:`~guffin.vertex.HeadingVertex` — ``H{n}: <text>``.
     - :class:`~guffin.vertex.TextContentVertex` — block text as-is.
     - :class:`~guffin.vertex.ImageVertex` — ``IMAGE [<alt>](<firestore_url>)``.
+    - :class:`~guffin.vertex.CalloutVertex` — ``CALLOUT [<type>]: <title>``.
 
-    The panel body shows ``type``, ``children``, and ``refs``.
+    The panel body renders each name in *props* via :func:`_format_vertex_prop`.
 
     Args:
         vertex: The :data:`~guffin.vertex.Vertex` to render.
+        props: Vertex property names to include in the panel body.  Defaults to
+            :data:`DEFAULT_VERTEX_PANEL_PROPS`.
 
     Returns:
         A :class:`~rich.panel.Panel` with a labelled title and metadata body.
@@ -319,15 +333,13 @@ def build_vertex_panel(vertex: Vertex) -> Panel:
             text = f"CALLOUT [{vertex.callout_type.value}]: {vertex.title}"
         case _ as unreachable:
             assert_never(unreachable)
-    title: Final[str] = f"[bold #00aa00]{text} ({vertex.uid})[/bold #00aa00]"
-    children_str: Final[str] = f"[{', '.join(vertex.children)}]" if vertex.children else "None"
-    refs_str: Final[str] = f"[{', '.join(vertex.refs)}]" if vertex.refs else "None"
-    content: Final[str] = f"type={vertex.vertex_type.value}  children={children_str}  refs={refs_str}"
+    title: Final[str] = f"[bold #00aa00]{markup_escape(text)} ({vertex.uid})[/bold #00aa00]"
+    content: Final[str] = "  ".join(_format_vertex_prop(vertex, p) for p in props)
     return Panel(Text(content), title=title, expand=False)
 
 
 @validate_call
-def build_rich_vertex_tree(vertex_tree: VertexTree) -> RichTree:
+def build_rich_vertex_tree(vertex_tree: VertexTree, props: list[str] = DEFAULT_VERTEX_PANEL_PROPS) -> RichTree:
     """Build a Rich tree from *vertex_tree* using a depth-first traversal.
 
     Locates the root vertex (the one not referenced as a child by any other
@@ -336,6 +348,8 @@ def build_rich_vertex_tree(vertex_tree: VertexTree) -> RichTree:
 
     Args:
         vertex_tree: The :class:`~guffin.vertex_tree.VertexTree` to render.
+        props: Vertex property names to include in each panel body.  Defaults to
+            :data:`DEFAULT_VERTEX_PANEL_PROPS`.
 
     Returns:
         A :class:`~rich.tree.Tree` rooted at the single root vertex of
@@ -348,11 +362,11 @@ def build_rich_vertex_tree(vertex_tree: VertexTree) -> RichTree:
     rich_map: Final[dict[Uid, RichTree]] = {}
     dfs_iter: Final[VertexTreeDFSIterator] = vertex_tree.dfs()
     root: Final[Vertex] = next(dfs_iter)
-    root_rich: Final[RichTree] = RichTree(build_vertex_panel(root))
+    root_rich: Final[RichTree] = RichTree(build_vertex_panel(root, props))
     rich_map[root.uid] = root_rich
     for vertex in dfs_iter:
         parent_rich: RichTree = rich_map[child_to_parent[vertex.uid]]
-        rich_map[vertex.uid] = parent_rich.add(build_vertex_panel(vertex))
+        rich_map[vertex.uid] = parent_rich.add(build_vertex_panel(vertex, props))
     return root_rich
 
 

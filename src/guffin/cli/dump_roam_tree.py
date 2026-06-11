@@ -53,6 +53,7 @@ from rich.tree import Tree as RichTree
 
 from guffin.render.rich_rendering import (
     DEFAULT_NODE_PANEL_PROPS,
+    DEFAULT_VERTEX_PANEL_PROPS,
     build_rich_node_tree,
     build_rich_raw_table,
     build_rich_refs_box,
@@ -126,7 +127,7 @@ def _dump_node_tree(fetch_result: NodeFetchResult, node_props: str | None, conso
     )
 
 
-def _dump_vertex_tree(vertex_tree: VertexTree | None, console: Console) -> None:
+def _dump_vertex_tree(vertex_tree: VertexTree | None, vertex_props: str | None, console: Console) -> None:
     """Render and print *vertex_tree* as a Rich tree.
 
     Logs a warning and returns early when *vertex_tree* is ``None``.
@@ -134,12 +135,18 @@ def _dump_vertex_tree(vertex_tree: VertexTree | None, console: Console) -> None:
     Args:
         vertex_tree: Normalized :class:`~guffin.vertex_tree.VertexTree` to render,
             or ``None`` when vertex tree computation was skipped.
+        vertex_props: Comma-separated :class:`~guffin.vertex.Vertex` field names
+            to include in each panel body, or ``None`` to use
+            :data:`~guffin.render.rich_rendering.DEFAULT_VERTEX_PANEL_PROPS`.
         console: Rich :class:`~rich.console.Console` to print to.
     """
     if vertex_tree is None:
         logger.warning("show_vertex_tree=True but vertex_tree is None; skipping vertex tree output")
         return
-    vertex_rich_tree: Final[RichTree] = build_rich_vertex_tree(vertex_tree)
+    effective_props: Final[list[str]] = (
+        [p.strip() for p in vertex_props.split(",")] if vertex_props is not None else list(DEFAULT_VERTEX_PANEL_PROPS)
+    )
+    vertex_rich_tree: Final[RichTree] = build_rich_vertex_tree(vertex_tree, effective_props)
     logger.debug("vertex_rich_tree=%r", vertex_rich_tree)
     console.rule("[bold]Vertex Tree[/bold]")
     console.print()
@@ -151,6 +158,7 @@ def dump_trees(
     fetch_result: NodeFetchResult,
     vertex_tree: VertexTree | None,
     node_props: str | None,
+    vertex_props: str | None,
     show_raw_results: bool,
     show_node_tree: bool,
     show_vertex_tree: bool,
@@ -169,6 +177,9 @@ def dump_trees(
         node_props: Comma-separated list of :class:`~guffin.roam.node.RoamNode`
             field names to include in each node panel body, or ``None`` to use
             :data:`~guffin.render.rich_rendering.DEFAULT_NODE_PANEL_PROPS`.
+        vertex_props: Comma-separated list of :class:`~guffin.vertex.Vertex`
+            field names to include in each vertex panel body, or ``None`` to use
+            :data:`~guffin.render.rich_rendering.DEFAULT_VERTEX_PANEL_PROPS`.
         show_raw_results: When ``True``, call :func:`_dump_raw_table`.
         show_node_tree: When ``True``, call :func:`_dump_node_tree`.
         show_vertex_tree: When ``True``, call :func:`_dump_vertex_tree`.
@@ -179,7 +190,7 @@ def dump_trees(
     if show_node_tree:
         _dump_node_tree(fetch_result, node_props, console)
     if show_vertex_tree:
-        _dump_vertex_tree(vertex_tree, console)
+        _dump_vertex_tree(vertex_tree, vertex_props, console)
 
 
 @app.command()
@@ -233,6 +244,18 @@ def main(
             ),
         ),
     ] = None,
+    vertex_props: Annotated[
+        str | None,
+        typer.Option(
+            "--vertex-props",
+            help=(
+                "Comma-separated list of Vertex property names to include in each panel body. "
+                f"Example: --vertex-props type,children,text. "
+                f"Defaults to: {','.join(DEFAULT_VERTEX_PANEL_PROPS)}. "
+                'Unrecognized names are shown as "name=?" in the panel body.'
+            ),
+        ),
+    ] = None,
     include_refs: Annotated[
         bool,
         typer.Option(
@@ -281,13 +304,14 @@ def main(
     nodes referenced via ``:block/refs`` from the target page or its descendants.
     """
     logger.debug(
-        "target=%r, local_api_port=%r, graph_name=%r, api_bearer_token=%r, node_props=%r, "
+        "target=%r, local_api_port=%r, graph_name=%r, api_bearer_token=%r, node_props=%r, vertex_props=%r, "
         "show_raw_results=%r, show_vertex_tree=%r, show_node_tree=%r, include_refs=%r",
         target,
         local_api_port,
         graph_name,
         api_bearer_token,
         node_props,
+        vertex_props,
         show_raw_results,
         show_vertex_tree,
         show_node_tree,
@@ -324,6 +348,7 @@ def main(
         fetch_result=fetch_result,
         vertex_tree=vertex_tree,
         node_props=node_props,
+        vertex_props=vertex_props,
         show_raw_results=show_raw_results,
         show_node_tree=show_node_tree,
         show_vertex_tree=show_vertex_tree,
