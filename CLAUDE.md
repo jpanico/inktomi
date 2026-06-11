@@ -75,7 +75,7 @@ GUFFIN_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `schema_fetch.py` — fetches Datomic schema via Local API
     - `asset_fetch.py` — fetches Firestore assets via Local API
 - `scripts/` — shell wrapper scripts (`dump-roam-tree.sh`, `export-roam-tree.sh`)
-- `tests/fixtures/` — sample markdown, images, JSON, YAML for tests
+- `tests/fixtures/` — sample markdown, images, JSON, YAML, PDF for tests
 - `tests/regen_fixtures.py` — developer script; regenerates all six fixture files for a given Roam page title or node UID (see **Test Fixtures** below)
 
 ## Test Fixtures
@@ -113,6 +113,10 @@ python tests/regen_fixtures.py "[[Test Article]] 0" --prefix test_article_0
 python tests/regen_fixtures.py "[[Test Article]] 1" --prefix test_article_1
 python tests/regen_fixtures.py "[[Test Article]] 2" --prefix test_article_2
 ```
+
+Pass `--pdf` to additionally record a byte-reproducible baseline PDF under `tests/fixtures/pdf/`
+(requires Typst on PATH) for the live PDF export test — e.g.
+`python tests/regen_fixtures.py "[[Test Article]] 1" --prefix test_article_1 --pdf`.
 
 ## Git
 - **Never commit or push without explicit instructions**: do not run `git commit` or `git push` unless the user explicitly asks. This applies even after completing a task — finish the work, then wait for the user to request a commit/push.
@@ -175,4 +179,5 @@ All code written or modified by Claude MUST follow these conventions — no exce
 - `GUFFIN_CACHE_DIR` — directory for caching downloaded Cloud Firestore assets (`export-roam-tree`)
 - `GUFFIN_PDF_TEMPLATE_DIR` — directory containing a `user_cfg.typ` override for PDF styling (`export-roam-tree --format pdf`)
 - `GUFFIN_DUMP_PANDOC_AST` — set to any non-empty value to dump the Pandoc JSON AST to `<output-dir>/<target>.pandoc.json` before the Pandoc conversion step (`export-roam-tree`, both formats)
+- `GUFFIN_PDF_CREATION_TIMESTAMP` — UNIX timestamp passed to Typst via Pandoc `--pdf-engine-opt=--creation-timestamp` to pin the PDF creation date for byte-reproducible output (`export-roam-tree --format pdf`); used by the live PDF fixture test
 - `GUFFIN_LIVE_TESTS` — set to any non-empty value to enable live tests (e.g. `GUFFIN_LIVE_TESTS=1`); requires Roam Desktop running locally

@@ -1,17 +1,19 @@
 """Unit tests for guffin.cli.export_roam_tree."""
 
 import logging
+import os
 import pathlib
 from typing import Final
 from unittest.mock import patch
 
+import pytest
 from typer.testing import CliRunner
 
 from guffin.cli.export_roam_tree import app
 from guffin.roam.node_fetch import RoamNodeNotFoundError
 from guffin.roam.node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
 
-from conftest import FIXTURES_MD_DIR, article1_node_tree
+from conftest import FIXTURES_MD_DIR, FIXTURES_PDF_DIR, PDF_CREATION_TIMESTAMP, article1_node_tree
 
 
 class TestExportRoamTreeNoBundle:
@@ -105,3 +107,37 @@ class TestExportRoamTreeNotFound:
         """No output file is written when the target page does not exist."""
         self._invoke("DOES NOT EXIST", tmp_path)
         assert list(tmp_path.iterdir()) == []
+
+
+class TestExportRoamTreePdfLive:
+    """Live end-to-end test of export_roam_tree::main for the PDF format."""
+
+    @pytest.mark.live
+    @pytest.mark.skipif(not os.getenv("GUFFIN_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
+    def test_live_pdf_matches_fixture(self, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Exporting [[Test Article]] 1 to PDF matches the recorded baseline byte-for-byte.
+
+        Pins Typst's creation timestamp via GUFFIN_PDF_CREATION_TIMESTAMP so the output is
+        reproducible; Roam credentials (GUFFIN_ROAM_*) are read from the environment by the CLI.
+        """
+        baseline: Final[pathlib.Path] = FIXTURES_PDF_DIR / "Test_Article_1.pdf"
+        assert baseline.exists(), (
+            f"baseline PDF missing: {baseline}. Record it with: "
+            'python tests/regen_fixtures.py "[[Test Article]] 1" --prefix test_article_1 --pdf'
+        )
+        monkeypatch.setenv("GUFFIN_PDF_CREATION_TIMESTAMP", str(PDF_CREATION_TIMESTAMP))
+        runner: CliRunner = CliRunner()
+        saved_handlers = logging.root.handlers[:]
+        logging.root.handlers.clear()
+        try:
+            result = runner.invoke(
+                app,
+                ["[[Test Article]] 1", "--output-dir", str(tmp_path), "--format", "pdf"],
+            )
+        finally:
+            logging.root.handlers = saved_handlers
+
+        assert result.exit_code == 0, result.output
+        actual: Final[pathlib.Path] = tmp_path / "Test_Article_1.pdf"
+        assert actual.exists()
+        assert actual.read_bytes() == baseline.read_bytes()

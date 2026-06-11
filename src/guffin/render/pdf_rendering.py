@@ -62,6 +62,54 @@ def _bundled_templates_dir() -> Path:
         return templates_path
 
 
+def _dump_typst_sources(
+    json_str: str,
+    output_dir: Path,
+    stem: str,
+    template_path: Path,
+    bundled_dir: Path,
+    template_dir: Path | None,
+) -> None:
+    """Dump intermediate Typst sources for debugging when ``GUFFIN_DUMP_TYPST`` is set.
+
+    A no-op unless the ``GUFFIN_DUMP_TYPST`` environment variable is non-empty.  When
+    enabled, converts the Pandoc JSON to Typst twice and writes both files to
+    *output_dir*: ``<stem>.body.typ`` (the bare body) and ``<stem>.full.typ`` (with the
+    template applied).  Purely a debugging aid for inspecting the Typst the PDF is built
+    from; it has no effect on the produced PDF.
+
+    Args:
+        json_str: The Pandoc JSON (serialized Panflute Doc) to convert to Typst.
+        output_dir: Directory the ``.typ`` files are written into.
+        stem: Output filename stem, shared with the ``.pdf``.
+        template_path: Path to the Bergfink Typst template entry point.
+        bundled_dir: Bundled templates directory, used as Pandoc's resource path.
+        template_dir: Optional user template directory; when set, a ``user-config``
+            override is applied to the full-Typst conversion.
+    """
+    if not os.environ.get("GUFFIN_DUMP_TYPST"):
+        return
+    typst_body: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
+        json_str, "typst", format="json", extra_args=[f"--lua-filter={_TYPST_CALLOUT_FILTER}"]
+    )
+    typst_body_path: Final[Path] = output_dir / f"{stem}.body.typ"
+    typst_body_path.write_text(typst_body, encoding="utf-8")
+    logger.info("Wrote Typst body to %s", typst_body_path)
+    typst_full_extra: list[str] = [
+        f"--template={template_path}",
+        f"--resource-path={bundled_dir}",
+        f"--lua-filter={_TYPST_CALLOUT_FILTER}",
+    ]
+    if template_dir is not None:
+        typst_full_extra.extend(["-V", f"user-config={template_dir / _USER_CFG_FILENAME}"])
+    typst_full: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
+        json_str, "typst", format="json", extra_args=typst_full_extra
+    )
+    typst_full_path: Final[Path] = output_dir / f"{stem}.full.typ"
+    typst_full_path.write_text(typst_full, encoding="utf-8")
+    logger.info("Wrote full Typst (with template) to %s", typst_full_path)
+
+
 @validate_call
 def render(
     vertex_tree: VertexTree,
@@ -137,6 +185,13 @@ def render(
         extra_args.extend(["-V", f"user-config={user_cfg_path}"])
         logger.debug("using user_cfg override: %s", user_cfg_path)
 
+    # Reproducible builds: when GUFFIN_PDF_CREATION_TIMESTAMP is set, pin Typst's PDF creation
+    # date (a UNIX timestamp) so the output is byte-identical across runs.  Used by fixture tests.
+    creation_timestamp: Final[str | None] = os.environ.get("GUFFIN_PDF_CREATION_TIMESTAMP")
+    if creation_timestamp:
+        extra_args.append(f"--pdf-engine-opt=--creation-timestamp={creation_timestamp}")
+        logger.debug("pinning Typst creation timestamp to %s", creation_timestamp)
+
     with tempfile.TemporaryDirectory() as tmp:
         fetched: Final[tuple[VertexTree, dict[Uid, ImageRef]]] = fetch_and_enrich_images(
             vertex_tree, api_endpoint, Path(tmp), cache_dir
@@ -148,26 +203,7 @@ def render(
         json_str: Final[str] = pandoc_to_json(doc, dump_pandoc_ast, output_dir, stem)
         logger.debug("pandoc JSON length=%d bytes, output_path=%s", len(json_str), output_path)
 
-        if os.environ.get("GUFFIN_DUMP_TYPST"):
-            typst_body: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
-                json_str, "typst", format="json", extra_args=[f"--lua-filter={_TYPST_CALLOUT_FILTER}"]
-            )
-            typst_body_path: Final[Path] = output_dir / f"{stem}.body.typ"
-            typst_body_path.write_text(typst_body, encoding="utf-8")
-            logger.info("Wrote Typst body to %s", typst_body_path)
-            typst_full_extra: list[str] = [
-                f"--template={template_path}",
-                f"--resource-path={bundled_dir}",
-                f"--lua-filter={_TYPST_CALLOUT_FILTER}",
-            ]
-            if template_dir is not None:
-                typst_full_extra.extend(["-V", f"user-config={template_dir / _USER_CFG_FILENAME}"])
-            typst_full: Final[str] = pypandoc.convert_text(  # type: ignore[no-untyped-call]
-                json_str, "typst", format="json", extra_args=typst_full_extra
-            )
-            typst_full_path: Final[Path] = output_dir / f"{stem}.full.typ"
-            typst_full_path.write_text(typst_full, encoding="utf-8")
-            logger.info("Wrote full Typst (with template) to %s", typst_full_path)
+        _dump_typst_sources(json_str, output_dir, stem, template_path, bundled_dir, template_dir)
 
         pypandoc.convert_text(  # type: ignore[no-untyped-call]
             json_str, "pdf", format="json", outputfile=str(output_path), extra_args=extra_args

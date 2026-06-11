@@ -13,6 +13,9 @@ Writes to tests/fixtures/yaml/ and tests/fixtures/markdown/:
     <prefix>_anchor_tree.yaml   — serialised NodeTree (anchor subtree)
     <prefix>_nodes_by_uid.yaml  — serialised NodesByUid mapping
 
+  Optional (--pdf), to tests/fixtures/pdf/:
+    <shell-safe-title>.pdf      — byte-reproducible baseline PDF (requires Typst on PATH)
+
 Run from the project root with the venv active:
   python tests/regen_fixtures.py "[[Test Article]] 1" --prefix test_article_1
   python tests/regen_fixtures.py "[[Test Article]] 2" --prefix test_article_2
@@ -37,6 +40,7 @@ from guffin.vertex import vertex_adapter
 from guffin.vertex_tree import VertexTree
 from guffin.cli.logging_config import configure_logging
 from guffin.render.md_rendering import render
+from guffin.render.pdf_rendering import render as render_pdf
 from guffin.roam.local_api import ApiEndpoint
 from guffin.roam.node import RoamNode
 from guffin.roam.node_fetch import FetchRoamNodes
@@ -44,10 +48,13 @@ from guffin.roam.node_fetch_result import NodeFetchAnchor, NodeFetchResult, anch
 from guffin.roam_tree_to_vertex_tree import transcribe
 from guffin.roam.tree import NodeTree
 
+from conftest import PDF_CREATION_TIMESTAMP
+
 configure_logging()
 
 FIXTURES_YAML: Final[pathlib.Path] = pathlib.Path("tests/fixtures/yaml")
 FIXTURES_MD: Final[pathlib.Path] = pathlib.Path("tests/fixtures/markdown")
+FIXTURES_PDF: Final[pathlib.Path] = pathlib.Path("tests/fixtures/pdf")
 README_PATH: Final[pathlib.Path] = pathlib.Path("tests/fixtures/README.md")
 
 _TRANSIENT_FIELDS: Final[frozenset[str]] = frozenset({"open", "sidebar", "lookup", "seen_by"})
@@ -144,6 +151,11 @@ def main() -> None:
         default=os.getenv("GUFFIN_ROAM_API_TOKEN", _DEFAULT_TOKEN),
         help="Roam Local API bearer token (default: $GUFFIN_ROAM_API_TOKEN).",
     )
+    parser.add_argument(
+        "--pdf",
+        action="store_true",
+        help="Also render a byte-reproducible baseline PDF to tests/fixtures/pdf/ (requires Typst on PATH).",
+    )
     args = parser.parse_args()
 
     qualifier: Final[str] = args.qualifier
@@ -226,6 +238,14 @@ def main() -> None:
         )
     md_path.write_text(rendered, encoding="utf-8")
     print(f"  wrote {md_path}")
+
+    # Fixture 7 (optional, --pdf): byte-reproducible baseline PDF under tests/fixtures/pdf/
+    if args.pdf:
+        FIXTURES_PDF.mkdir(parents=True, exist_ok=True)
+        os.environ["GUFFIN_PDF_CREATION_TIMESTAMP"] = str(PDF_CREATION_TIMESTAMP)
+        render_pdf(vertex_tree, filename_stem=qualifier, output_dir=FIXTURES_PDF, api_endpoint=endpoint)
+        pdf_path: Final[pathlib.Path] = FIXTURES_PDF / f"{shell_safe_filename(qualifier)}.pdf"
+        print(f"  wrote {pdf_path}")
 
     # Update README Article Features section from callout node
     callout_node: Final[RoamNode | None] = next(

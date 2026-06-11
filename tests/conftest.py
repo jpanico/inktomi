@@ -26,6 +26,13 @@ FIXTURES_IMAGES_DIR: pathlib.Path = pathlib.Path(__file__).parent / "fixtures" /
 FIXTURES_MD_DIR: pathlib.Path = pathlib.Path(__file__).parent / "fixtures" / "markdown"
 """Absolute path to the ``tests/fixtures/markdown/`` directory."""
 
+FIXTURES_PDF_DIR: pathlib.Path = pathlib.Path(__file__).parent / "fixtures" / "pdf"
+"""Absolute path to the ``tests/fixtures/pdf/`` directory."""
+
+PDF_CREATION_TIMESTAMP: int = 1704067200
+"""Fixed UNIX timestamp (2024-01-01T00:00:00Z) pinned via ``GUFFIN_PDF_CREATION_TIMESTAMP`` so PDF
+export is byte-reproducible; shared by the live PDF fixture test and ``regen_fixtures.py --pdf``."""
+
 STUB_TIME: int = 0
 """Stub value for ``RoamNode.time`` in tests where the timestamp is irrelevant."""
 
