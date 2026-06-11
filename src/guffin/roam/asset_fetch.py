@@ -196,11 +196,12 @@ def fetch_and_cache_asset(
             if cached_media_type is None:
                 raise ValueError(f"Cached file has unrecognized extension: {cached_path.name!r}")
             logger.info("Cache hit: %s -> %s", firebase_url, cached_path.name)
-            return RoamAsset(
+            cached_contents: Final[bytes] = cached_path.read_bytes()
+            return RoamAsset.create(
                 file_name=cached_path.name,
                 last_modified=datetime.now(),
                 media_type=cached_media_type,
-                contents=cached_path.read_bytes(),
+                contents=cached_contents,
             )
 
     asset: Final[RoamAsset] = FetchRoamAsset.fetch(firebase_url=firebase_url, api_endpoint=api_endpoint)
@@ -212,7 +213,7 @@ def fetch_and_cache_asset(
         (cache_dir / file_name).write_bytes(asset.contents)
         logger.info("Cached asset: %s -> %s", firebase_url, file_name)
 
-    return RoamAsset(
+    return RoamAsset.create(
         file_name=file_name,
         last_modified=asset.last_modified,
         media_type=asset.media_type,
