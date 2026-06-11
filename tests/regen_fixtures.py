@@ -55,6 +55,7 @@ configure_logging()
 FIXTURES_YAML: Final[pathlib.Path] = pathlib.Path("tests/fixtures/yaml")
 FIXTURES_MD: Final[pathlib.Path] = pathlib.Path("tests/fixtures/markdown")
 FIXTURES_PDF: Final[pathlib.Path] = pathlib.Path("tests/fixtures/pdf")
+FIXTURES_MDBUNDLE: Final[pathlib.Path] = pathlib.Path("tests/fixtures/mdbundle")
 README_PATH: Final[pathlib.Path] = pathlib.Path("tests/fixtures/README.md")
 
 _TRANSIENT_FIELDS: Final[frozenset[str]] = frozenset({"open", "sidebar", "lookup", "seen_by"})
@@ -156,6 +157,11 @@ def main() -> None:
         action="store_true",
         help="Also render a byte-reproducible baseline PDF to tests/fixtures/pdf/ (requires Typst on PATH).",
     )
+    parser.add_argument(
+        "--mdbundle",
+        action="store_true",
+        help="Also render a baseline .mdbundle to tests/fixtures/mdbundle/.",
+    )
     args = parser.parse_args()
 
     qualifier: Final[str] = args.qualifier
@@ -246,6 +252,13 @@ def main() -> None:
         render_pdf(vertex_tree, filename_stem=qualifier, output_dir=FIXTURES_PDF, api_endpoint=endpoint)
         pdf_path: Final[pathlib.Path] = FIXTURES_PDF / f"{shell_safe_filename(qualifier)}.pdf"
         print(f"  wrote {pdf_path}")
+
+    # Fixture 8 (optional, --mdbundle): baseline .mdbundle under tests/fixtures/mdbundle/
+    if args.mdbundle:
+        FIXTURES_MDBUNDLE.mkdir(parents=True, exist_ok=True)
+        render(vertex_tree, filename_stem=qualifier, output_dir=FIXTURES_MDBUNDLE, api_endpoint=endpoint, bundle=True)
+        mdbundle_path: Final[pathlib.Path] = FIXTURES_MDBUNDLE / f"{shell_safe_filename(qualifier)}.mdbundle"
+        print(f"  wrote {mdbundle_path}")
 
     # Update README Article Features section from callout node
     callout_node: Final[RoamNode | None] = next(

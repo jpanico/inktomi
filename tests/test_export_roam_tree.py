@@ -13,7 +13,13 @@ from guffin.cli.export_roam_tree import app
 from guffin.roam.node_fetch import RoamNodeNotFoundError
 from guffin.roam.node_fetch_result import NodeFetchAnchor, NodeFetchResult, NodeFetchSpec
 
-from conftest import FIXTURES_MD_DIR, FIXTURES_PDF_DIR, PDF_CREATION_TIMESTAMP, article1_node_tree
+from conftest import (
+    FIXTURES_MD_DIR,
+    FIXTURES_MDBUNDLE_DIR,
+    FIXTURES_PDF_DIR,
+    PDF_CREATION_TIMESTAMP,
+    article1_node_tree,
+)
 
 
 class TestExportRoamTreeNoBundle:
@@ -107,6 +113,47 @@ class TestExportRoamTreeNotFound:
         """No output file is written when the target page does not exist."""
         self._invoke("DOES NOT EXIST", tmp_path)
         assert list(tmp_path.iterdir()) == []
+
+
+class TestExportRoamTreeMdbundleLive:
+    """Live end-to-end test of export_roam_tree::main for the markdown bundle format."""
+
+    @pytest.mark.live
+    @pytest.mark.skipif(not os.getenv("GUFFIN_LIVE_TESTS"), reason="requires Roam Desktop app running locally")
+    def test_live_mdbundle_matches_fixture(self, tmp_path: pathlib.Path) -> None:
+        """Exporting [[Test Article]] 1 as a markdown bundle matches the recorded baseline file-for-file.
+
+        Roam credentials (GUFFIN_ROAM_*) are read from the environment by the CLI.
+        """
+        baseline: Final[pathlib.Path] = FIXTURES_MDBUNDLE_DIR / "Test_Article_1.mdbundle"
+        assert baseline.exists(), (
+            f"baseline mdbundle missing: {baseline}. Record it with: "
+            'python tests/regen_fixtures.py "[[Test Article]] 1" --prefix test_article_1 --mdbundle'
+        )
+        runner: CliRunner = CliRunner()
+        saved_handlers = logging.root.handlers[:]
+        logging.root.handlers.clear()
+        try:
+            result = runner.invoke(
+                app,
+                ["[[Test Article]] 1", "--output-dir", str(tmp_path), "--format", "markdown", "--bundle"],
+            )
+        finally:
+            logging.root.handlers = saved_handlers
+
+        assert result.exit_code == 0, result.output
+        actual: Final[pathlib.Path] = tmp_path / "Test_Article_1.mdbundle"
+        assert actual.exists()
+        expected_names: Final[list[str]] = sorted(f.name for f in baseline.iterdir())
+        actual_names: Final[list[str]] = sorted(f.name for f in actual.iterdir())
+        assert actual_names == expected_names
+        for name in expected_names:
+            if name.endswith(".md"):
+                assert (actual / name).read_text(encoding="utf-8") == (baseline / name).read_text(
+                    encoding="utf-8"
+                ), f"content mismatch: {name}"
+            else:
+                assert (actual / name).read_bytes() == (baseline / name).read_bytes(), f"content mismatch: {name}"
 
 
 class TestExportRoamTreePdfLive:

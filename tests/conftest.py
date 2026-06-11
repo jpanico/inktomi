@@ -29,6 +29,9 @@ FIXTURES_MD_DIR: pathlib.Path = pathlib.Path(__file__).parent / "fixtures" / "ma
 FIXTURES_PDF_DIR: pathlib.Path = pathlib.Path(__file__).parent / "fixtures" / "pdf"
 """Absolute path to the ``tests/fixtures/pdf/`` directory."""
 
+FIXTURES_MDBUNDLE_DIR: pathlib.Path = pathlib.Path(__file__).parent / "fixtures" / "mdbundle"
+"""Absolute path to the ``tests/fixtures/mdbundle/`` directory."""
+
 PDF_CREATION_TIMESTAMP: int = 1704067200
 """Fixed UNIX timestamp (2024-01-01T00:00:00Z) pinned via ``GUFFIN_PDF_CREATION_TIMESTAMP`` so PDF
 export is byte-reproducible; shared by the live PDF fixture test and ``regen_fixtures.py --pdf``."""

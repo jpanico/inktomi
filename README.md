@@ -144,12 +144,15 @@ guffin/
 │       │
 │       ├── common/                      # Cross-cutting helpers (no guffin dependencies)
 │       │   ├── filenames.py               # POSIX filename normalization (shell_safe_filename)
+│       │   ├── geometry.py                # Generic 2D geometry types (ImageSize)
 │       │   ├── media_type.py              # MediaType enum; MIME type detection from filenames
 │       │   └── validation.py              # Generic accumulator-pipeline validation framework
 │       │
 │       ├── render/                      # Rendering pipeline modules
+│       │   ├── image_fetch.py             # Pandoc-free image asset fetching; ImageRef (UID + path +
+│       │   │                              #   ImageSize) and fetch_images() → {uid: ImageRef}
 │       │   ├── pandoc_rendering.py        # Shared Pandoc/Panflute utilities; vertex_tree_to_pandoc()
-│       │   │                              #   builds a Panflute Doc; fetch_images() fetches assets
+│       │   │                              #   builds a Panflute Doc from a VertexTree
 │       │   ├── md_rendering.py            # VertexTree → GFM Markdown; writes .mdbundle or plain .md
 │       │   ├── pdf_rendering.py           # VertexTree → PDF via Pandoc + Typst
 │       │   ├── rich_rendering.py          # Rich panel/tree rendering for NodeTree and VertexTree
