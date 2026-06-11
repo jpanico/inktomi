@@ -4,9 +4,13 @@
 # Rationale: panflute has no type stubs; all six rules are triggered entirely by
 # Unknown propagation from that import — suppressing them here avoids false positives.
 
+import logging
+from datetime import datetime
 from pathlib import Path
+from typing import Final
 
 import panflute as pf  # type: ignore[import-untyped]
+import pytest
 from pydantic import HttpUrl
 
 from guffin.common.geometry import ImageSize
@@ -19,14 +23,24 @@ from guffin.vertex import (
 )
 from guffin.vertex_tree import VertexTree
 from guffin.render.pandoc_rendering import (
+    ImageRef,
     parse_inline_md,
     build_child_blocks,
+    fetch_images,
     vertex_tree_to_pandoc,
 )
+from guffin.roam.asset import RoamAsset, RoamImageAsset
+from guffin.roam.local_api import ApiEndpoint, ApiEndpointURL
+from guffin.roam.primitives import Uid
 
 from conftest import article1_vertex_tree
 
 _IMAGE_URL: HttpUrl = HttpUrl("https://example.com/imgs/photo.jpeg")
+_ENDPOINT: Final[ApiEndpoint] = ApiEndpoint(
+    url=ApiEndpointURL(local_api_port=3333, graph_name="test-graph"),
+    bearer_token="test-token",
+)
+_LAST_MODIFIED: Final[datetime] = datetime(2024, 6, 1, 12, 0, 0)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -349,6 +363,110 @@ class TestVertexTreeToPandocImageVertex:
         inline = list(list(doc.content)[0].content)[0]
         assert isinstance(inline, pf.Link)
         assert _collect_text(inline) == "photo.jpg"
+
+
+# ---------------------------------------------------------------------------
+# TestFetchImages
+# ---------------------------------------------------------------------------
+
+
+def _image_vertex(uid: str) -> ImageVertex:
+    """Build a minimal ImageVertex pointing at _IMAGE_URL."""
+    return ImageVertex(
+        uid=uid,
+        source=_IMAGE_URL,
+        media_type=MediaType.JPEG,
+        scaled_image_size=ImageSize(),
+    )
+
+
+class TestFetchImages:
+    """Tests for fetch_images() — fetch_and_cache_asset is mocked; only tmp_path writes touch disk."""
+
+    def test_image_asset_yields_imageref_with_path_size_and_written_bytes(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A RoamImageAsset produces an ImageRef whose path holds the bytes and whose size is the asset's."""
+        contents: Final[bytes] = b"\xff\xd8\xff\xe0jpegbody"
+        asset: Final[RoamImageAsset] = RoamImageAsset(
+            file_name="photo.jpg",
+            last_modified=_LAST_MODIFIED,
+            media_type=MediaType.JPEG,
+            contents=contents,
+            image_size=ImageSize(width=640, height=480),
+        )
+
+        def _fake(firebase_url: HttpUrl, api_endpoint: ApiEndpoint, cache_dir: Path | None = None) -> RoamAsset:
+            return asset
+
+        monkeypatch.setattr("guffin.render.pandoc_rendering.fetch_and_cache_asset", _fake)
+
+        tree: Final[VertexTree] = VertexTree(vertices=[_image_vertex("img00001a")])
+        result: Final[dict[Uid, ImageRef]] = fetch_images(tree, _ENDPOINT, tmp_path)
+
+        assert list(result) == ["img00001a"]
+        ref: Final[ImageRef] = result["img00001a"]
+        assert ref.uid == "img00001a"
+        assert ref.path == tmp_path / "photo.jpg"
+        assert ref.path.read_bytes() == contents
+        assert ref.size == ImageSize(width=640, height=480)
+
+    def test_base_roamasset_yields_empty_size(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A base RoamAsset (not a RoamImageAsset) yields an empty ImageSize."""
+        asset: Final[RoamAsset] = RoamAsset(
+            file_name="photo.jpg",
+            last_modified=_LAST_MODIFIED,
+            media_type=MediaType.JPEG,
+            contents=b"bytes",
+        )
+
+        def _fake(firebase_url: HttpUrl, api_endpoint: ApiEndpoint, cache_dir: Path | None = None) -> RoamAsset:
+            return asset
+
+        monkeypatch.setattr("guffin.render.pandoc_rendering.fetch_and_cache_asset", _fake)
+
+        tree: Final[VertexTree] = VertexTree(vertices=[_image_vertex("img00001a")])
+        result: Final[dict[Uid, ImageRef]] = fetch_images(tree, _ENDPOINT, tmp_path)
+
+        assert result["img00001a"].size == ImageSize()
+
+    def test_fetch_failure_skips_vertex_and_logs_warning(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """When fetch_and_cache_asset raises, the vertex is absent and a warning is logged."""
+
+        def _raising(firebase_url: HttpUrl, api_endpoint: ApiEndpoint, cache_dir: Path | None = None) -> RoamAsset:
+            raise RuntimeError("network down")
+
+        monkeypatch.setattr("guffin.render.pandoc_rendering.fetch_and_cache_asset", _raising)
+
+        tree: Final[VertexTree] = VertexTree(vertices=[_image_vertex("img00001a")])
+        with caplog.at_level(logging.WARNING, logger="guffin.render.pandoc_rendering"):
+            result: Final[dict[Uid, ImageRef]] = fetch_images(tree, _ENDPOINT, tmp_path)
+
+        assert result == {}
+        assert any("Failed to fetch image" in r.message for r in caplog.records)
+
+    def test_non_image_vertices_are_skipped(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Only ImageVertex entries are fetched; page and text vertices are ignored."""
+
+        def _fake(firebase_url: HttpUrl, api_endpoint: ApiEndpoint, cache_dir: Path | None = None) -> RoamAsset:
+            return RoamImageAsset(
+                file_name="photo.jpg",
+                last_modified=_LAST_MODIFIED,
+                media_type=MediaType.JPEG,
+                contents=b"body",
+                image_size=ImageSize(width=1, height=1),
+            )
+
+        monkeypatch.setattr("guffin.render.pandoc_rendering.fetch_and_cache_asset", _fake)
+
+        page: Final[PageVertex] = PageVertex(uid="page00001", title="P", children=["img00001a"])
+        text: Final[TextContentVertex] = TextContentVertex(uid="txt00001a", text="hello")
+        tree: Final[VertexTree] = VertexTree(vertices=[page, text, _image_vertex("img00001a")])
+        result: Final[dict[Uid, ImageRef]] = fetch_images(tree, _ENDPOINT, tmp_path)
+
+        assert list(result) == ["img00001a"]
 
 
 # ---------------------------------------------------------------------------

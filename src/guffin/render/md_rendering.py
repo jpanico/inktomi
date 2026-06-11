@@ -31,7 +31,7 @@ from pydantic import validate_call
 
 from guffin.common.filenames import shell_safe_filename
 from guffin.vertex_tree import VertexTree
-from guffin.render.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
+from guffin.render.pandoc_rendering import ImageRef, pandoc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam.local_api import ApiEndpoint
 from guffin.roam.primitives import Uid
 
@@ -94,10 +94,10 @@ def render(
         bundle_dir.mkdir(parents=True, exist_ok=True)
         logger.info("Created bundle directory: %s", bundle_dir)
 
-        # the Paths returned from the fetch are absolute
-        abs_image_files: Final[dict[Uid, Path]] = fetch_images(vertex_tree, api_endpoint, bundle_dir, cache_dir)
+        # the Paths in the returned ImageRefs are absolute
+        image_refs: Final[dict[Uid, ImageRef]] = fetch_images(vertex_tree, api_endpoint, bundle_dir, cache_dir)
         # Strip to filename-only so Pandoc writes relative image references in the Markdown output.
-        image_files: Final[dict[Uid, Path]] = {uid: Path(p.name) for uid, p in abs_image_files.items()}
+        image_files: Final[dict[Uid, Path]] = {uid: Path(ref.path.name) for uid, ref in image_refs.items()}
 
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files, title_in_header=True)
         bundle_json_str: Final[str] = pandoc_to_json(doc, dump_pandoc_ast, output_dir, stem)

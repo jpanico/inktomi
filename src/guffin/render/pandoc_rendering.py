@@ -40,10 +40,11 @@ Public symbols:
 
 - :func:`parse_inline_md` — batch-parse Pandoc Markdown inline text strings into
   panflute inline element lists via a single Pandoc call.
+- :class:`ImageRef` — 3-way association of an image vertex's UID, on-disk path, and pixel size.
 - :func:`fetch_images` — fetch all
   :class:`~guffin.vertex.ImageVertex` assets from a
   :class:`~guffin.vertex_tree.VertexTree` to a local directory; return a
-  ``{uid: path}`` mapping.
+  ``{uid: ImageRef}`` mapping.
 - :func:`build_child_blocks` — convert an ordered list of vertex UIDs to Pandoc
   block elements.
 - :func:`vertex_tree_to_pandoc` — convert a
@@ -62,7 +63,7 @@ import logging
 import uuid
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Final
+from typing import Final, NamedTuple
 
 import panflute as pf  # type: ignore[import-untyped]
 import pypandoc  # type: ignore[import-untyped]
@@ -79,7 +80,8 @@ from guffin.vertex import (
     VertexChildren,
 )
 from guffin.vertex_tree import VertexTree, root_vertex
-from guffin.roam.asset import RoamAsset
+from guffin.common.geometry import ImageSize
+from guffin.roam.asset import RoamAsset, RoamImageAsset
 from guffin.roam.asset_fetch import fetch_and_cache_asset
 from guffin.roam.local_api import ApiEndpoint
 from guffin.roam.primitives import Uid
@@ -153,13 +155,31 @@ def parse_inline_md(texts: list[str]) -> dict[str, list[pf.Inline]]:
 # ---------------------------------------------------------------------------
 
 
+class ImageRef(NamedTuple):
+    """An :class:`~guffin.vertex.ImageVertex`'s fetched asset: its UID, on-disk path, and pixel size.
+
+    The 3-way association produced by :func:`fetch_images` for every image
+    successfully fetched from Cloud Firestore.
+
+    Attributes:
+        uid: The source :class:`~guffin.vertex.ImageVertex` UID.
+        path: Local filesystem path of the written image file.
+        size: Native pixel dimensions of the image, or an empty
+            :class:`~guffin.common.geometry.ImageSize` when they could not be determined.
+    """
+
+    uid: Uid
+    path: Path
+    size: ImageSize
+
+
 @validate_call
 def fetch_images(
     vertex_tree: VertexTree,
     api_endpoint: ApiEndpoint,
     image_dir: Path,
     cache_dir: Path | None = None,
-) -> dict[Uid, Path]:
+) -> dict[Uid, ImageRef]:
     """Fetch all :class:`~guffin.vertex.ImageVertex` assets to *image_dir*.
 
     Delegates fetching and caching to
@@ -176,11 +196,12 @@ def fetch_images(
             runs.
 
     Returns:
-        A mapping from :class:`~guffin.vertex.ImageVertex` UID to the
-        local :class:`~pathlib.Path` of the fetched image file.  Vertices
-        that could not be fetched are absent from the mapping.
+        A mapping from :class:`~guffin.vertex.ImageVertex` UID to an
+        :class:`ImageRef` bundling the local path and native pixel size of
+        the fetched image.  Vertices that could not be fetched are absent
+        from the mapping.
     """
-    image_files: dict[Uid, Path] = {}
+    image_refs: dict[Uid, ImageRef] = {}
     for vertex in vertex_tree.vertices:
         if not isinstance(vertex, ImageVertex):
             continue
@@ -188,11 +209,12 @@ def fetch_images(
             asset: RoamAsset = fetch_and_cache_asset(vertex.source, api_endpoint, cache_dir)
             img_path: Path = image_dir / asset.file_name
             img_path.write_bytes(asset.contents)
-            image_files[vertex.uid] = img_path
+            size: ImageSize = asset.image_size if isinstance(asset, RoamImageAsset) else ImageSize()
+            image_refs[vertex.uid] = ImageRef(uid=vertex.uid, path=img_path, size=size)
             logger.info("Fetched image uid=%r -> %s", vertex.uid, img_path.name)
         except Exception as e:
             logger.warning("Failed to fetch image uid=%r source=%s: %s", vertex.uid, vertex.source, e)
-    return image_files
+    return image_refs
 
 
 # ---------------------------------------------------------------------------

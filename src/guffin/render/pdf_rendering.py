@@ -41,7 +41,7 @@ from pydantic import validate_call
 
 from guffin.common.filenames import shell_safe_filename
 from guffin.vertex_tree import VertexTree
-from guffin.render.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
+from guffin.render.pandoc_rendering import ImageRef, pandoc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam.local_api import ApiEndpoint
 from guffin.roam.primitives import Uid
 
@@ -136,7 +136,8 @@ def render(
         logger.debug("using user_cfg override: %s", user_cfg_path)
 
     with tempfile.TemporaryDirectory() as tmp:
-        image_files: Final[dict[Uid, Path]] = fetch_images(vertex_tree, api_endpoint, Path(tmp), cache_dir)
+        image_refs: Final[dict[Uid, ImageRef]] = fetch_images(vertex_tree, api_endpoint, Path(tmp), cache_dir)
+        image_files: Final[dict[Uid, Path]] = {uid: ref.path for uid, ref in image_refs.items()}
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files)
         json_str: Final[str] = pandoc_to_json(doc, dump_pandoc_ast, output_dir, stem)
         logger.debug("pandoc JSON length=%d bytes, output_path=%s", len(json_str), output_path)
