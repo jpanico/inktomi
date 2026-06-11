@@ -43,6 +43,7 @@ from guffin.common.filenames import shell_safe_filename
 from guffin.vertex_tree import VertexTree
 from guffin.render.pandoc_rendering import pandoc_to_json, fetch_images, vertex_tree_to_pandoc
 from guffin.roam.local_api import ApiEndpoint
+from guffin.roam.primitives import Uid
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +136,7 @@ def render(
         logger.debug("using user_cfg override: %s", user_cfg_path)
 
     with tempfile.TemporaryDirectory() as tmp:
-        image_files = fetch_images(vertex_tree, api_endpoint, Path(tmp), cache_dir)
+        image_files: Final[dict[Uid, Path]] = fetch_images(vertex_tree, api_endpoint, Path(tmp), cache_dir)
         doc: Final[pf.Doc] = vertex_tree_to_pandoc(vertex_tree, image_files)
         json_str: Final[str] = pandoc_to_json(doc, dump_pandoc_ast, output_dir, stem)
         logger.debug("pandoc JSON length=%d bytes, output_path=%s", len(json_str), output_path)

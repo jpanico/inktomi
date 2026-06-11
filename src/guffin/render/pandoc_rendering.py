@@ -79,6 +79,7 @@ from guffin.vertex import (
     VertexChildren,
 )
 from guffin.vertex_tree import VertexTree, root_vertex
+from guffin.roam.asset import RoamAsset
 from guffin.roam.asset_fetch import fetch_and_cache_asset
 from guffin.roam.local_api import ApiEndpoint
 from guffin.roam.primitives import Uid
@@ -184,7 +185,7 @@ def fetch_images(
         if not isinstance(vertex, ImageVertex):
             continue
         try:
-            asset = fetch_and_cache_asset(vertex.source, api_endpoint, cache_dir)
+            asset: RoamAsset = fetch_and_cache_asset(vertex.source, api_endpoint, cache_dir)
             img_path: Path = image_dir / asset.file_name
             img_path.write_bytes(asset.contents)
             image_files[vertex.uid] = img_path
