@@ -74,6 +74,19 @@ def _make_text(uid: str = "textuid01", id: int = 104, string: str = "Some plain 
     )
 
 
+def _make_code(uid: str = "codeuid01", id: int = 106, string: str = "```python\nx = 1\n```") -> RoamNode:
+    """Return a minimal fenced-code-block RoamNode."""
+    return RoamNode(
+        uid=uid,
+        id=id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=string,
+        parents=[IdObject(id=99)],
+        page=IdObject(id=99),
+    )
+
+
 # ---------------------------------------------------------------------------
 # TestRoamNodeProps
 # ---------------------------------------------------------------------------
@@ -202,8 +215,12 @@ class TestNodeType:
         """Test that NodeType.ROAM_CALLOUT_BLOCK has string value 'roam/callout-block'."""
         assert NodeType.ROAM_CALLOUT_BLOCK == "roam/callout-block"
 
-    def test_exactly_six_members(self) -> None:
-        """Test that NodeType has exactly six members."""
+    def test_code_value(self) -> None:
+        """Test that NodeType.ROAM_CODE_BLOCK has string value 'roam/code-block'."""
+        assert NodeType.ROAM_CODE_BLOCK == "roam/code-block"
+
+    def test_exactly_seven_members(self) -> None:
+        """Test that NodeType has exactly seven members."""
         assert set(NodeType) == {
             NodeType.ROAM_PAGE,
             NodeType.ROAM_PLAIN_BLOCK,
@@ -211,6 +228,7 @@ class TestNodeType:
             NodeType.ROAM_IMAGE_BLOCK,
             NodeType.ROAM_HEADING_BLOCK,
             NodeType.ROAM_CALLOUT_BLOCK,
+            NodeType.ROAM_CODE_BLOCK,
         }
 
 
@@ -410,6 +428,30 @@ class TestNodeTypeFunction:
         ]
         for callout_type in valid_types:
             assert node_type(_make_callout(callout_type=callout_type)) is NodeType.ROAM_CALLOUT_BLOCK
+
+    def test_fenced_code_block_returns_code_block(self) -> None:
+        """Test that a string fenced with ``` at both ends returns NodeType.ROAM_CODE_BLOCK."""
+        assert node_type(_make_code()) is NodeType.ROAM_CODE_BLOCK
+
+    def test_code_block_is_not_plain_block(self) -> None:
+        """Test that a fenced code block does not return NodeType.ROAM_PLAIN_BLOCK."""
+        assert node_type(_make_code()) is not NodeType.ROAM_PLAIN_BLOCK
+
+    def test_code_block_with_surrounding_whitespace_returns_code_block(self) -> None:
+        """Test that surrounding whitespace is trimmed before the fence check."""
+        assert node_type(_make_code(string="  \n```\ncode\n```  \n")) is NodeType.ROAM_CODE_BLOCK
+
+    def test_code_block_without_language_returns_code_block(self) -> None:
+        """Test that a fence with no language/info string is still a code block."""
+        assert node_type(_make_code(string="```\nplain code\n```")) is NodeType.ROAM_CODE_BLOCK
+
+    def test_unterminated_fence_returns_code_block(self) -> None:
+        """Test that an opening fence with no closing fence is still a code block (closing optional)."""
+        assert node_type(_make_code(string="```python\nx = 1")) is NodeType.ROAM_CODE_BLOCK
+
+    def test_inline_code_is_plain_block(self) -> None:
+        """Test that single-backtick inline code is not classified as a code block."""
+        assert node_type(_make_code(string="`inline`")) is NodeType.ROAM_PLAIN_BLOCK
 
     def test_result_is_str_enum(self) -> None:
         """Test that the returned value is a NodeType StrEnum member."""

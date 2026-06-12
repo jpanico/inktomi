@@ -3,7 +3,8 @@
 Public symbols:
 
 - :class:`NodeType` — ``StrEnum`` of pull-block entity types: ``ROAM_PAGE``, ``ROAM_PLAIN_BLOCK``,
-  ``ROAM_EMBED_BLOCK``, ``ROAM_IMAGE_BLOCK``, ``ROAM_HEADING_BLOCK``, ``ROAM_CALLOUT_BLOCK``.
+  ``ROAM_EMBED_BLOCK``, ``ROAM_IMAGE_BLOCK``, ``ROAM_HEADING_BLOCK``, ``ROAM_CALLOUT_BLOCK``,
+  ``ROAM_CODE_BLOCK``.
 - :class:`RoamNode` — raw shape of a pull-block as returned by the Roam Local API.
 - :func:`node_type` — return the :class:`NodeType` of a :class:`RoamNode`.
 - :func:`effective_heading_level` — return the effective heading level for a
@@ -29,6 +30,7 @@ from pydantic import (
 )
 
 from guffin.common.geometry import ImageSize
+from guffin.common.markdown import is_fenced_code_block
 from guffin.roam.primitives import (
     CALLOUT_PREFIX,
     CALLOUT_RE,
@@ -70,6 +72,8 @@ class NodeType(enum.StrEnum):
     - **ROAM_CALLOUT_BLOCK**: ``string`` starts with ``[[>]] [[!<TYPE>]]`` where ``<TYPE>`` is one of the twelve
       recognised callout type keywords (``INFO``, ``QUOTE``, ``EXAMPLE``, ``NOTE``, ``WARNING``, ``DANGER``,
       ``TIP``, ``SUMMARY``, ``SUCCESS``, ``QUESTION``, ``FAILURE``, ``BUG``).
+    - **ROAM_CODE_BLOCK**: ``string``, with surrounding whitespace trimmed, is a CommonMark fenced code
+      block (opened by a ```` ``` ```` or ``~~~`` fence).
     """
 
     ROAM_PAGE = "roam/page"
@@ -78,6 +82,7 @@ class NodeType(enum.StrEnum):
     ROAM_IMAGE_BLOCK = "roam/image-block"
     ROAM_EMBED_BLOCK = "roam/embed-block"
     ROAM_CALLOUT_BLOCK = "roam/callout-block"
+    ROAM_CODE_BLOCK = "roam/code-block"
 
 
 class RoamNode(BaseModel):
@@ -328,6 +333,8 @@ def node_type(node: RoamNode) -> NodeType:
     :attr:`NodeType.ROAM_HEADING_BLOCK` when :func:`effective_heading_level` is non-``None``,
     :attr:`NodeType.ROAM_CALLOUT_BLOCK` when ``string`` starts with a valid callout marker
     (as matched by :data:`~guffin.roam.primitives.CALLOUT_RE`),
+    :attr:`NodeType.ROAM_CODE_BLOCK` when the trimmed ``string`` is a fenced code block
+    (as determined by :func:`~guffin.common.markdown.is_fenced_code_block`),
     and :attr:`NodeType.ROAM_PLAIN_BLOCK` otherwise.
 
     Args:
@@ -339,6 +346,7 @@ def node_type(node: RoamNode) -> NodeType:
         :attr:`NodeType.ROAM_IMAGE_BLOCK` if ``string`` is solely a single Markdown image link;
         :attr:`NodeType.ROAM_HEADING_BLOCK` if ``heading`` or ``props['ah-level']`` is set;
         :attr:`NodeType.ROAM_CALLOUT_BLOCK` if ``string`` starts with ``[[>]] [[!<TYPE>]]``;
+        :attr:`NodeType.ROAM_CODE_BLOCK` if the trimmed ``string`` is a CommonMark fenced code block;
         :attr:`NodeType.ROAM_PLAIN_BLOCK` otherwise.
     """
     if node.title == "embed":
@@ -351,4 +359,6 @@ def node_type(node: RoamNode) -> NodeType:
         return NodeType.ROAM_HEADING_BLOCK
     if node.string is not None and CALLOUT_RE.match(node.string):
         return NodeType.ROAM_CALLOUT_BLOCK
+    if node.string is not None and is_fenced_code_block(node.string.strip()):
+        return NodeType.ROAM_CODE_BLOCK
     return NodeType.ROAM_PLAIN_BLOCK

@@ -1,0 +1,120 @@
+"""Markdown structural predicates.
+
+Public symbols:
+
+- :func:`is_fenced_code_block` — whether a string is a single CommonMark fenced code block.
+- :class:`FencedCodeBlock` — the info string and code content extracted from a fenced code block.
+- :func:`parse_fenced_code_block` — extract the info string and code content from a fenced code block.
+"""
+
+import re
+from typing import Final, NamedTuple
+
+from pydantic import validate_call
+
+# Opening code fence: up to three spaces of indentation, then a run of at least
+# three backticks or three tildes, then an optional info string (the remainder
+# of the line).  Group 1 captures the fence run; group 2 captures the info string.
+_OPENING_FENCE_RE: Final[re.Pattern[str]] = re.compile(r" {0,3}(`{3,}|~{3,})(.*)")
+
+
+@validate_call
+def is_fenced_code_block(text: str) -> bool:
+    r"""Return whether *text* is a single fenced code block per the CommonMark spec.
+
+    A fenced code block opens with a code fence — up to three spaces of
+    indentation followed by a run of at least three backticks (```` ``` ````) or
+    at least three tildes (``~~~``) — optionally followed by an info string on
+    the same line.  When the fence is built from backticks, the info string may
+    not contain a backtick.  The content runs until a closing fence (a line
+    bearing only indentation of up to three spaces, fence characters of the same
+    kind and at least the same count, and trailing whitespace) or, when there is
+    none, to the end of *text* — a closing fence is optional in CommonMark.
+
+    *text* qualifies only when it is wholly a single fenced code block: its first
+    line is the opening fence and any closing fence is followed by nothing but
+    blank lines.  A string whose opening fence is preceded by other content, or
+    whose closing fence is followed by further content, returns ``False``.
+
+    Args:
+        text: The string to test.
+
+    Returns:
+        ``True`` if *text* is a single CommonMark fenced code block; ``False``
+        otherwise.
+    """
+    lines: Final[list[str]] = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    opening: Final[re.Match[str] | None] = _OPENING_FENCE_RE.fullmatch(lines[0])
+    if opening is None:
+        return False
+    fence: Final[str] = opening.group(1)
+    info: Final[str] = opening.group(2)
+    if fence[0] == "`" and "`" in info:
+        return False
+    closing_fence_re: Final[re.Pattern[str]] = re.compile(rf" {{0,3}}{re.escape(fence[0])}{{{len(fence)},}}[ \t]*")
+    closing_index: Final[int | None] = next(
+        (i for i in range(1, len(lines)) if closing_fence_re.fullmatch(lines[i])),
+        None,
+    )
+    if closing_index is None:
+        return True
+    return all(not line.strip() for line in lines[closing_index + 1 :])
+
+
+class FencedCodeBlock(NamedTuple):
+    """The info string and code content extracted from a fenced code block.
+
+    Attributes:
+        info: The opening fence's info string (e.g. ``python``), stripped of
+            surrounding whitespace; the empty string when the fence carries none.
+        code: The code content between the opening and closing fences.
+    """
+
+    info: str
+    code: str
+
+
+@validate_call
+def parse_fenced_code_block(text: str) -> FencedCodeBlock:
+    """Extract the info string and code content from a fenced code block.
+
+    *text* must open with a code fence (as accepted by
+    :func:`is_fenced_code_block`).  The closing fence may sit on its own line, be
+    attached to the final content line with no separating newline, or be absent
+    (in which case the content runs to the end of *text*).
+
+    Args:
+        text: A fenced code block string.
+
+    Returns:
+        A :class:`FencedCodeBlock` pairing the opening fence's info string with
+        the code content between the fences.
+
+    Raises:
+        ValueError: If *text* does not open with a code fence.
+    """
+    lines: Final[list[str]] = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    opening: Final[re.Match[str] | None] = _OPENING_FENCE_RE.fullmatch(lines[0])
+    if opening is None:
+        raise ValueError(f"not a fenced code block: {text!r}")
+    fence: Final[str] = opening.group(1)
+    info: Final[str] = opening.group(2).strip()
+    body_lines: Final[list[str]] = lines[1:]
+
+    closing_fence_re: Final[re.Pattern[str]] = re.compile(rf" {{0,3}}{re.escape(fence[0])}{{{len(fence)},}}[ \t]*")
+    closing_index: Final[int | None] = next(
+        (i for i, line in enumerate(body_lines) if closing_fence_re.fullmatch(line)),
+        None,
+    )
+    if closing_index is not None:
+        return FencedCodeBlock(info=info, code="\n".join(body_lines[:closing_index]))
+
+    # No standalone closing fence: strip a fence attached to the final content
+    # line (the form Roam stores), else treat the block as unterminated.
+    if body_lines:
+        attached_fence_re: Final[re.Pattern[str]] = re.compile(rf"{re.escape(fence[0])}{{{len(fence)},}}[ \t]*$")
+        stripped_last: Final[str] = attached_fence_re.sub("", body_lines[-1])
+        if stripped_last != body_lines[-1]:
+            tail: Final[list[str]] = [stripped_last] if stripped_last else []
+            return FencedCodeBlock(info=info, code="\n".join(body_lines[:-1] + tail))
+    return FencedCodeBlock(info=info, code="\n".join(body_lines))

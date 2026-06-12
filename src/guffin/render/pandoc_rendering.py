@@ -36,6 +36,9 @@ Rendering rules:
 - :class:`~guffin.vertex.ImageVertex` — embedded as a :class:`~panflute.Image`
   element pointing at the local path from *image_files*; falls back to a
   :class:`~panflute.Link` when *image_files* has no entry for the vertex.
+- :class:`~guffin.vertex.CodeBlockVertex` — rendered as a
+  :class:`~panflute.CodeBlock` whose class is the vertex's language, so Pandoc
+  applies language-specific syntax highlighting.
 
 Public symbols:
 
@@ -72,6 +75,7 @@ from pydantic import ConfigDict, validate_call
 from guffin.common.geometry import ImageSize
 from guffin.vertex import (
     CalloutVertex,
+    CodeBlockVertex,
     HeadingVertex,
     ImageVertex,
     PageVertex,
@@ -469,6 +473,22 @@ def _callout_vertex_to_blocks(
     return [pf.Div(*callout_blocks, classes=["callout", f"callout-{callout_type}"])]
 
 
+def _code_block_vertex_to_blocks(vertex: CodeBlockVertex) -> list[pf.Block]:
+    """Render a :class:`~guffin.vertex.CodeBlockVertex` to a Pandoc :class:`~panflute.CodeBlock`.
+
+    The vertex's :attr:`~guffin.vertex.CodeBlockVertex.language` is set as the
+    code block's class, which Pandoc uses to apply language-specific syntax
+    highlighting in the output.  The code content is emitted verbatim.
+
+    Args:
+        vertex: The code block vertex to render.
+
+    Returns:
+        A single-element list containing the :class:`~panflute.CodeBlock`.
+    """
+    return [pf.CodeBlock(vertex.code, classes=[vertex.language.value])]
+
+
 def _vertex_to_blocks(
     vertex: Vertex,
     uid_map: Mapping[Uid, Vertex],
@@ -501,6 +521,8 @@ def _vertex_to_blocks(
             return _image_vertex_to_blocks(vertex, image_files, inline_map)
         case CalloutVertex():
             return _callout_vertex_to_blocks(vertex, uid_map, image_files, inline_map, depth)
+        case CodeBlockVertex():
+            return _code_block_vertex_to_blocks(vertex)
 
 
 @validate_call

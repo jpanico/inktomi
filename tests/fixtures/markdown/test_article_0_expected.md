@@ -41,18 +41,18 @@ block 1
   ```
 
 - The child of this block is an isolated fenced code block
-  - ``` python
-    def fizz_buzz(limit: int = 100):
-        for i in range(1, limit + 1):
-            if i % 15 == 0:
-                print("FizzBuzz")
-            elif i % 3 == 0:
-                print("Fizz")
-            elif i % 5 == 0:
-                print("Buzz")
-            else:
-                print(i)
-    ```
+  ``` python
+  def fizz_buzz(limit: int = 100):
+      for i in range(1, limit + 1):
+          if i % 15 == 0:
+              print("FizzBuzz")
+          elif i % 3 == 0:
+              print("Fizz")
+          elif i % 5 == 0:
+              print("Buzz")
+          else:
+              print(i)
+  ```
 
 - block 1.1
   - block 1.1.1

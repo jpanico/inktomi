@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from guffin.vertex import (
     CalloutVertex,
+    CodeBlockVertex,
     HeadingVertex,
     ImageVertex,
     PageVertex,
@@ -16,10 +17,12 @@ from guffin.vertex import (
     VertexType,
     vertex_adapter,
 )
+from guffin.common.code_language import CodeLanguage
 from guffin.roam.network import min_effective_heading_level
 from guffin.roam.node import RoamNode
 from guffin.roam_tree_to_vertex_tree import (
     to_callout_vertex,
+    to_code_block_vertex,
     to_heading_vertex,
     to_image_vertex,
     to_page_vertex,
@@ -38,6 +41,8 @@ _FIRESTORE_URL = (
 )
 _IMAGE_STRING = f"![A flower]({_FIRESTORE_URL})"
 _CALLOUT_STRING: str = "[[>]] [[!NOTE]] This is a note"
+# Raw Roam form: closing fence attached to the final content line (no separating newline).
+_CODE_STRING: str = "```python\ndef f():\n    pass```"
 
 from conftest import FIXTURES_JSON_DIR, FIXTURES_YAML_DIR, STUB_TIME, STUB_USER, article1_node_tree
 
@@ -136,6 +141,23 @@ def _make_callout(
     )
 
 
+def _make_code(
+    uid: str = "codeuid01",
+    id: int = 106,
+    string: str = _CODE_STRING,
+) -> RoamNode:
+    """Return a minimal fenced code block RoamNode."""
+    return RoamNode(
+        uid=uid,
+        id=id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=string,
+        parents=[IdObject(id=99)],
+        page=IdObject(id=99),
+    )
+
+
 def _id_map(*nodes: RoamNode) -> dict[Id, RoamNode]:
     """Build an id_map from a sequence of nodes."""
     return {n.id: n for n in nodes}
@@ -168,6 +190,10 @@ class TestVertexType:
     def test_plain_text_node_returns_roam_text_content(self) -> None:
         """Test that a plain text block node classifies as GUFFIN_TEXT_CONTENT."""
         assert vertex_type(_make_text()) is VertexType.GUFFIN_TEXT_CONTENT
+
+    def test_code_block_node_returns_guffin_code_block(self) -> None:
+        """Test that a fenced code block node classifies as GUFFIN_CODE_BLOCK."""
+        assert vertex_type(_make_code()) is VertexType.GUFFIN_CODE_BLOCK
 
     def test_node_with_neither_title_nor_string_raises_validation_error(self) -> None:
         """Test that constructing a node missing both title and string raises ValidationError."""
@@ -569,6 +595,46 @@ class TestToCalloutVertex:
             "- this INFO `Callout box`, which contains Roam `page references`"
         )
         assert to_callout_vertex(fixture_node, id_map).body == expected
+
+
+# ---------------------------------------------------------------------------
+# TestToCodeBlockVertex
+# ---------------------------------------------------------------------------
+
+
+class TestToCodeBlockVertex:
+    """Tests for to_code_block_vertex."""
+
+    def test_returns_code_block_vertex(self) -> None:
+        """Test that a fenced code block node builds a CodeBlockVertex."""
+        node = _make_code()
+        assert isinstance(to_code_block_vertex(node, _id_map(node)), CodeBlockVertex)
+
+    def test_language_from_info_string(self) -> None:
+        """Test that the opening fence's info string maps to a CodeLanguage."""
+        node = _make_code()
+        assert to_code_block_vertex(node, _id_map(node)).language is CodeLanguage.PYTHON
+
+    def test_code_excludes_fences(self) -> None:
+        """Test that the code content excludes the opening and closing fences."""
+        node = _make_code()
+        assert to_code_block_vertex(node, _id_map(node)).code == "def f():\n    pass"
+
+    def test_unrecognised_language_raises(self) -> None:
+        """Test that an info string outside CodeLanguage raises ValueError."""
+        node = _make_code(string="```fortran\nprint *, 1\n```")
+        with pytest.raises(ValueError):
+            to_code_block_vertex(node, _id_map(node))
+
+    def test_article_0_fixture_code_block(self) -> None:
+        """Test that the Article 0 isolated code block (C6xVTMnsh) yields PYTHON CodeBlockVertex."""
+        raw: list[dict[str, object]] = yaml.safe_load((FIXTURES_YAML_DIR / "test_article_0_nodes.yaml").read_text())
+        nodes: list[RoamNode] = [RoamNode.model_validate(r) for r in raw]
+        fixture_node: RoamNode = next(n for n in nodes if n.uid == "C6xVTMnsh")
+        id_map: dict[Id, RoamNode] = {n.id: n for n in nodes}
+        vertex: CodeBlockVertex = to_code_block_vertex(fixture_node, id_map)
+        assert vertex.language is CodeLanguage.PYTHON
+        assert vertex.code.startswith("def fizz_buzz(limit: int = 100):")
 
 
 # ---------------------------------------------------------------------------

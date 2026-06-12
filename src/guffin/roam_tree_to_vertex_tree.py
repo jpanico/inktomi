@@ -16,6 +16,8 @@ Public symbols:
   :class:`~guffin.vertex.TextContentVertex` from a plain text block node.
 - :func:`to_callout_vertex` — build a :class:`~guffin.vertex.CalloutVertex` from a
   callout block node.
+- :func:`to_code_block_vertex` — build a :class:`~guffin.vertex.CodeBlockVertex` from a
+  fenced code block node.
 - :func:`transcribe_node` — transcribe a :class:`~guffin.roam.node.RoamNode` into
   the appropriate :data:`~guffin.vertex.Vertex` subtype.
 - :func:`transcribe` — transcribe all nodes in a :class:`~guffin.roam.tree.NodeTree`
@@ -31,6 +33,7 @@ from pydantic import TypeAdapter, validate_call
 
 from guffin.vertex import (
     CalloutVertex,
+    CodeBlockVertex,
     HeadingVertex,
     ImageVertex,
     PageVertex,
@@ -45,7 +48,9 @@ from guffin.roam_md_to_pandoc_md import to_pandoc_md
 from guffin.roam.network import min_effective_heading_level
 from guffin.roam.node import NodeType, RoamNode, effective_heading_level, image_size, node_type
 from guffin.roam.tree import NodeTree
+from guffin.common.code_language import CodeLanguage
 from guffin.common.geometry import ImageSize
+from guffin.common.markdown import FencedCodeBlock, parse_fenced_code_block
 from guffin.common.media_type import MediaType
 from guffin.roam.primitives import IMAGE_LINK_RE, HeadingLevel, Id, RoamCallout, Url, parse_callout
 
@@ -182,6 +187,8 @@ def vertex_type(node: RoamNode) -> VertexType:
             return VertexType.GUFFIN_PAGE
         case NodeType.ROAM_PLAIN_BLOCK:
             return VertexType.GUFFIN_TEXT_CONTENT
+        case NodeType.ROAM_CODE_BLOCK:
+            return VertexType.GUFFIN_CODE_BLOCK
         case NodeType.ROAM_HEADING_BLOCK:
             return VertexType.GUFFIN_HEADING
         case NodeType.ROAM_IMAGE_BLOCK:
@@ -366,6 +373,43 @@ def to_callout_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> CalloutVert
 
 
 @validate_call
+def to_code_block_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> CodeBlockVertex:
+    """Build a :class:`~guffin.vertex.CodeBlockVertex` from a fenced code block *node*.
+
+    Splits ``node.string`` into its info string and code content via
+    :func:`~guffin.common.markdown.parse_fenced_code_block`, mapping the info
+    string to a :class:`~guffin.common.code_language.CodeLanguage`.  The code
+    content is preserved verbatim — Roam-to-Pandoc Markdown normalization is
+    deliberately not applied, so the source is kept exactly as authored.
+
+    Args:
+        node: A code block node whose ``string`` is a fenced code block.
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`,
+            used to resolve child and ref stubs to UIDs.
+
+    Returns:
+        A :class:`~guffin.vertex.CodeBlockVertex`.
+
+    Raises:
+        ValidationError: If *node* or *id_map* is ``None`` or invalid.
+        ValueError: If ``node.string`` is ``None``, is not a fenced code block, or
+            carries an info string that is not a recognised
+            :class:`~guffin.common.code_language.CodeLanguage`.
+    """
+    logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
+    if node.string is None:
+        raise ValueError(f"RoamNode uid={node.uid!r} has no 'string'")
+    parsed: Final[FencedCodeBlock] = parse_fenced_code_block(node.string.strip())
+    return CodeBlockVertex(
+        uid=node.uid,
+        code=parsed.code,
+        language=CodeLanguage(parsed.info),
+        children=_resolve_children(node, id_map),
+        refs=_resolve_refs(node, id_map),
+    )
+
+
+@validate_call
 def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: int = 0) -> Vertex:
     r"""Transcribe *node* into a normalized :class:`~guffin.vertex.Vertex`.
 
@@ -402,6 +446,8 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
             return to_text_content_vertex(node, id_map)
         case VertexType.GUFFIN_CALLOUT:
             return to_callout_vertex(node, id_map)
+        case VertexType.GUFFIN_CODE_BLOCK:
+            return to_code_block_vertex(node, id_map)
         case _ as unreachable:
             assert_never(unreachable)
 

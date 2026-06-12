@@ -176,6 +176,9 @@ def build_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS
         case NodeType.ROAM_PLAIN_BLOCK:
             assert node.string is not None
             title_text = node.string
+        case NodeType.ROAM_CODE_BLOCK:
+            assert node.string is not None
+            title_text = node.string
         case _ as unreachable:
             assert_never(unreachable)
     title: Final[str] = f"[bold #00aa00]<{nt.value}> {title_text} ({node.id})[/bold #00aa00]"
@@ -349,6 +352,11 @@ def build_vertex_panel(vertex: Vertex, props: list[str] = DEFAULT_VERTEX_PANEL_P
             title_content = (
                 f"[bold orange1]{markup_escape(f'CALLOUT [{vertex.callout_type.value}]:')}[/bold orange1]"
                 f" [bold #00aa00]{markup_escape(vertex.title)}[/bold #00aa00]"
+            )
+        case VertexType.GUFFIN_CODE_BLOCK:
+            title_content = (
+                f"[bold orange1]{markup_escape(f'CODE [{vertex.language.value}]:')}[/bold orange1]"
+                f" [bold #00aa00]{markup_escape(vertex.code)}[/bold #00aa00]"
             )
         case _ as unreachable:
             assert_never(unreachable)
