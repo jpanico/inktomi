@@ -121,6 +121,10 @@ def _format_node_prop(node: RoamNode, prop: str) -> str:
             return f"{prop}=?"
 
 
+def _trunc(s: str, max_len: int = 40) -> str:
+    return s[:max_len] + "…" if len(s) > max_len else s
+
+
 @validate_call
 def build_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS) -> Panel:
     """Render *node* as a Rich Panel for display in a terminal tree.
@@ -172,13 +176,13 @@ def build_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS
             assert node.string is not None
             callout: Final[RoamCallout | None] = parse_callout(node.string)
             assert callout is not None
-            title_text = callout.title
+            title_text = _trunc(callout.title)
         case NodeType.ROAM_PLAIN_BLOCK:
             assert node.string is not None
-            title_text = node.string
+            title_text = _trunc(node.string)
         case NodeType.ROAM_CODE_BLOCK:
             assert node.string is not None
-            title_text = node.string
+            title_text = _trunc(node.string)
         case _ as unreachable:
             assert_never(unreachable)
     title: Final[str] = f"[bold #00aa00]<{nt.value}> {title_text} ({node.id})[/bold #00aa00]"
@@ -255,8 +259,8 @@ def build_rich_refs_box(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PR
     return Panel(Group(*ref_rows), title="refs")
 
 
-def _format_vertex_prop(vertex: Vertex, prop: str) -> str:
-    """Return a ``name=value`` string for *prop* on *vertex*, for use in a panel body.
+def _format_vertex_prop(vertex: Vertex, prop: str) -> Text:
+    """Return a styled ``name=value`` :class:`~rich.text.Text` for *prop* on *vertex*.
 
     Args:
         vertex: The vertex whose property is to be formatted.
@@ -264,48 +268,51 @@ def _format_vertex_prop(vertex: Vertex, prop: str) -> str:
             such as ``"vertex_type.value"``.
 
     Returns:
-        A ``"name=value"`` string.  Unknown *prop* names produce ``"name=?"``.
+        A :class:`~rich.text.Text` rendering ``name=value``.  Unknown *prop* names
+        produce ``"name=?"``.  For vertex-type props the value portion is bold orange.
     """
     match prop:
         case "vertex_type.value":
-            return f"type={vertex.vertex_type.value}"
+            return Text.assemble("type=", (vertex.vertex_type.value.split("/", 1)[-1], "bold orange1"))
         case "vertex_type":
-            return f"vertex_type={vertex.vertex_type.value}"
+            return Text.assemble("vertex_type=", (vertex.vertex_type.value.split("/", 1)[-1], "bold orange1"))
         case "uid":
-            return f"uid={vertex.uid}"
+            return Text(f"uid={vertex.uid}")
         case "title":
-            return f"title={vertex.title}" if isinstance(vertex, PageVertex) else "title=N/A"
+            return Text(f"title={vertex.title}" if isinstance(vertex, PageVertex) else "title=N/A")
         case "text":
-            return f"text={vertex.text}" if isinstance(vertex, TextContentVertex) else "text=N/A"
+            return Text(f"text={vertex.text}" if isinstance(vertex, TextContentVertex) else "text=N/A")
         case "file_name":
-            return f"file_name={vertex.file_name}" if isinstance(vertex, ImageVertex) else "file_name=N/A"
+            return Text(f"file_name={vertex.file_name}" if isinstance(vertex, ImageVertex) else "file_name=N/A")
         case "media_type":
-            return f"media_type={vertex.media_type.value}" if isinstance(vertex, ImageVertex) else "media_type=N/A"
+            return Text(
+                f"media_type={vertex.media_type.value}" if isinstance(vertex, ImageVertex) else "media_type=N/A"
+            )
         case "scaled_image_size":
-            return (
+            return Text(
                 f"scaled_image_size=({vertex.scaled_image_size})"
                 if isinstance(vertex, ImageVertex)
                 else "scaled_image_size=N/A"
             )
         case "original_image_size":
             if not isinstance(vertex, ImageVertex):
-                return "original_image_size=N/A"
+                return Text("original_image_size=N/A")
             size: Final[ImageSize | None] = vertex.original_image_size
-            return f"original_image_size=({size})" if size is not None else "original_image_size=None"
+            return Text(f"original_image_size=({size})" if size is not None else "original_image_size=None")
         case "source":
-            return f"source={vertex.source}" if isinstance(vertex, ImageVertex) else "source=N/A"
+            return Text(f"source={vertex.source}" if isinstance(vertex, ImageVertex) else "source=N/A")
         case "alt_text":
-            return f"alt_text={vertex.alt_text}" if isinstance(vertex, ImageVertex) else "alt_text=N/A"
+            return Text(f"alt_text={vertex.alt_text}" if isinstance(vertex, ImageVertex) else "alt_text=N/A")
         case "body":
-            return f"body={vertex.body}" if isinstance(vertex, CalloutVertex) else "body=N/A"
+            return Text(f"body={vertex.body}" if isinstance(vertex, CalloutVertex) else "body=N/A")
         case "children":
             val: str = f"[{', '.join(vertex.children)}]" if vertex.children else "None"
-            return f"children={val}"
+            return Text(f"children={val}")
         case "refs":
             val = f"[{', '.join(vertex.refs)}]" if vertex.refs else "None"
-            return f"refs={val}"
+            return Text(f"refs={val}")
         case _:
-            return f"{prop}=?"
+            return Text(f"{prop}=?")
 
 
 @validate_call
@@ -339,10 +346,10 @@ def build_vertex_panel(vertex: Vertex, props: list[str] = DEFAULT_VERTEX_PANEL_P
         case VertexType.GUFFIN_HEADING:
             title_content = (
                 f"[bold orange1]H{vertex.heading_level}[/bold orange1]"
-                f"[bold #00aa00]{markup_escape(f': {vertex.text}')}[/bold #00aa00]"
+                f"[bold #00aa00]{markup_escape(f': {_trunc(vertex.text)}')}[/bold #00aa00]"
             )
-        case VertexType.GUFFIN_TEXT_CONTENT:
-            title_content = f"[bold #00aa00]{markup_escape(vertex.text)}[/bold #00aa00]"
+        case VertexType.GUFFIN_TEXT:
+            title_content = f"[bold #00aa00]{markup_escape(_trunc(vertex.text))}[/bold #00aa00]"
         case VertexType.GUFFIN_IMAGE:
             title_content = (
                 f"[bold orange1]{markup_escape(f'IMAGE [{vertex.alt_text or ""}]')}[/bold orange1]"
@@ -351,18 +358,18 @@ def build_vertex_panel(vertex: Vertex, props: list[str] = DEFAULT_VERTEX_PANEL_P
         case VertexType.GUFFIN_CALLOUT:
             title_content = (
                 f"[bold orange1]{markup_escape(f'CALLOUT [{vertex.callout_type.value}]:')}[/bold orange1]"
-                f" [bold #00aa00]{markup_escape(vertex.title)}[/bold #00aa00]"
+                f" [bold #00aa00]{markup_escape(_trunc(vertex.title))}[/bold #00aa00]"
             )
         case VertexType.GUFFIN_CODE_BLOCK:
             title_content = (
                 f"[bold orange1]{markup_escape(f'CODE [{vertex.language.value}]:')}[/bold orange1]"
-                f" [bold #00aa00]{markup_escape(vertex.code)}[/bold #00aa00]"
+                f" [bold #00aa00]{markup_escape(_trunc(vertex.code))}[/bold #00aa00]"
             )
         case _ as unreachable:
             assert_never(unreachable)
     title: Final[str] = f"{title_content} [dim]({vertex.uid})[/dim]"
-    content: Final[str] = "  ".join(_format_vertex_prop(vertex, p) for p in props)
-    return Panel(Text(content), title=title, expand=False)
+    content: Final[Text] = Text("  ").join(_format_vertex_prop(vertex, p) for p in props)
+    return Panel(content, title=title, expand=False)
 
 
 @validate_call

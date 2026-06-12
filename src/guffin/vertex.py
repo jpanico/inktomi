@@ -76,7 +76,7 @@ class VertexType(StrEnum):
     Values:
         GUFFIN_PAGE: Normalized form of a Roam *Page* node — ``:node/title`` is
             present; ``:block/string`` is absent.
-        GUFFIN_TEXT_CONTENT: Normalized form of a Roam *Block* node that has no
+        GUFFIN_TEXT: Normalized form of a Roam *Block* node that has no
             ``heading`` property — i.e. normal body text.
         GUFFIN_HEADING: Normalized form of a Roam *Block* node that carries a
             ``heading`` property (value 1, 2, or 3).
@@ -90,7 +90,7 @@ class VertexType(StrEnum):
     """
 
     GUFFIN_PAGE = "guffin/page"
-    GUFFIN_TEXT_CONTENT = "guffin/text-content"
+    GUFFIN_TEXT = "guffin/text"
     GUFFIN_HEADING = "guffin/heading"
     GUFFIN_IMAGE = "guffin/image"
     GUFFIN_CALLOUT = "guffin/callout"
@@ -174,22 +174,22 @@ class HeadingVertex(_BaseVertex[Literal[VertexType.GUFFIN_HEADING]]):
     heading_level: HeadingLevel = Field(..., description="Effective heading level (1–6).")
 
 
-class TextContentVertex(_BaseVertex[Literal[VertexType.GUFFIN_TEXT_CONTENT]]):
+class TextContentVertex(_BaseVertex[Literal[VertexType.GUFFIN_TEXT]]):
     """Normalized (transcribed) form of a plain-text Roam Block node.
 
     Produced when the source :class:`~guffin.roam.node.RoamNode` has
     ``:block/string`` set with no heading property and no embedded Firestore URL.
 
     Attributes:
-        vertex_type: Always :attr:`~VertexType.GUFFIN_TEXT_CONTENT`.
+        vertex_type: Always :attr:`~VertexType.GUFFIN_TEXT`.
             Serialized as ``'vertex-type'``.
         text: Block string from the source node's ``string`` field.
     """
 
-    vertex_type: Literal[VertexType.GUFFIN_TEXT_CONTENT] = Field(
-        default=VertexType.GUFFIN_TEXT_CONTENT,
+    vertex_type: Literal[VertexType.GUFFIN_TEXT] = Field(
+        default=VertexType.GUFFIN_TEXT,
         serialization_alias="vertex-type",
-        description="Always VertexType.GUFFIN_TEXT_CONTENT (serialized as 'vertex-type').",
+        description="Always VertexType.GUFFIN_TEXT (serialized as 'vertex-type').",
     )
     text: str = Field(..., description="Block string from the source node's string field.")
 

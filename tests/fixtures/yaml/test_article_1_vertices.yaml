@@ -35,7 +35,7 @@
   - uj8YolCoE
   text: illustration 1.1
   heading_level: 3
-- vertex_type: guffin/text-content
+- vertex_type: guffin/text
   uid: Ma5KGUH9O
   text: 'AI assistant (Claude Opus 4.6): '
 - vertex_type: guffin/heading
@@ -52,7 +52,7 @@
   file_name: _otAwc2B9g.jpeg.enc
   media_type: image/jpeg
   scaled_image_size: {}
-- vertex_type: guffin/text-content
+- vertex_type: guffin/text
   uid: 4_GrZ9su6
   text: this image **has not been resized** through the Roam UI.
 - vertex_type: guffin/heading
@@ -120,6 +120,6 @@
   uid: JW5PswS6v
   text: Section 3.1
   heading_level: 2
-- vertex_type: guffin/text-content
+- vertex_type: guffin/text
   uid: tWkumkdUE
   text: this image **has been resized** through the Roam UI (width:257, height:None)

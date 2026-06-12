@@ -57,7 +57,10 @@ GUFFIN_LIVE_TESTS=1 pytest -m live -v  # requires Roam Desktop running locally
     - `pdf_rendering.py` — renders a `VertexTree` to PDF: invokes `pandoc_rendering`, serializes to Pandoc JSON, converts to PDF via Pandoc + Typst
     - `rich_rendering.py` — Rich panel/tree rendering for `NodeTree` and `VertexTree`
   - **`common/` sub-package** (`src/guffin/common/`) — cross-cutting helpers shared across the package
+    - `code_language.py` — `CodeLanguage` StrEnum of programming-language identifiers for fenced code block info strings
     - `filenames.py` — `shell_safe_filename()` normalizes strings to POSIX-safe filenames
+    - `geometry.py` — `ImageSize` Pydantic model for pixel dimensions (width × height) of a 2-D image
+    - `markdown.py` — CommonMark fenced code block utilities: `is_fenced_code_block()`, `FencedCodeBlock` NamedTuple, `parse_fenced_code_block()`
     - `media_type.py` — `MediaType` enum; MIME type detection from file names
     - `validation.py` — generic accumulator-pipeline validation framework
   - **Templates**

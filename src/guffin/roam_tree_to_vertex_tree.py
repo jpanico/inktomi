@@ -186,7 +186,7 @@ def vertex_type(node: RoamNode) -> VertexType:
         case NodeType.ROAM_PAGE:
             return VertexType.GUFFIN_PAGE
         case NodeType.ROAM_PLAIN_BLOCK:
-            return VertexType.GUFFIN_TEXT_CONTENT
+            return VertexType.GUFFIN_TEXT
         case NodeType.ROAM_CODE_BLOCK:
             return VertexType.GUFFIN_CODE_BLOCK
         case NodeType.ROAM_HEADING_BLOCK:
@@ -442,7 +442,7 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
             return to_image_vertex(node, id_map)
         case VertexType.GUFFIN_HEADING:
             return to_heading_vertex(node, id_map, heading_offset)
-        case VertexType.GUFFIN_TEXT_CONTENT:
+        case VertexType.GUFFIN_TEXT:
             return to_text_content_vertex(node, id_map)
         case VertexType.GUFFIN_CALLOUT:
             return to_callout_vertex(node, id_map)

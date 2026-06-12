@@ -188,8 +188,8 @@ class TestVertexType:
         assert vertex_type(_make_ah_heading()) is VertexType.GUFFIN_HEADING
 
     def test_plain_text_node_returns_roam_text_content(self) -> None:
-        """Test that a plain text block node classifies as GUFFIN_TEXT_CONTENT."""
-        assert vertex_type(_make_text()) is VertexType.GUFFIN_TEXT_CONTENT
+        """Test that a plain text block node classifies as GUFFIN_TEXT."""
+        assert vertex_type(_make_text()) is VertexType.GUFFIN_TEXT
 
     def test_code_block_node_returns_guffin_code_block(self) -> None:
         """Test that a fenced code block node classifies as GUFFIN_CODE_BLOCK."""
@@ -455,9 +455,9 @@ class TestToTextContentVertex:
     """Tests for to_text_content_vertex."""
 
     def test_returns_roam_text_content_vertex_type(self) -> None:
-        """Test that to_text_content_vertex produces a vertex with type GUFFIN_TEXT_CONTENT."""
+        """Test that to_text_content_vertex produces a vertex with type GUFFIN_TEXT."""
         node = _make_text()
-        assert to_text_content_vertex(node, _id_map(node)).vertex_type is VertexType.GUFFIN_TEXT_CONTENT
+        assert to_text_content_vertex(node, _id_map(node)).vertex_type is VertexType.GUFFIN_TEXT
 
     def test_uid_preserved(self) -> None:
         """Test that the vertex uid matches the source node uid."""
@@ -672,11 +672,11 @@ class TestTranscribeNode:
         assert v.heading_level == 1
 
     def test_transcribes_text_content_node(self) -> None:
-        """Test that a plain text block node is transcribed to a GUFFIN_TEXT_CONTENT vertex."""
+        """Test that a plain text block node is transcribed to a GUFFIN_TEXT vertex."""
         node = _make_text(string="Body text")
         v = transcribe_node(node, _id_map(node))
         assert isinstance(v, TextContentVertex)
-        assert v.vertex_type is VertexType.GUFFIN_TEXT_CONTENT
+        assert v.vertex_type is VertexType.GUFFIN_TEXT
         assert v.text == "Body text"
 
     def test_children_resolved_via_id_map(self) -> None:

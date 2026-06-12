@@ -260,7 +260,8 @@ Fetches a Roam `Page` or `Node` subtree via the Local API, and renders it as a c
 
 ```bash
 dump-roam-tree <page_title_or_node_uid> --port <port> --graph <graph> --token <token> \
-  [--vertex-tree] [--node-tree] [--raw-results] [--include-refs] [--node-props <props>]
+  [--vertex-tree] [--node-tree] [--raw-results] [--include-refs] \
+  [--node-props <props>] [--vertex-props <props>]
 ```
 
 Flags (all are boolean toggles with a `--no-*` / uppercase-letter inverse):
@@ -272,7 +273,9 @@ Flags (all are boolean toggles with a `--no-*` / uppercase-letter inverse):
 | `--raw-results` | `-r/-R` | off | Print the raw Datalog query results |
 | `--include-refs` | `-i/-I` | **on** | Also fetch nodes referenced via `:block/refs` and their descendants |
 
-`--node-props heading,parents` selects which `RoamNode` fields appear for each node in the output.
+`--node-props heading,parents` selects which `RoamNode` fields appear for each node in the node-tree output (defaults to `heading,order,children,parents,page`).
+
+`--vertex-props vertex_type.value,children,refs` selects which `Vertex` fields appear for each vertex in the vertex-tree output (defaults to `vertex_type.value,children,refs`).
 
 Examples:
 ```bash
