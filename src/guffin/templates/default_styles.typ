@@ -270,3 +270,12 @@
 // reduce code line spacing
 #show raw.where(block: true): set text(1em / 0.9)
 #show raw: set text(ligatures: true, font: cfg.code-font)
+
+// blockquote styling — gray left border with left padding
+#show quote.where(block: true): it => {
+  block(
+    stroke: (left: 3pt + luma(170)),
+    inset: (left: 1em, right: 0em, top: 0.4em, bottom: 0.4em),
+    width: 100%,
+  )[#it.body]
+}

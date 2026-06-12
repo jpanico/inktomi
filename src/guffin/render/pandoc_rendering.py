@@ -499,9 +499,10 @@ def _block_quote_vertex_to_blocks(
 ) -> list[pf.Block]:
     """Render a :class:`~guffin.vertex.BlockQuoteVertex` to a Pandoc :class:`~panflute.BlockQuote`.
 
-    The vertex text is wrapped in a :class:`~panflute.Para` and placed inside
-    a :class:`~panflute.BlockQuote`.  Child vertices are rendered recursively
-    and appended inside the same :class:`~panflute.BlockQuote`.
+    The vertex text is parsed at block level via :func:`parse_block_md` so that
+    multi-paragraph content and embedded list items are preserved as distinct block
+    elements inside the :class:`~panflute.BlockQuote`.  Child vertices are rendered
+    recursively and appended inside the same :class:`~panflute.BlockQuote`.
 
     Args:
         vertex: The block-quote vertex to render.
@@ -514,8 +515,7 @@ def _block_quote_vertex_to_blocks(
     Returns:
         A single-element list containing the :class:`~panflute.BlockQuote`.
     """
-    text_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
-    inner_blocks: list[pf.Block] = [pf.Para(*text_inlines)]
+    inner_blocks: list[pf.Block] = parse_block_md(vertex.text.replace("\n", "\n\n"))
     if vertex.children:
         inner_blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
     return [pf.BlockQuote(*inner_blocks)]
@@ -613,8 +613,6 @@ def vertex_tree_to_pandoc(
             case ImageVertex(alt_text=t) if t is not None:
                 texts.append(t)
             case CalloutVertex(title=t) if t:
-                texts.append(t)
-            case BlockQuoteVertex(text=t):
                 texts.append(t)
             case _:
                 pass
