@@ -12,6 +12,25 @@
     title: Test Article
     edit-nonce: 0iIGJ1buX
     edit-time: 1780843750454
+- - string: '[[>]] This is a Roam standard multi-line Block Quote
+
+      this is the 2nd line
+
+      - this is the 3rd line'
+    user:
+      id: 3
+    id: 11193
+    uid: r09kXvUg-
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1781283589466
+    order: 10
+    open: true
+    page:
+      id: 11137
+    refs:
+    - id: 5450
 - - string: block 3
     children:
     - id: 11154
@@ -40,6 +59,8 @@
     - id: 11174
     - id: 11186
     - id: 11187
+    - id: 11188
+    - id: 11193
     user:
       id: 3
     id: 11149
@@ -118,7 +139,7 @@
     - id: 11137
     - id: 11149
     time: 1780944784665
-    order: 10
+    order: 12
     open: true
     page:
       id: 11137
@@ -189,6 +210,21 @@
     open: true
     page:
       id: 11137
+- - string: '[[>]] This is a Roam standard single line Block Quote'
+    user:
+      id: 3
+    id: 11188
+    uid: gq_29_H-7
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1781283482682
+    order: 9
+    open: true
+    page:
+      id: 11137
+    refs:
+    - id: 5450
 - - string: block 1.1
     children:
     - id: 11152
@@ -200,7 +236,7 @@
     - id: 11137
     - id: 11149
     time: 1780944773800
-    order: 9
+    order: 11
     open: true
     page:
       id: 11137
@@ -330,13 +366,13 @@
     sidebar: 18
     id: 11137
     uid: L7iQsWlWT
-    word-count: 193
+    word-count: 221
     edit-user:
       id: 3
     time: 1780943981609
     title: '[[Test Article]] 0'
-    edit-nonce: uQ8bStjLw
-    edit-time: 1781270487313
+    edit-nonce: gRDiSl57W
+    edit-time: 1781283589466
     refs:
     - id: 4223
 - - string: block 1.1.1
