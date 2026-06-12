@@ -7,9 +7,9 @@ Public symbols are organized into five groups:
 - **Composite type aliases**: :data:`UidPair`, :data:`RawChildren`, :data:`RawRefs`.
 - **Stub models**: :class:`IdObject`, :class:`LinkObject`.
 - **Pattern constants**: :data:`UID_PATTERN` — raw regex string for a Roam node UID;
-  :data:`UID_RE` — compiled form; :data:`CALLOUT_PREFIX` — string prefix that identifies a
-  potential callout block; :data:`CALLOUT_RE` — compiled regex that matches and decomposes a
-  full callout block string; :data:`MD_BLOCK_QUOTE_PREFIX` — string prefix for a standard
+  :data:`UID_RE` — compiled form; :data:`ROAM_BLOCK_QUOTE_PREFIX` — string prefix for a
+  Roam block quote (and callout); :data:`CALLOUT_RE` — compiled regex that matches and
+  decomposes a full callout block string; :data:`MD_BLOCK_QUOTE_PREFIX` — string prefix for a standard
   Markdown blockquote line; :data:`IMAGE_LINK_RE` — compiled regex matching a Roam markdown
   image link whose URL is a Cloud Firestore storage URL.
 - **Enumerations**: :class:`CalloutType` — the twelve Roam callout type keywords.
@@ -136,10 +136,13 @@ class CalloutType(enum.StrEnum):
     BUG = "BUG"
 
 
-CALLOUT_PREFIX: Final[str] = "[[>]]"
-"""String prefix that identifies a potential Roam callout block.
+ROAM_BLOCK_QUOTE_PREFIX: Final[str] = "[[>]]"
+"""String prefix for a Roam block quote (and by extension, a Roam callout).
 
-Used as a fast pre-filter before applying :data:`CALLOUT_RE`.
+In Roam's Markdown model ``[[>]]`` is the block-quote marker; callouts are a
+styled subtype of block quote whose marker is ``[[>]] [[!<TYPE>]]``.  Used as
+a fast pre-filter before applying :data:`CALLOUT_RE` and by
+:func:`is_roam_block_quote`.
 """
 
 MD_BLOCK_QUOTE_PREFIX: Final[str] = ">"
@@ -150,7 +153,7 @@ block quote marker.  Used by :func:`is_roam_block_quote`.
 """
 
 CALLOUT_RE: Final[re.Pattern[str]] = re.compile(
-    rf"(?P<prefix>{re.escape(CALLOUT_PREFIX)})"
+    rf"(?P<prefix>{re.escape(ROAM_BLOCK_QUOTE_PREFIX)})"
     rf" \[\[!(?P<callout_type>{'|'.join(ct.value for ct in CalloutType)})\]\]"
     r"\s*(?P<title>[^\n]*)(?:\n(?P<body>.*))?",
     re.DOTALL,
@@ -196,7 +199,7 @@ class RoamCallout(BaseModel):
 def parse_callout(block_string: str) -> RoamCallout | None:
     """Parse *block_string* as a :class:`RoamCallout`, or return ``None`` if it is not a callout.
 
-    Returns ``None`` when *block_string* does not start with :data:`CALLOUT_PREFIX`.
+    Returns ``None`` when *block_string* does not start with :data:`ROAM_BLOCK_QUOTE_PREFIX`.
 
     Args:
         block_string: The raw block string to parse.
@@ -206,15 +209,15 @@ def parse_callout(block_string: str) -> RoamCallout | None:
         The ``body`` field is an empty string when *block_string* contains no newline.
 
     Raises:
-        ValueError: When *block_string* starts with :data:`CALLOUT_PREFIX` but does not match
+        ValueError: When *block_string* starts with :data:`ROAM_BLOCK_QUOTE_PREFIX` but does not match
             :data:`CALLOUT_RE` (malformed callout marker).
     """
-    if not block_string.startswith(CALLOUT_PREFIX):
+    if not block_string.startswith(ROAM_BLOCK_QUOTE_PREFIX):
         return None
     m: Final[re.Match[str] | None] = CALLOUT_RE.match(block_string)
     if m is None:
         raise ValueError(
-            f"block string starts with {CALLOUT_PREFIX!r} " f"but does not match callout pattern; got {block_string!r}"
+            f"block string starts with {ROAM_BLOCK_QUOTE_PREFIX!r} " f"but does not match callout pattern; got {block_string!r}"
         )
     return RoamCallout(
         callout_type=CalloutType(m.group("callout_type")),
@@ -230,7 +233,7 @@ def is_roam_block_quote(block_string: str) -> bool:
     Recognises two forms:
 
     - **Standard Markdown**: *block_string* starts with :data:`MD_BLOCK_QUOTE_PREFIX` (``>``).
-    - **Roam-specific**: *block_string* starts with :data:`CALLOUT_PREFIX` (``[[>]]``) but does
+    - **Roam-specific**: *block_string* starts with :data:`ROAM_BLOCK_QUOTE_PREFIX` (``[[>]]``) but does
       not match :data:`CALLOUT_RE` — i.e. a plain ``[[>]]``-prefixed blockquote rather
       than a typed callout.
 
@@ -240,7 +243,7 @@ def is_roam_block_quote(block_string: str) -> bool:
     Returns:
         ``True`` when *block_string* matches either the standard or Roam blockquote form.
     """
-    if block_string.startswith(CALLOUT_PREFIX):
+    if block_string.startswith(ROAM_BLOCK_QUOTE_PREFIX):
         return not CALLOUT_RE.match(block_string)
     return block_string.startswith(MD_BLOCK_QUOTE_PREFIX)
 
@@ -249,7 +252,7 @@ def is_roam_block_quote(block_string: str) -> bool:
 def strip_block_quote_marker(block_string: str) -> str:
     """Strip the leading block-quote marker from *block_string* and return the remaining content.
 
-    Strips :data:`CALLOUT_PREFIX` (``[[>]]``) for Roam-style block quotes or
+    Strips :data:`ROAM_BLOCK_QUOTE_PREFIX` (``[[>]]``) for Roam-style block quotes or
     :data:`MD_BLOCK_QUOTE_PREFIX` (``>``) for standard Markdown block quotes, then
     strips any leading whitespace from the remainder.
 
@@ -266,7 +269,7 @@ def strip_block_quote_marker(block_string: str) -> str:
     """
     if not is_roam_block_quote(block_string):
         raise ValueError(f"string is not a block quote: {block_string!r}")
-    prefix: Final[str] = CALLOUT_PREFIX if block_string.startswith(CALLOUT_PREFIX) else MD_BLOCK_QUOTE_PREFIX
+    prefix: Final[str] = ROAM_BLOCK_QUOTE_PREFIX if block_string.startswith(ROAM_BLOCK_QUOTE_PREFIX) else MD_BLOCK_QUOTE_PREFIX
     return block_string[len(prefix) :].lstrip()
 
 

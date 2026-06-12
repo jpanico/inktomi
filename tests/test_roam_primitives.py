@@ -152,7 +152,7 @@ class TestCallout:
         assert parse_callout("") is None
 
     def test_returns_none_for_plain_text(self) -> None:
-        """Returns None when block_string does not start with CALLOUT_PREFIX."""
+        """Returns None when block_string does not start with ROAM_BLOCK_QUOTE_PREFIX."""
         assert parse_callout("Some plain text") is None
 
     def test_returns_none_for_image_link(self) -> None:
@@ -211,7 +211,7 @@ class TestCallout:
     # --- error cases ---
 
     def test_raises_value_error_for_malformed_marker(self) -> None:
-        """Raises ValueError when block_string starts with CALLOUT_PREFIX but has a malformed marker."""
+        """Raises ValueError when block_string starts with ROAM_BLOCK_QUOTE_PREFIX but has a malformed marker."""
         with pytest.raises(ValueError, match="does not match callout pattern"):
             parse_callout("[[>]] [[!INVALID]]")
 
