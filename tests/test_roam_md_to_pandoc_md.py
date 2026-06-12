@@ -1,6 +1,7 @@
 """Unit tests for guffin.roam_md_to_pandoc_md."""
 
 from guffin.roam_md_to_pandoc_md import (
+    convert_code_blocks,
     convert_highlights,
     convert_italics,
     convert_page_link_aliases,
@@ -161,6 +162,42 @@ class TestStripDoubleBrackets:
         assert strip_double_brackets("[display](Page Name)") == "[display](Page Name)"
 
 
+class TestConvertCodeBlocks:
+    """Tests for convert_code_blocks — repositioning Roam fenced code blocks onto isolated lines."""
+
+    def test_isolated_closing_fence_repositioned(self) -> None:
+        """Test that a block-start fence with a trailing closing fence gets the closing fence isolated."""
+        assert convert_code_blocks("```python\ndef f():\n    pass```") == "```python\ndef f():\n    pass\n```"
+
+    def test_prose_before_opening_fence_repositioned(self) -> None:
+        """Test that an opening fence mid-line is pushed onto its own line."""
+        assert convert_code_blocks("text ```python\ncode```") == "text \n```python\ncode\n```"
+
+    def test_no_language_tag(self) -> None:
+        """Test that a fence with no language/info string is normalized correctly."""
+        assert convert_code_blocks("```\ncode```") == "```\ncode\n```"
+
+    def test_trailing_content_after_closing_fence(self) -> None:
+        """Test that content after the closing fence is pushed onto a new line."""
+        assert convert_code_blocks("```python\ncode``` and more") == "```python\ncode\n```\n and more"
+
+    def test_multiple_code_blocks(self) -> None:
+        """Test that multiple fenced blocks in one string are each normalized."""
+        assert convert_code_blocks("```py\na```\n```js\nb```") == "```py\na\n```\n```js\nb\n```"
+
+    def test_already_normalized_is_idempotent(self) -> None:
+        """Test that an already-isolated fenced block is returned unchanged."""
+        assert convert_code_blocks("```python\ncode\n```") == "```python\ncode\n```"
+
+    def test_no_code_block(self) -> None:
+        """Test that text without a fenced code block is returned unchanged."""
+        assert convert_code_blocks("plain `inline` text") == "plain `inline` text"
+
+    def test_empty_string(self) -> None:
+        """Test that an empty string is returned unchanged."""
+        assert convert_code_blocks("") == ""
+
+
 class TestToPandocMd:
     """Tests for to_pandoc_md — applying all Roam-to-Pandoc-Markdown conversions in order."""
 
@@ -205,3 +242,7 @@ class TestToPandocMd:
         # strip_double_brackets runs before convert_highlights, so the [[ produced by
         # [bright]{.mark} inside the link display text is never treated as a page-link delimiter.
         assert to_pandoc_md("[^^bright^^]([[Page]])") == "[[bright]{.mark}](Page)"
+
+    def test_code_block_normalized(self) -> None:
+        """Test that a Roam fenced code block has its closing fence isolated."""
+        assert to_pandoc_md("```python\nx = 1```") == "```python\nx = 1\n```"

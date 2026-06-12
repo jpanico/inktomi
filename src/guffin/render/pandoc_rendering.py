@@ -30,7 +30,9 @@ Rendering rules:
 - :class:`~guffin.vertex.TextContentVertex` — direct children of the page
   (depth 1) become :class:`~panflute.Para` blocks; deeper vertices are
   coalesced into :class:`~panflute.BulletList` items, with their own
-  children rendered as nested :class:`~panflute.BulletList` blocks.
+  children rendered as nested :class:`~panflute.BulletList` blocks.  Text
+  containing a fenced code block is parsed at block level so the fence
+  becomes a :class:`~panflute.CodeBlock` rather than inline code.
 - :class:`~guffin.vertex.ImageVertex` — embedded as a :class:`~panflute.Image`
   element pointing at the local path from *image_files*; falls back to a
   :class:`~panflute.Link` when *image_files* has no entry for the vertex.
@@ -39,6 +41,8 @@ Public symbols:
 
 - :func:`parse_inline_md` — batch-parse Pandoc Markdown inline text strings into
   panflute inline element lists via a single Pandoc call.
+- :func:`parse_block_md` — parse a single Pandoc Markdown string into panflute
+  block elements, preserving block constructs such as fenced code blocks.
 - :func:`build_child_blocks` — convert an ordered list of vertex UIDs to Pandoc
   block elements.
 - :func:`vertex_tree_to_pandoc` — convert a
@@ -54,6 +58,7 @@ Public symbols:
 
 from io import StringIO
 import logging
+import re
 import uuid
 from collections.abc import Mapping
 from pathlib import Path
@@ -78,6 +83,11 @@ from guffin.vertex_tree import VertexTree, root_vertex
 from guffin.roam.primitives import Uid
 
 logger = logging.getLogger(__name__)
+
+# A fenced code block, after Roam→Pandoc normalization, opens with a ``` fence
+# at the start of a line.  Its presence in a text field signals that the field
+# must be parsed as block-level Markdown rather than inline.
+_CONTAINS_CODE_BLOCK_RE: Final[re.Pattern[str]] = re.compile(r"(?m)^```")
 
 
 # ---------------------------------------------------------------------------
@@ -141,6 +151,27 @@ def parse_inline_md(texts: list[str]) -> dict[str, list[pf.Inline]]:
     return result
 
 
+@validate_call
+def parse_block_md(text: str) -> list[pf.Block]:
+    """Parse a single Pandoc Markdown string into a list of panflute block elements.
+
+    Unlike :func:`parse_inline_md`, this performs a full block-level parse, so
+    block constructs such as fenced code blocks are preserved as their
+    corresponding panflute block elements (e.g. :class:`~panflute.CodeBlock`)
+    rather than being flattened into inline content.
+
+    Args:
+        text: The Pandoc Markdown text to parse.
+
+    Returns:
+        The list of :class:`~panflute.Block` elements produced by parsing
+        *text*.
+    """
+    json_str: Final[str] = pypandoc.convert_text(text, "json", format="markdown")
+    doc: Final[pf.Doc] = pf.load(StringIO(json_str))
+    return list(doc.content)
+
+
 # ---------------------------------------------------------------------------
 # Pandoc document building
 # ---------------------------------------------------------------------------
@@ -155,8 +186,10 @@ def _build_list_item(
 ) -> pf.ListItem:
     """Build a Pandoc :class:`~panflute.ListItem` from a :class:`~guffin.vertex.TextContentVertex`.
 
-    The item body is a :class:`~panflute.Plain` inline block.  If the vertex
-    has children they are rendered recursively via :func:`build_child_blocks` and
+    The item body is a :class:`~panflute.Plain` inline block, or — when the
+    vertex text contains a fenced code block — the block elements produced by a
+    full block-level parse via :func:`parse_block_md`.  If the vertex has
+    children they are rendered recursively via :func:`build_child_blocks` and
     appended as nested :class:`~panflute.BulletList` blocks inside the item.
 
     Args:
@@ -171,8 +204,12 @@ def _build_list_item(
         A :class:`~panflute.ListItem` wrapping the vertex text and any
         nested children.
     """
-    inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
-    content: list[pf.Block] = [pf.Plain(*inlines)]
+    content: list[pf.Block]
+    if _CONTAINS_CODE_BLOCK_RE.search(vertex.text):
+        content = parse_block_md(vertex.text)
+    else:
+        inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
+        content = [pf.Plain(*inlines)]
     if vertex.children:
         content.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
     return pf.ListItem(*content)
@@ -295,8 +332,11 @@ def _text_content_vertex_to_blocks(
     """Render a :class:`~guffin.vertex.TextContentVertex` to Pandoc block elements.
 
     At depth 1: one :class:`~panflute.Para` followed by the recursively rendered
-    children.  At depth > 1: a single-item :class:`~panflute.BulletList` (sibling
-    grouping at list depth is handled by :func:`build_child_blocks`).
+    children; when the vertex text contains a fenced code block, the block
+    elements from a full block-level parse via :func:`parse_block_md` (e.g. a
+    :class:`~panflute.CodeBlock`) replace the :class:`~panflute.Para`.  At
+    depth > 1: a single-item :class:`~panflute.BulletList` (sibling grouping at
+    list depth is handled by :func:`build_child_blocks`).
 
     Args:
         vertex: The text-content vertex to render.
@@ -307,12 +347,16 @@ def _text_content_vertex_to_blocks(
         depth: Tree depth of *vertex* (1 = direct page child).
 
     Returns:
-        A :class:`~panflute.Para` with children at depth 1, or a
-        single-item :class:`~panflute.BulletList` at depth > 1.
+        A :class:`~panflute.Para` (or block-parsed elements) with children at
+        depth 1, or a single-item :class:`~panflute.BulletList` at depth > 1.
     """
-    text_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
     if depth <= 1:
-        para_blocks: list[pf.Block] = [pf.Para(*text_inlines)]
+        para_blocks: list[pf.Block]
+        if _CONTAINS_CODE_BLOCK_RE.search(vertex.text):
+            para_blocks = parse_block_md(vertex.text)
+        else:
+            text_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
+            para_blocks = [pf.Para(*text_inlines)]
         if vertex.children:
             para_blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
         return para_blocks

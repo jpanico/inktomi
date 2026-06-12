@@ -39,6 +39,11 @@
   - id: 11153
   - id: 11157
   - id: 11158
+  - id: 11170
+  - id: 11171
+  - id: 11172
+  - id: 11173
+  - id: 11174
   refs: null
   page:
     id: 11137
@@ -125,7 +130,7 @@
   user:
     id: 0
   string: block 1.2
-  order: 3
+  order: 8
   heading: null
   children: null
   refs: null
@@ -154,16 +159,71 @@
   props: null
   title: null
   attrs: null
+- uid: ETesnk4Zi
+  id: 11172
+  time: 0
+  user:
+    id: 0
+  string: This para features `inline-code`
+  order: 4
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  parents:
+  - id: 11137
+  - id: 11149
+  props: null
+  title: null
+  attrs: null
 - uid: mGk4VnMT3
   id: 11151
   time: 0
   user:
     id: 0
   string: block 1.1
-  order: 2
+  order: 7
   heading: null
   children:
   - id: 11152
+  refs: null
+  page:
+    id: 11137
+  parents:
+  - id: 11137
+  - id: 11149
+  props: null
+  title: null
+  attrs: null
+- uid: 8FeLZHNMW
+  id: 11174
+  time: 0
+  user:
+    id: 0
+  string: The child of this block is an isolated fenced code block
+  order: 6
+  heading: null
+  children:
+  - id: 11175
+  refs: null
+  page:
+    id: 11137
+  parents:
+  - id: 11137
+  - id: 11149
+  props: null
+  title: null
+  attrs: null
+- uid: VvbwbLchA
+  id: 11171
+  time: 0
+  user:
+    id: 0
+  string: This para features ^^highlight^^
+  order: 3
+  heading: null
+  children: null
   refs: null
   page:
     id: 11137
@@ -188,6 +248,50 @@
   parents:
   - id: 11137
   - id: 11149
+  props: null
+  title: null
+  attrs: null
+- uid: E_Nsc0SmT
+  id: 11173
+  time: 0
+  user:
+    id: 0
+  string: "This para features includes a fenced code block: ```python\ndef fizz_buzz(limit:\
+    \ int = 100):\n    for i in range(1, limit + 1):\n        if i % 15 == 0:\n  \
+    \          print(\"FizzBuzz\")\n        elif i % 3 == 0:\n            print(\"\
+    Fizz\")\n        elif i % 5 == 0:\n            print(\"Buzz\")\n        else:\n\
+    \            print(i)```"
+  order: 5
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  parents:
+  - id: 11137
+  - id: 11149
+  props: null
+  title: null
+  attrs: null
+- uid: C6xVTMnsh
+  id: 11175
+  time: 0
+  user:
+    id: 0
+  string: "```python\ndef fizz_buzz(limit: int = 100):\n    for i in range(1, limit\
+    \ + 1):\n        if i % 15 == 0:\n            print(\"FizzBuzz\")\n        elif\
+    \ i % 3 == 0:\n            print(\"Fizz\")\n        elif i % 5 == 0:\n       \
+    \     print(\"Buzz\")\n        else:\n            print(i)```"
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  parents:
+  - id: 11137
+  - id: 11149
+  - id: 11174
   props: null
   title: null
   attrs: null
@@ -264,6 +368,24 @@
   - id: 11137
   - id: 11149
   - id: 11151
+  props: null
+  title: null
+  attrs: null
+- uid: 7dBusjzDA
+  id: 11170
+  time: 0
+  user:
+    id: 0
+  string: This para features ~~strikethrough~~
+  order: 2
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  parents:
+  - id: 11137
+  - id: 11149
   props: null
   title: null
   attrs: null

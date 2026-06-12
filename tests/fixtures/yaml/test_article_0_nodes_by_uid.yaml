@@ -57,6 +57,11 @@ MRKYttxrM:
   - id: 11153
   - id: 11157
   - id: 11158
+  - id: 11170
+  - id: 11171
+  - id: 11172
+  - id: 11173
+  - id: 11174
   refs: null
   page:
     id: 11137
@@ -163,7 +168,7 @@ WtrddPBAt:
   user:
     id: 3
   string: block 1.2
-  order: 3
+  order: 8
   heading: null
   children: null
   refs: null
@@ -221,6 +226,29 @@ OexZiLR_O:
   attrs: null
   lookup: null
   seen_by: null
+ETesnk4Zi:
+  uid: ETesnk4Zi
+  id: 11172
+  time: 1781221588685
+  user:
+    id: 3
+  string: This para features `inline-code`
+  order: 4
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11149
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
 mGk4VnMT3:
   uid: mGk4VnMT3
   id: 11151
@@ -228,10 +256,57 @@ mGk4VnMT3:
   user:
     id: 3
   string: block 1.1
-  order: 2
+  order: 7
   heading: null
   children:
   - id: 11152
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11149
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+8FeLZHNMW:
+  uid: 8FeLZHNMW
+  id: 11174
+  time: 1781221807118
+  user:
+    id: 3
+  string: The child of this block is an isolated fenced code block
+  order: 6
+  heading: null
+  children:
+  - id: 11175
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11149
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+VvbwbLchA:
+  uid: VvbwbLchA
+  id: 11171
+  time: 1781221355217
+  user:
+    id: 3
+  string: This para features ^^highlight^^
+  order: 3
+  heading: null
+  children: null
   refs: null
   page:
     id: 11137
@@ -282,6 +357,60 @@ QB8DChDBs:
   parents:
   - id: 11137
   - id: 11149
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+E_Nsc0SmT:
+  uid: E_Nsc0SmT
+  id: 11173
+  time: 1781222033423
+  user:
+    id: 3
+  string: "This para features includes a fenced code block: ```python\ndef fizz_buzz(limit:\
+    \ int = 100):\n    for i in range(1, limit + 1):\n        if i % 15 == 0:\n  \
+    \          print(\"FizzBuzz\")\n        elif i % 3 == 0:\n            print(\"\
+    Fizz\")\n        elif i % 5 == 0:\n            print(\"Buzz\")\n        else:\n\
+    \            print(i)```"
+  order: 5
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11149
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+C6xVTMnsh:
+  uid: C6xVTMnsh
+  id: 11175
+  time: 1781222045009
+  user:
+    id: 3
+  string: "```python\ndef fizz_buzz(limit: int = 100):\n    for i in range(1, limit\
+    \ + 1):\n        if i % 15 == 0:\n            print(\"FizzBuzz\")\n        elif\
+    \ i % 3 == 0:\n            print(\"Fizz\")\n        elif i % 5 == 0:\n       \
+    \     print(\"Buzz\")\n        else:\n            print(i)```"
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11149
+  - id: 11174
   props: null
   title: null
   sidebar: null
@@ -378,6 +507,29 @@ L7iQsWlWT:
   - id: 11137
   - id: 11149
   - id: 11151
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+7dBusjzDA:
+  uid: 7dBusjzDA
+  id: 11170
+  time: 1781218309397
+  user:
+    id: 3
+  string: This para features ~~strikethrough~~
+  order: 2
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11149
   props: null
   title: null
   sidebar: null

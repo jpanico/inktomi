@@ -13,6 +13,11 @@
   children:
   - 2yQYaKIEV
   - QB8DChDBs
+  - 7dBusjzDA
+  - VvbwbLchA
+  - ETesnk4Zi
+  - E_Nsc0SmT
+  - 8FeLZHNMW
   - mGk4VnMT3
   - WtrddPBAt
   text: block 1
@@ -47,13 +52,37 @@
   uid: Odbqghm-D
   text: block 2
 - vertex_type: guffin/text-content
+  uid: ETesnk4Zi
+  text: This para features `inline-code`
+- vertex_type: guffin/text-content
   uid: mGk4VnMT3
   children:
   - 2IDW6tZJ4
   text: block 1.1
 - vertex_type: guffin/text-content
+  uid: 8FeLZHNMW
+  children:
+  - C6xVTMnsh
+  text: The child of this block is an isolated fenced code block
+- vertex_type: guffin/text-content
+  uid: VvbwbLchA
+  text: This para features [highlight]{.mark}
+- vertex_type: guffin/text-content
   uid: QB8DChDBs
   text: This para features **bold**
+- vertex_type: guffin/text-content
+  uid: E_Nsc0SmT
+  text: "This para features includes a fenced code block: \n```python\ndef fizz_buzz(limit:\
+    \ int = 100):\n    for i in range(1, limit + 1):\n        if i % 15 == 0:\n  \
+    \          print(\"FizzBuzz\")\n        elif i % 3 == 0:\n            print(\"\
+    Fizz\")\n        elif i % 5 == 0:\n            print(\"Buzz\")\n        else:\n\
+    \            print(i)\n```"
+- vertex_type: guffin/text-content
+  uid: C6xVTMnsh
+  text: "```python\ndef fizz_buzz(limit: int = 100):\n    for i in range(1, limit\
+    \ + 1):\n        if i % 15 == 0:\n            print(\"FizzBuzz\")\n        elif\
+    \ i % 3 == 0:\n            print(\"Fizz\")\n        elif i % 5 == 0:\n       \
+    \     print(\"Buzz\")\n        else:\n            print(i)\n```"
 - vertex_type: guffin/text-content
   uid: d6b4AGFrG
   children:
@@ -73,3 +102,6 @@
 - vertex_type: guffin/text-content
   uid: 2IDW6tZJ4
   text: block 1.1.1
+- vertex_type: guffin/text-content
+  uid: 7dBusjzDA
+  text: This para features ~~strikethrough~~

@@ -33,6 +33,11 @@
     - id: 11153
     - id: 11157
     - id: 11158
+    - id: 11170
+    - id: 11171
+    - id: 11172
+    - id: 11173
+    - id: 11174
     user:
       id: 3
     id: 11149
@@ -111,7 +116,7 @@
     - id: 11137
     - id: 11149
     time: 1780944784665
-    order: 3
+    order: 8
     open: true
     page:
       id: 11137
@@ -139,6 +144,19 @@
     title: '>'
     edit-nonce: 2POM1zS7j
     edit-time: 1773784559631
+- - string: This para features `inline-code`
+    user:
+      id: 3
+    id: 11172
+    uid: ETesnk4Zi
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1781221588685
+    order: 4
+    open: true
+    page:
+      id: 11137
 - - string: block 1.1
     children:
     - id: 11152
@@ -150,7 +168,35 @@
     - id: 11137
     - id: 11149
     time: 1780944773800
-    order: 2
+    order: 7
+    open: true
+    page:
+      id: 11137
+- - string: The child of this block is an isolated fenced code block
+    children:
+    - id: 11175
+    user:
+      id: 3
+    id: 11174
+    uid: 8FeLZHNMW
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1781221807118
+    order: 6
+    open: true
+    page:
+      id: 11137
+- - string: This para features ^^highlight^^
+    user:
+      id: 3
+    id: 11171
+    uid: VvbwbLchA
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1781221355217
+    order: 3
     open: true
     page:
       id: 11137
@@ -176,6 +222,40 @@
     - id: 11149
     time: 1780944927251
     order: 1
+    open: true
+    page:
+      id: 11137
+- - string: "This para features includes a fenced code block: ```python\ndef fizz_buzz(limit:\
+      \ int = 100):\n    for i in range(1, limit + 1):\n        if i % 15 == 0:\n\
+      \            print(\"FizzBuzz\")\n        elif i % 3 == 0:\n            print(\"\
+      Fizz\")\n        elif i % 5 == 0:\n            print(\"Buzz\")\n        else:\n\
+      \            print(i)```"
+    user:
+      id: 3
+    id: 11173
+    uid: E_Nsc0SmT
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1781222033423
+    order: 5
+    open: true
+    page:
+      id: 11137
+- - string: "```python\ndef fizz_buzz(limit: int = 100):\n    for i in range(1, limit\
+      \ + 1):\n        if i % 15 == 0:\n            print(\"FizzBuzz\")\n        elif\
+      \ i % 3 == 0:\n            print(\"Fizz\")\n        elif i % 5 == 0:\n     \
+      \       print(\"Buzz\")\n        else:\n            print(i)```"
+    user:
+      id: 3
+    id: 11175
+    uid: C6xVTMnsh
+    parents:
+    - id: 11137
+    - id: 11149
+    - id: 11174
+    time: 1781222045009
+    order: 0
     open: true
     page:
       id: 11137
@@ -218,13 +298,13 @@
     sidebar: 18
     id: 11137
     uid: L7iQsWlWT
-    word-count: 65
+    word-count: 165
     edit-user:
       id: 3
     time: 1780943981609
     title: '[[Test Article]] 0'
-    edit-nonce: Ip2gzUKp9
-    edit-time: 1781088375207
+    edit-nonce: PpD-_Wjo9
+    edit-time: 1781222045009
     refs:
     - id: 4223
 - - string: block 1.1.1
@@ -238,6 +318,19 @@
     - id: 11151
     time: 1780944780043
     order: 0
+    open: true
+    page:
+      id: 11137
+- - string: This para features ~~strikethrough~~
+    user:
+      id: 3
+    id: 11170
+    uid: 7dBusjzDA
+    parents:
+    - id: 11137
+    - id: 11149
+    time: 1781218309397
+    order: 2
     open: true
     page:
       id: 11137

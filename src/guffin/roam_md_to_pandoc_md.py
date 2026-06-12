@@ -20,6 +20,8 @@ Public symbols:
 
 - :func:`to_pandoc_md` — apply all conversions to a Roam block string and
   return the Pandoc Markdown result.
+- :func:`convert_code_blocks` — reposition Roam fenced code blocks so the
+  opening and closing ```` ``` ```` fences each sit on their own line.
 - :func:`convert_italics` — convert ``__italic__`` → ``*italic*``.
 - :func:`convert_highlights` — convert ``^^text^^`` → ``[text]{.mark}``.
 - :func:`convert_page_link_aliases` — convert ``[display]([[Page Name]])``
@@ -35,6 +37,12 @@ from pydantic import validate_call
 # ---------------------------------------------------------------------------
 # Module-level compiled patterns
 # ---------------------------------------------------------------------------
+
+# Roam fenced code block: ```lang\ncode``` where the opening fence (with its
+# optional language tag) and the closing fence may share a line with adjacent
+# content.  Group 1 captures the language/info string on the opening line;
+# group 2 captures the code body up to the closing fence.
+_CODE_BLOCK_RE: re.Pattern[str] = re.compile(r"```([^\n]*)\n(.*?)```", re.DOTALL)
 
 # Roam italic: __text__ (double underscores).  Must not match bold (**text**).
 # Negative look-behind/ahead prevents matching inside bold markers.
@@ -81,11 +89,49 @@ def to_pandoc_md(roam_string: str) -> str:
         The Pandoc Markdown string.
     """
     result: str = roam_string
+    result = convert_code_blocks(result)
     result = convert_page_link_aliases(result)
     result = strip_double_brackets(result)
     result = convert_italics(result)
     result = convert_highlights(result)
     return result
+
+
+@validate_call
+def convert_code_blocks(roam_string: str) -> str:
+    r"""Reposition Roam fenced code blocks so each fence sits on its own line.
+
+    Roam stores a fenced code block as ```` ```lang\ncode``` ````, where the
+    opening fence (with its language tag) can share a line with preceding text
+    and the closing fence trails the final code line.  Pandoc only recognises a
+    fenced code block when both the opening and closing ```` ``` ```` fences
+    begin their own lines, so this function inserts the newlines needed to
+    isolate them:
+
+    - a newline is inserted before the opening fence unless it already starts
+      the string or follows a newline;
+    - the closing fence is moved onto its own line directly after the code body;
+    - a newline is inserted after the closing fence when trailing content
+      follows it on the same line.
+
+    The language/info string on the opening fence is preserved verbatim.
+
+    Args:
+        roam_string: A Roam block string, possibly containing fenced code blocks.
+
+    Returns:
+        The string with every fenced code block repositioned onto isolated
+        fence lines.
+    """
+
+    def _reposition(match: re.Match[str]) -> str:
+        language: str = match.group(1)
+        body: str = match.group(2).rstrip("\n")
+        prefix: str = "" if match.start() == 0 or match.string[match.start() - 1] == "\n" else "\n"
+        suffix: str = "" if match.end() == len(match.string) or match.string[match.end()] == "\n" else "\n"
+        return f"{prefix}```{language}\n{body}\n```{suffix}"
+
+    return _CODE_BLOCK_RE.sub(_reposition, roam_string)
 
 
 @validate_call
