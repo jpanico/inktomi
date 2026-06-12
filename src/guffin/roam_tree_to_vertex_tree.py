@@ -18,6 +18,8 @@ Public symbols:
   callout block node.
 - :func:`to_code_block_vertex` — build a :class:`~guffin.vertex.CodeBlockVertex` from a
   fenced code block node.
+- :func:`to_block_quote_vertex` — build a :class:`~guffin.vertex.BlockQuoteVertex` from a
+  block-quote node.
 - :func:`transcribe_node` — transcribe a :class:`~guffin.roam.node.RoamNode` into
   the appropriate :data:`~guffin.vertex.Vertex` subtype.
 - :func:`transcribe` — transcribe all nodes in a :class:`~guffin.roam.tree.NodeTree`
@@ -32,6 +34,7 @@ from urllib.parse import unquote, urlparse
 from pydantic import TypeAdapter, validate_call
 
 from guffin.vertex import (
+    BlockQuoteVertex,
     CalloutVertex,
     CodeBlockVertex,
     HeadingVertex,
@@ -52,7 +55,15 @@ from guffin.common.code_language import CodeLanguage
 from guffin.common.geometry import ImageSize
 from guffin.common.markdown import FencedCodeBlock, parse_fenced_code_block
 from guffin.common.media_type import MediaType
-from guffin.roam.primitives import IMAGE_LINK_RE, HeadingLevel, Id, RoamCallout, Url, parse_callout
+from guffin.roam.primitives import (
+    IMAGE_LINK_RE,
+    HeadingLevel,
+    Id,
+    RoamCallout,
+    Url,
+    parse_callout,
+    strip_block_quote_marker,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -195,6 +206,8 @@ def vertex_type(node: RoamNode) -> VertexType:
             return VertexType.GUFFIN_IMAGE
         case NodeType.ROAM_CALLOUT_BLOCK:
             return VertexType.GUFFIN_CALLOUT
+        case NodeType.ROAM_BLOCK_QUOTE:
+            return VertexType.GUFFIN_BLOCK_QUOTE
         case NodeType.ROAM_EMBED_BLOCK:
             raise NotImplementedError(f"RoamNode uid={node.uid!r}: ROAM_EMBED_BLOCK transcription is not supported")
 
@@ -410,6 +423,38 @@ def to_code_block_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> CodeBloc
 
 
 @validate_call
+def to_block_quote_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> BlockQuoteVertex:
+    """Build a :class:`~guffin.vertex.BlockQuoteVertex` from a block-quote *node*.
+
+    Strips the leading block-quote marker (``>`` or ``[[>]]``) from ``node.string``
+    via :func:`~guffin.roam.primitives.strip_block_quote_marker` before storing the
+    remaining content as :attr:`~guffin.vertex.BlockQuoteVertex.text`.
+
+    Args:
+        node: A block-quote node whose ``string`` starts with a recognised block-quote
+            marker (standard Markdown ``>`` or Roam-specific ``[[>]]``).
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`,
+            used to resolve child and ref stubs to UIDs.
+
+    Returns:
+        A :class:`~guffin.vertex.BlockQuoteVertex`.
+
+    Raises:
+        ValidationError: If *node* or *id_map* is ``None`` or invalid.
+        ValueError: If ``node.string`` is ``None`` or is not a recognised block quote.
+    """
+    logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
+    if node.string is None:
+        raise ValueError(f"RoamNode uid={node.uid!r} has no 'string'")
+    return BlockQuoteVertex(
+        uid=node.uid,
+        text=to_pandoc_md(strip_block_quote_marker(node.string)),
+        children=_resolve_children(node, id_map),
+        refs=_resolve_refs(node, id_map),
+    )
+
+
+@validate_call
 def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: int = 0) -> Vertex:
     r"""Transcribe *node* into a normalized :class:`~guffin.vertex.Vertex`.
 
@@ -448,6 +493,8 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
             return to_callout_vertex(node, id_map)
         case VertexType.GUFFIN_CODE_BLOCK:
             return to_code_block_vertex(node, id_map)
+        case VertexType.GUFFIN_BLOCK_QUOTE:
+            return to_block_quote_vertex(node, id_map)
         case _ as unreachable:
             assert_never(unreachable)
 

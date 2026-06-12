@@ -7,6 +7,7 @@ import yaml
 from pydantic import ValidationError
 
 from guffin.vertex import (
+    BlockQuoteVertex,
     CalloutVertex,
     CodeBlockVertex,
     HeadingVertex,
@@ -21,6 +22,7 @@ from guffin.common.code_language import CodeLanguage
 from guffin.roam.network import min_effective_heading_level
 from guffin.roam.node import RoamNode
 from guffin.roam_tree_to_vertex_tree import (
+    to_block_quote_vertex,
     to_callout_vertex,
     to_code_block_vertex,
     to_heading_vertex,
@@ -51,16 +53,16 @@ from conftest import FIXTURES_JSON_DIR, FIXTURES_YAML_DIR, STUB_TIME, STUB_USER,
 # ---------------------------------------------------------------------------
 
 
-def _make_page(uid: str = "pageuid01", id: int = 100, title: str = "My Page") -> RoamNode:
+def _make_page(uid: str = "pageuid01", node_id: int = 100, title: str = "My Page") -> RoamNode:
     """Return a minimal page RoamNode."""
-    return RoamNode(uid=uid, id=id, time=STUB_TIME, user=STUB_USER, title=title, children=[])
+    return RoamNode(uid=uid, id=node_id, time=STUB_TIME, user=STUB_USER, title=title, children=[])
 
 
-def _make_image(uid: str = "imageuid1", id: int = 101, string: str = _IMAGE_STRING) -> RoamNode:
+def _make_image(uid: str = "imageuid1", node_id: int = 101, string: str = _IMAGE_STRING) -> RoamNode:
     """Return a minimal Firestore image-block RoamNode."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
@@ -71,14 +73,14 @@ def _make_image(uid: str = "imageuid1", id: int = 101, string: str = _IMAGE_STRI
 
 def _make_heading(
     uid: str = "headuid01",
-    id: int = 102,
+    node_id: int = 102,
     string: str = "Chapter One",
     heading: int = 2,
 ) -> RoamNode:
     """Return a minimal native-heading RoamNode."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
@@ -90,14 +92,14 @@ def _make_heading(
 
 def _make_ah_heading(
     uid: str = "ahheaduid",
-    id: int = 103,
+    node_id: int = 103,
     string: str = "Deep Heading",
     level: str = "h4",
 ) -> RoamNode:
     """Return a minimal Augmented Headings RoamNode."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
@@ -109,13 +111,13 @@ def _make_ah_heading(
 
 def _make_text(
     uid: str = "textuid01",
-    id: int = 104,
+    node_id: int = 104,
     string: str = "Some plain text",
 ) -> RoamNode:
     """Return a minimal plain-text RoamNode."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
@@ -126,13 +128,13 @@ def _make_text(
 
 def _make_callout(
     uid: str = "caluid001",
-    id: int = 105,
+    node_id: int = 105,
     string: str = _CALLOUT_STRING,
 ) -> RoamNode:
     """Return a minimal callout block RoamNode."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
@@ -143,13 +145,30 @@ def _make_callout(
 
 def _make_code(
     uid: str = "codeuid01",
-    id: int = 106,
+    node_id: int = 106,
     string: str = _CODE_STRING,
 ) -> RoamNode:
     """Return a minimal fenced code block RoamNode."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=string,
+        parents=[IdObject(id=99)],
+        page=IdObject(id=99),
+    )
+
+
+def _make_block_quote(
+    uid: str = "bquid0001",
+    node_id: int = 107,
+    string: str = "> A quoted line",
+) -> RoamNode:
+    """Return a minimal block-quote RoamNode."""
+    return RoamNode(
+        uid=uid,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
@@ -194,6 +213,14 @@ class TestVertexType:
     def test_code_block_node_returns_guffin_code_block(self) -> None:
         """Test that a fenced code block node classifies as GUFFIN_CODE_BLOCK."""
         assert vertex_type(_make_code()) is VertexType.GUFFIN_CODE_BLOCK
+
+    def test_md_block_quote_returns_guffin_block_quote(self) -> None:
+        """Test that a standard Markdown block-quote node classifies as GUFFIN_BLOCK_QUOTE."""
+        assert vertex_type(_make_block_quote(string="> quoted text")) is VertexType.GUFFIN_BLOCK_QUOTE
+
+    def test_roam_block_quote_returns_guffin_block_quote(self) -> None:
+        """Test that a Roam-style block-quote node classifies as GUFFIN_BLOCK_QUOTE."""
+        assert vertex_type(_make_block_quote(string="[[>]] quoted text")) is VertexType.GUFFIN_BLOCK_QUOTE
 
     def test_node_with_neither_title_nor_string_raises_validation_error(self) -> None:
         """Test that constructing a node missing both title and string raises ValidationError."""
@@ -286,7 +313,7 @@ class TestToPageVertex:
 
     def test_refs_resolved_to_uids(self) -> None:
         """Test that ref stubs are resolved to UIDs via id_map."""
-        ref_node = _make_text(uid="refnode01", id=301)
+        ref_node = _make_text(uid="refnode01", node_id=301)
         page = RoamNode(
             uid="pageuid01",
             id=100,
@@ -638,6 +665,67 @@ class TestToCodeBlockVertex:
 
 
 # ---------------------------------------------------------------------------
+# TestToBlockQuoteVertex
+# ---------------------------------------------------------------------------
+
+
+class TestToBlockQuoteVertex:
+    """Tests for to_block_quote_vertex."""
+
+    def test_returns_block_quote_vertex(self) -> None:
+        """Test that a block-quote node builds a BlockQuoteVertex."""
+        node = _make_block_quote()
+        assert isinstance(to_block_quote_vertex(node, _id_map(node)), BlockQuoteVertex)
+
+    def test_vertex_type_is_guffin_block_quote(self) -> None:
+        """Test that the vertex_type is GUFFIN_BLOCK_QUOTE."""
+        node = _make_block_quote()
+        assert to_block_quote_vertex(node, _id_map(node)).vertex_type is VertexType.GUFFIN_BLOCK_QUOTE
+
+    def test_uid_preserved(self) -> None:
+        """Test that the vertex uid matches the source node uid."""
+        node = _make_block_quote(uid="bquid0002")
+        assert to_block_quote_vertex(node, _id_map(node)).uid == "bquid0002"
+
+    def test_md_marker_stripped_from_text(self) -> None:
+        """Test that the standard Markdown > marker is stripped, leaving only the content."""
+        node = _make_block_quote(string="> Hello, world!")
+        assert to_block_quote_vertex(node, _id_map(node)).text == "Hello, world!"
+
+    def test_roam_marker_stripped_from_text(self) -> None:
+        """Test that the Roam [[>]] marker is stripped, leaving only the content."""
+        node = _make_block_quote(string="[[>]] Hello, world!")
+        assert to_block_quote_vertex(node, _id_map(node)).text == "Hello, world!"
+
+    def test_children_none_when_no_children(self) -> None:
+        """Test that children is None when the node has no children."""
+        node = _make_block_quote()
+        assert to_block_quote_vertex(node, _id_map(node)).children is None
+
+    def test_refs_none_when_no_refs(self) -> None:
+        """Test that refs is None when the node has no refs."""
+        node = _make_block_quote()
+        assert to_block_quote_vertex(node, _id_map(node)).refs is None
+
+    def test_missing_string_raises_value_error(self) -> None:
+        """Test that a node without a string raises ValueError."""
+        node = _make_page()
+        with pytest.raises(ValueError, match="no 'string'"):
+            to_block_quote_vertex(node, _id_map(node))
+
+    def test_non_quote_string_raises_value_error(self) -> None:
+        """Test that a plain string that is not a block quote raises ValueError."""
+        node = _make_block_quote(string="Just plain text")
+        with pytest.raises(ValueError):
+            to_block_quote_vertex(node, _id_map(node))
+
+    def test_null_node_raises_validation_error(self) -> None:
+        """Test that passing None as node raises a ValidationError."""
+        with pytest.raises(ValidationError):
+            to_block_quote_vertex(None, _id_map())  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
 # TestTranscribeNode
 # ---------------------------------------------------------------------------
 
@@ -678,6 +766,14 @@ class TestTranscribeNode:
         assert isinstance(v, TextContentVertex)
         assert v.vertex_type is VertexType.GUFFIN_TEXT
         assert v.text == "Body text"
+
+    def test_transcribes_block_quote_node(self) -> None:
+        """Test that a block-quote node is transcribed to a GUFFIN_BLOCK_QUOTE vertex."""
+        node = _make_block_quote(string="> Quoted content")
+        v = transcribe_node(node, _id_map(node))
+        assert isinstance(v, BlockQuoteVertex)
+        assert v.vertex_type is VertexType.GUFFIN_BLOCK_QUOTE
+        assert v.text == "Quoted content"
 
     def test_children_resolved_via_id_map(self) -> None:
         """Test that transcribe_node resolves children through the id_map."""
@@ -751,11 +847,11 @@ class TestTranscribeArticleFixture:
 
         # Serialize both sides to plain dicts (mode='json' converts HttpUrl → str,
         # StrEnum → str) and sort by uid so the comparison is order-independent.
-        def _as_dict(v: Vertex) -> dict[str, object]:
-            return v.model_dump(mode="json", exclude_none=True)
+        def _as_dict(vtx: Vertex) -> dict[str, object]:
+            return vtx.model_dump(mode="json", exclude_none=True)
 
-        actual_by_uid = {d["uid"]: d for d in (_as_dict(v) for v in actual_vertices)}
-        expected_by_uid = {d["uid"]: d for d in (_as_dict(v) for v in expected_vertices)}
+        actual_by_uid = {d["uid"]: d for d in (_as_dict(vtx) for vtx in actual_vertices)}
+        expected_by_uid = {d["uid"]: d for d in (_as_dict(vtx) for vtx in expected_vertices)}
 
         assert actual_by_uid == expected_by_uid
 
@@ -770,7 +866,7 @@ class TestTranscribeArticleFixture:
         )
         expected: list[Vertex] = [vertex_adapter.validate_python(r) for r in raw_vertices]
 
-        def _serialise(v: Vertex) -> dict[str, object]:
-            return v.model_dump(mode="json", exclude_none=True)
+        def _serialise(vtx: Vertex) -> dict[str, object]:
+            return vtx.model_dump(mode="json", exclude_none=True)
 
-        assert [_serialise(v) for v in vertex_tree.vertices] == [_serialise(v) for v in expected]
+        assert [_serialise(vtx) for vtx in vertex_tree.vertices] == [_serialise(vtx) for vtx in expected]

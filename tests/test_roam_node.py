@@ -21,11 +21,11 @@ _FIRESTORE_URL = (
 _IMAGE_STRING = f"![A flower]({_FIRESTORE_URL})"
 
 
-def _make_image(uid: str = "imageuid1", id: int = 101, string: str = _IMAGE_STRING) -> RoamNode:
+def _make_image(uid: str = "imageuid1", node_id: int = 101, string: str = _IMAGE_STRING) -> RoamNode:
     """Return a minimal Firestore image-block RoamNode."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
@@ -34,11 +34,11 @@ def _make_image(uid: str = "imageuid1", id: int = 101, string: str = _IMAGE_STRI
     )
 
 
-def _make_heading(uid: str = "headnguid", id: int = 102, string: str = "Section One", level: int = 2) -> RoamNode:
+def _make_heading(uid: str = "headnguid", node_id: int = 102, string: str = "Section One", level: int = 2) -> RoamNode:
     """Return a minimal native-heading RoamNode."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
@@ -48,11 +48,11 @@ def _make_heading(uid: str = "headnguid", id: int = 102, string: str = "Section 
     )
 
 
-def _make_callout(uid: str = "callutuid", id: int = 105, callout_type: str = "INFO", suffix: str = "") -> RoamNode:
+def _make_callout(uid: str = "callutuid", node_id: int = 105, callout_type: str = "INFO", suffix: str = "") -> RoamNode:
     """Return a minimal callout RoamNode with the given callout type."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=f"[[>]] [[!{callout_type}]]{suffix}",
@@ -61,11 +61,11 @@ def _make_callout(uid: str = "callutuid", id: int = 105, callout_type: str = "IN
     )
 
 
-def _make_text(uid: str = "textuid01", id: int = 104, string: str = "Some plain text") -> RoamNode:
+def _make_text(uid: str = "textuid01", node_id: int = 104, string: str = "Some plain text") -> RoamNode:
     """Return a minimal plain-text RoamNode."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
@@ -74,11 +74,24 @@ def _make_text(uid: str = "textuid01", id: int = 104, string: str = "Some plain 
     )
 
 
-def _make_code(uid: str = "codeuid01", id: int = 106, string: str = "```python\nx = 1\n```") -> RoamNode:
+def _make_block_quote(uid: str = "blkqtuid1", node_id: int = 107, text: str = "Some quoted text") -> RoamNode:
+    """Return a minimal block-quote RoamNode (``[[>]] <text>``)."""
+    return RoamNode(
+        uid=uid,
+        id=node_id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=f"[[>]] {text}",
+        parents=[IdObject(id=99)],
+        page=IdObject(id=99),
+    )
+
+
+def _make_code(uid: str = "codeuid01", node_id: int = 106, string: str = "```python\nx = 1\n```") -> RoamNode:
     """Return a minimal fenced-code-block RoamNode."""
     return RoamNode(
         uid=uid,
-        id=id,
+        id=node_id,
         time=STUB_TIME,
         user=STUB_USER,
         string=string,
@@ -219,8 +232,12 @@ class TestNodeType:
         """Test that NodeType.ROAM_CODE_BLOCK has string value 'roam/code-block'."""
         assert NodeType.ROAM_CODE_BLOCK == "roam/code-block"
 
-    def test_exactly_seven_members(self) -> None:
-        """Test that NodeType has exactly seven members."""
+    def test_block_quote_value(self) -> None:
+        """Test that NodeType.ROAM_BLOCK_QUOTE has string value 'roam/block-quote'."""
+        assert NodeType.ROAM_BLOCK_QUOTE == "roam/quote-block"
+
+    def test_exactly_eight_members(self) -> None:
+        """Test that NodeType has exactly eight members."""
         assert set(NodeType) == {
             NodeType.ROAM_PAGE,
             NodeType.ROAM_PLAIN_BLOCK,
@@ -229,6 +246,7 @@ class TestNodeType:
             NodeType.ROAM_HEADING_BLOCK,
             NodeType.ROAM_CALLOUT_BLOCK,
             NodeType.ROAM_CODE_BLOCK,
+            NodeType.ROAM_BLOCK_QUOTE,
         }
 
 
@@ -453,6 +471,24 @@ class TestNodeTypeFunction:
         """Test that single-backtick inline code is not classified as a code block."""
         assert node_type(_make_code(string="`inline`")) is NodeType.ROAM_PLAIN_BLOCK
 
+    def test_block_quote_node_returns_block_quote(self) -> None:
+        """Test that a [[>]]-prefixed block without a callout type returns ROAM_BLOCK_QUOTE."""
+        assert node_type(_make_block_quote()) is NodeType.ROAM_BLOCK_QUOTE
+
+    def test_block_quote_is_not_plain_block(self) -> None:
+        """Test that a block quote node does not return ROAM_PLAIN_BLOCK."""
+        assert node_type(_make_block_quote()) is not NodeType.ROAM_PLAIN_BLOCK
+
+    def test_bare_block_quote_prefix_returns_block_quote(self) -> None:
+        """Test that bare '[[>]]' with no following text returns ROAM_BLOCK_QUOTE."""
+        node = _make_text(string="[[>]]")
+        assert node_type(node) is NodeType.ROAM_BLOCK_QUOTE
+
+    def test_invalid_callout_type_classified_as_block_quote(self) -> None:
+        """Test that [[>]] with an unrecognised type keyword is classified as ROAM_BLOCK_QUOTE."""
+        node = _make_text(string="[[>]] [[!INVALID]] text")
+        assert node_type(node) is NodeType.ROAM_BLOCK_QUOTE
+
     def test_result_is_str_enum(self) -> None:
         """Test that the returned value is a NodeType StrEnum member."""
         node = RoamNode(uid="page00001", id=1, time=STUB_TIME, user=STUB_USER, title="My Page", children=[])
@@ -490,30 +526,30 @@ class TestRoamNodeCalloutValidation:
         node = self._make_block("[[>]] [[!WARNING]] Watch out!")
         assert node.string == "[[>]] [[!WARNING]] Watch out!"
 
-    def test_invalid_callout_type_raises(self) -> None:
-        """Test that an unrecognised callout type raises ValidationError."""
-        with pytest.raises(ValidationError):
-            self._make_block("[[>]] [[!INVALID]]")
+    def test_invalid_callout_type_accepted_as_block_quote(self) -> None:
+        """Test that an unrecognised callout type is accepted (classified as ROAM_BLOCK_QUOTE)."""
+        node = self._make_block("[[>]] [[!INVALID]]")
+        assert node.string == "[[>]] [[!INVALID]]"
 
-    def test_missing_type_raises(self) -> None:
-        """Test that '[[>]]' with no type marker raises ValidationError."""
-        with pytest.raises(ValidationError):
-            self._make_block("[[>]]")
+    def test_missing_type_accepted_as_block_quote(self) -> None:
+        """Test that bare '[[>]]' is accepted (classified as ROAM_BLOCK_QUOTE)."""
+        node = self._make_block("[[>]]")
+        assert node.string == "[[>]]"
 
-    def test_bare_prefix_with_space_raises(self) -> None:
-        """Test that '[[>]] ' with no type block raises ValidationError."""
-        with pytest.raises(ValidationError):
-            self._make_block("[[>]] some text without type")
+    def test_bare_prefix_with_text_accepted_as_block_quote(self) -> None:
+        """Test that '[[>]] text' with no type block is accepted (classified as ROAM_BLOCK_QUOTE)."""
+        node = self._make_block("[[>]] some text without type")
+        assert node.string == "[[>]] some text without type"
 
-    def test_lowercase_callout_type_raises(self) -> None:
-        """Test that a lowercase callout type (e.g. 'info') raises ValidationError."""
-        with pytest.raises(ValidationError):
-            self._make_block("[[>]] [[!info]]")
+    def test_lowercase_callout_type_accepted_as_block_quote(self) -> None:
+        """Test that a lowercase callout type is accepted (classified as ROAM_BLOCK_QUOTE)."""
+        node = self._make_block("[[>]] [[!info]]")
+        assert node.string == "[[>]] [[!info]]"
 
-    def test_partial_type_block_raises(self) -> None:
-        """Test that a malformed type block like '[[!INFO' raises ValidationError."""
-        with pytest.raises(ValidationError):
-            self._make_block("[[>]] [[!INFO")
+    def test_partial_type_block_accepted_as_block_quote(self) -> None:
+        """Test that a malformed type block like '[[!INFO' is accepted (classified as ROAM_BLOCK_QUOTE)."""
+        node = self._make_block("[[>]] [[!INFO")
+        assert node.string == "[[>]] [[!INFO"
 
     def test_string_without_prefix_accepted(self) -> None:
         """Test that a plain block string with no '[[>]]' prefix is not affected."""

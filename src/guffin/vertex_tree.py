@@ -171,21 +171,21 @@ def root_vertex(tree: VertexTree) -> Vertex:
 
 
 @validate_call
-def map_vertices(tree: VertexTree, fn: Callable[[Vertex], Vertex]) -> VertexTree:
-    """Return a new :class:`VertexTree` with *fn* applied to every vertex.
+def map_vertices(tree: VertexTree, func: Callable[[Vertex], Vertex]) -> VertexTree:
+    """Return a new :class:`VertexTree` with *func* applied to every vertex.
 
     The original *tree* is not modified; immutability is preserved via
     :meth:`~pydantic.BaseModel.model_copy`.
 
     Args:
         tree: The source :class:`VertexTree`.
-        fn: A callable that maps each :data:`~guffin.vertex.Vertex` to a
+        func: A callable that maps each :data:`~guffin.vertex.Vertex` to a
             (possibly new) :data:`~guffin.vertex.Vertex`.
 
     Returns:
-        A new :class:`VertexTree` whose vertices are ``[fn(v) for v in tree.vertices]``.
+        A new :class:`VertexTree` whose vertices are ``[func(v) for v in tree.vertices]``.
     """
-    return tree.model_copy(update={"vertices": [fn(v) for v in tree.vertices]})
+    return tree.model_copy(update={"vertices": [func(vtx) for vtx in tree.vertices]})
 
 
 @validate_call
@@ -206,11 +206,11 @@ def enrich_image_original_sizes(tree: VertexTree, sizes: dict[Uid, ImageSize]) -
         populated for all UIDs present in *sizes*.
     """
 
-    def _enrich(v: Vertex) -> Vertex:
-        if isinstance(v, ImageVertex):
-            if v.uid in sizes:
-                return v.model_copy(update={"original_image_size": sizes[v.uid]})
-            logger.warning("ImageVertex uid=%r absent from sizes map; original_image_size left unset", v.uid)
-        return v
+    def _enrich(vtx: Vertex) -> Vertex:
+        if isinstance(vtx, ImageVertex):
+            if vtx.uid in sizes:
+                return vtx.model_copy(update={"original_image_size": sizes[vtx.uid]})
+            logger.warning("ImageVertex uid=%r absent from sizes map; original_image_size left unset", vtx.uid)
+        return vtx
 
     return map_vertices(tree, _enrich)

@@ -33,6 +33,7 @@ from rich.tree import Tree as RichTree
 
 from guffin.common.geometry import ImageSize
 from guffin.vertex import (
+    BlockQuoteVertex,
     CalloutVertex,
     ImageVertex,
     PageVertex,
@@ -44,7 +45,15 @@ from guffin.vertex_tree import VertexTree, VertexTreeDFSIterator
 from guffin.roam.node import NodeType, RoamNode, effective_heading_level, node_type
 from guffin.roam.node_fetch_result import NodeFetchResult
 from guffin.roam.tree import NodeTree, NodeTreeDFSIterator
-from guffin.roam.primitives import Id, IdObject, IMAGE_LINK_RE, Uid, RoamCallout, parse_callout
+from guffin.roam.primitives import (
+    Id,
+    IdObject,
+    IMAGE_LINK_RE,
+    Uid,
+    RoamCallout,
+    parse_callout,
+    strip_block_quote_marker,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -121,8 +130,8 @@ def _format_node_prop(node: RoamNode, prop: str) -> str:
             return f"{prop}=?"
 
 
-def _trunc(s: str, max_len: int = 40) -> str:
-    return s[:max_len] + "…" if len(s) > max_len else s
+def _trunc(val: str, max_len: int = 40) -> str:
+    return val[:max_len] + "…" if len(val) > max_len else val
 
 
 @validate_call
@@ -183,6 +192,9 @@ def build_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS
         case NodeType.ROAM_CODE_BLOCK:
             assert node.string is not None
             title_text = _trunc(node.string)
+        case NodeType.ROAM_BLOCK_QUOTE:
+            assert node.string is not None
+            title_text = _trunc(strip_block_quote_marker(node.string))
         case _ as unreachable:
             assert_never(unreachable)
     title: Final[str] = f"[bold #00aa00]<{nt.value}> {title_text} ({node.id})[/bold #00aa00]"
@@ -281,7 +293,9 @@ def _format_vertex_prop(vertex: Vertex, prop: str) -> Text:
         case "title":
             return Text(f"title={vertex.title}" if isinstance(vertex, PageVertex) else "title=N/A")
         case "text":
-            return Text(f"text={vertex.text}" if isinstance(vertex, TextContentVertex) else "text=N/A")
+            return Text(
+                f"text={vertex.text}" if isinstance(vertex, TextContentVertex | BlockQuoteVertex) else "text=N/A"
+            )
         case "file_name":
             return Text(f"file_name={vertex.file_name}" if isinstance(vertex, ImageVertex) else "file_name=N/A")
         case "media_type":
@@ -364,6 +378,11 @@ def build_vertex_panel(vertex: Vertex, props: list[str] = DEFAULT_VERTEX_PANEL_P
             title_content = (
                 f"[bold orange1]{markup_escape(f'CODE [{vertex.language.value}]:')}[/bold orange1]"
                 f" [bold #00aa00]{markup_escape(_trunc(vertex.code))}[/bold #00aa00]"
+            )
+        case VertexType.GUFFIN_BLOCK_QUOTE:
+            title_content = (
+                f"[bold orange1]{markup_escape('QUOTE:')}[/bold orange1]"
+                f" [bold #00aa00]{markup_escape(_trunc(vertex.text))}[/bold #00aa00]"
             )
         case _ as unreachable:
             assert_never(unreachable)
@@ -505,8 +524,8 @@ def _truncate_urls_in_cell(cell: str) -> str:
     are left unchanged.
     """
 
-    def _shorten(m: re.Match[str]) -> str:
-        url: Final[str] = m.group()
+    def _shorten(match: re.Match[str]) -> str:
+        url: Final[str] = match.group()
         return url[:15] + "…" if len(url) > 15 else url
 
     return _URL_RE.sub(_shorten, cell)

@@ -44,9 +44,9 @@ class TestMapVertices:
         tree: Final[VertexTree] = _make_text_tree([("aaaaaaaaa", "hello"), ("bbbbbbbbb", "world")])
         seen_uids: Final[list[str]] = []
 
-        def _record(v: Vertex) -> Vertex:
-            seen_uids.append(v.uid)
-            return v
+        def _record(vtx: Vertex) -> Vertex:
+            seen_uids.append(vtx.uid)
+            return vtx
 
         map_vertices(tree, _record)
         assert sorted(seen_uids) == ["aaaaaaaaa", "bbbbbbbbb"]
@@ -55,26 +55,26 @@ class TestMapVertices:
         """Fn's return values appear verbatim in the result tree."""
         tree: Final[VertexTree] = _make_text_tree([("aaaaaaaaa", "hello"), ("bbbbbbbbb", "world")])
 
-        def _upcase(v: Vertex) -> Vertex:
-            if isinstance(v, TextContentVertex):
-                return v.model_copy(update={"text": v.text.upper()})
-            return v
+        def _upcase(vtx: Vertex) -> Vertex:
+            if isinstance(vtx, TextContentVertex):
+                return vtx.model_copy(update={"text": vtx.text.upper()})
+            return vtx
 
         result: Final[VertexTree] = map_vertices(tree, _upcase)
-        texts: Final[list[str]] = [v.text for v in result.vertices if isinstance(v, TextContentVertex)]
+        texts: Final[list[str]] = [vtx.text for vtx in result.vertices if isinstance(vtx, TextContentVertex)]
         assert texts == ["HELLO", "WORLD"]
 
     def test_unmatched_vertices_pass_through_unchanged(self) -> None:
         """Vertices not modified by fn are returned as-is."""
         tree: Final[VertexTree] = _make_text_tree([("aaaaaaaaa", "hello"), ("bbbbbbbbb", "world")])
 
-        def _transform_first_only(v: Vertex) -> Vertex:
-            if isinstance(v, TextContentVertex) and v.uid == "aaaaaaaaa":
-                return v.model_copy(update={"text": "changed"})
-            return v
+        def _transform_first_only(vtx: Vertex) -> Vertex:
+            if isinstance(vtx, TextContentVertex) and vtx.uid == "aaaaaaaaa":
+                return vtx.model_copy(update={"text": "changed"})
+            return vtx
 
         result: Final[VertexTree] = map_vertices(tree, _transform_first_only)
-        texts: Final[list[str]] = [v.text for v in result.vertices if isinstance(v, TextContentVertex)]
+        texts: Final[list[str]] = [vtx.text for vtx in result.vertices if isinstance(vtx, TextContentVertex)]
         assert texts == ["changed", "world"]
 
 

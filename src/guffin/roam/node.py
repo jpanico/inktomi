@@ -4,7 +4,7 @@ Public symbols:
 
 - :class:`NodeType` — ``StrEnum`` of pull-block entity types: ``ROAM_PAGE``, ``ROAM_PLAIN_BLOCK``,
   ``ROAM_EMBED_BLOCK``, ``ROAM_IMAGE_BLOCK``, ``ROAM_HEADING_BLOCK``, ``ROAM_CALLOUT_BLOCK``,
-  ``ROAM_CODE_BLOCK``.
+  ``ROAM_CODE_BLOCK``, ``ROAM_BLOCK_QUOTE``.
 - :class:`RoamNode` — raw shape of a pull-block as returned by the Roam Local API.
 - :func:`node_type` — return the :class:`NodeType` of a :class:`RoamNode`.
 - :func:`effective_heading_level` — return the effective heading level for a
@@ -32,9 +32,9 @@ from pydantic import (
 from guffin.common.geometry import ImageSize
 from guffin.common.markdown import is_fenced_code_block
 from guffin.roam.primitives import (
-    CALLOUT_PREFIX,
     CALLOUT_RE,
     IMAGE_LINK_RE,
+    is_roam_block_quote,
     HeadingLevel,
     Id,
     IdObject,
@@ -74,6 +74,8 @@ class NodeType(enum.StrEnum):
       ``TIP``, ``SUMMARY``, ``SUCCESS``, ``QUESTION``, ``FAILURE``, ``BUG``).
     - **ROAM_CODE_BLOCK**: ``string``, with surrounding whitespace trimmed, is a CommonMark fenced code
       block (opened by a ```` ``` ```` or ``~~~`` fence).
+    - **ROAM_BLOCK_QUOTE**: ``string`` starts with ``[[>]]`` but does *not* match the callout marker
+      pattern ``[[>]] [[!<TYPE>]]`` — i.e. a plain ``[[>]]``-prefixed blockquote.
     """
 
     ROAM_PAGE = "roam/page"
@@ -83,6 +85,7 @@ class NodeType(enum.StrEnum):
     ROAM_EMBED_BLOCK = "roam/embed-block"
     ROAM_CALLOUT_BLOCK = "roam/callout-block"
     ROAM_CODE_BLOCK = "roam/code-block"
+    ROAM_BLOCK_QUOTE = "roam/quote-block"
 
 
 class RoamNode(BaseModel):
@@ -188,22 +191,11 @@ class RoamNode(BaseModel):
         default=None, description=f"{RoamAttribute.EDIT_SEEN_BY} — users who have seen this block (purpose unclear)"
     )
 
-    @field_validator("string", mode="after")
-    @classmethod
-    def _validate_callout_string(cls, v: str | None) -> str | None:
-        if v is not None and v.startswith(CALLOUT_PREFIX):
-            if not CALLOUT_RE.match(v):
-                raise ValueError(
-                    f"block string starts with '[[>]]' but does not match callout marker "
-                    f"'[[>]] [[!<TYPE>]]' with a valid callout type; got {v!r}"
-                )
-        return v
-
     @field_validator("heading", mode="before")
     @classmethod
-    def _coerce_zero_heading(cls, v: object) -> object:
+    def _coerce_zero_heading(cls, val: object) -> object:
         # Roam API *can* return heading=0 for non-heading blocks instead of omitting the field.
-        return None if v == 0 else v
+        return None if val == 0 else val
 
     @model_validator(mode="after")
     def _validate_entity_type(self) -> RoamNode:
@@ -331,8 +323,11 @@ def node_type(node: RoamNode) -> NodeType:
     :attr:`NodeType.ROAM_IMAGE_BLOCK` when ``string`` consists solely of a single Markdown image
     link (as matched by :data:`~guffin.roam.primitives.IMAGE_LINK_RE`),
     :attr:`NodeType.ROAM_HEADING_BLOCK` when :func:`effective_heading_level` is non-``None``,
-    :attr:`NodeType.ROAM_CALLOUT_BLOCK` when ``string`` starts with a valid callout marker
+    :attr:`NodeType.ROAM_CALLOUT_BLOCK` when ``string`` matches the full callout marker pattern
     (as matched by :data:`~guffin.roam.primitives.CALLOUT_RE`),
+    :attr:`NodeType.ROAM_BLOCK_QUOTE` when :func:`~guffin.roam.primitives.is_roam_block_quote`
+    returns ``True`` for ``string`` — i.e. a Roam ``[[>]]``-prefixed blockquote or a standard
+    Markdown ``>``-prefixed blockquote,
     :attr:`NodeType.ROAM_CODE_BLOCK` when the trimmed ``string`` is a fenced code block
     (as determined by :func:`~guffin.common.markdown.is_fenced_code_block`),
     and :attr:`NodeType.ROAM_PLAIN_BLOCK` otherwise.
@@ -345,7 +340,8 @@ def node_type(node: RoamNode) -> NodeType:
         :attr:`NodeType.ROAM_PAGE` if ``title`` is set (and not ``"embed"``);
         :attr:`NodeType.ROAM_IMAGE_BLOCK` if ``string`` is solely a single Markdown image link;
         :attr:`NodeType.ROAM_HEADING_BLOCK` if ``heading`` or ``props['ah-level']`` is set;
-        :attr:`NodeType.ROAM_CALLOUT_BLOCK` if ``string`` starts with ``[[>]] [[!<TYPE>]]``;
+        :attr:`NodeType.ROAM_CALLOUT_BLOCK` if ``string`` matches ``[[>]] [[!<TYPE>]]``;
+        :attr:`NodeType.ROAM_BLOCK_QUOTE` if :func:`~guffin.roam.primitives.is_roam_block_quote` is ``True``;
         :attr:`NodeType.ROAM_CODE_BLOCK` if the trimmed ``string`` is a CommonMark fenced code block;
         :attr:`NodeType.ROAM_PLAIN_BLOCK` otherwise.
     """
@@ -359,6 +355,8 @@ def node_type(node: RoamNode) -> NodeType:
         return NodeType.ROAM_HEADING_BLOCK
     if node.string is not None and CALLOUT_RE.match(node.string):
         return NodeType.ROAM_CALLOUT_BLOCK
+    if node.string is not None and is_roam_block_quote(node.string):
+        return NodeType.ROAM_BLOCK_QUOTE
     if node.string is not None and is_fenced_code_block(node.string.strip()):
         return NodeType.ROAM_CODE_BLOCK
     return NodeType.ROAM_PLAIN_BLOCK

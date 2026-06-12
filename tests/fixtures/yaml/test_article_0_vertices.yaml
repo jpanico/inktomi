@@ -18,6 +18,8 @@
   - ETesnk4Zi
   - E_Nsc0SmT
   - 8FeLZHNMW
+  - Yz0pqYfBh
+  - 6bcyfVpL2
   - mGk4VnMT3
   - WtrddPBAt
   text: block 1
@@ -48,9 +50,19 @@
 - vertex_type: guffin/text
   uid: WtrddPBAt
   text: block 1.2
+- vertex_type: guffin/block-quote
+  uid: 6bcyfVpL2
+  text: 'This is a Markdown standard multi-line Block Quote
+
+    this is the 2nd line
+
+    - this is the 3rd line'
 - vertex_type: guffin/text
   uid: Odbqghm-D
   text: block 2
+- vertex_type: guffin/block-quote
+  uid: Yz0pqYfBh
+  text: This is a Markdown standard single line Block Quote
 - vertex_type: guffin/text
   uid: ETesnk4Zi
   text: This para features `inline-code`

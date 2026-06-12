@@ -74,6 +74,7 @@ from pydantic import ConfigDict, validate_call
 
 from guffin.common.geometry import ImageSize
 from guffin.vertex import (
+    BlockQuoteVertex,
     CalloutVertex,
     CodeBlockVertex,
     HeadingVertex,
@@ -489,6 +490,37 @@ def _code_block_vertex_to_blocks(vertex: CodeBlockVertex) -> list[pf.Block]:
     return [pf.CodeBlock(vertex.code, classes=[vertex.language.value])]
 
 
+def _block_quote_vertex_to_blocks(
+    vertex: BlockQuoteVertex,
+    uid_map: Mapping[Uid, Vertex],
+    image_files: dict[Uid, Path],
+    inline_map: dict[str, list[pf.Inline]],
+    depth: int,
+) -> list[pf.Block]:
+    """Render a :class:`~guffin.vertex.BlockQuoteVertex` to a Pandoc :class:`~panflute.BlockQuote`.
+
+    The vertex text is wrapped in a :class:`~panflute.Para` and placed inside
+    a :class:`~panflute.BlockQuote`.  Child vertices are rendered recursively
+    and appended inside the same :class:`~panflute.BlockQuote`.
+
+    Args:
+        vertex: The block-quote vertex to render.
+        uid_map: Mapping from UID to :data:`~guffin.vertex.Vertex`.
+        image_files: Mapping from :class:`~guffin.vertex.ImageVertex` UID to
+            local image file path.
+        inline_map: Mapping from text string to parsed panflute inline elements.
+        depth: Tree depth of *vertex*.
+
+    Returns:
+        A single-element list containing the :class:`~panflute.BlockQuote`.
+    """
+    text_inlines: Final[list[pf.Inline]] = inline_map.get(vertex.text, [pf.Str(vertex.text)])
+    inner_blocks: list[pf.Block] = [pf.Para(*text_inlines)]
+    if vertex.children:
+        inner_blocks.extend(build_child_blocks(vertex.children, uid_map, image_files, inline_map, depth + 1))
+    return [pf.BlockQuote(*inner_blocks)]
+
+
 def _vertex_to_blocks(
     vertex: Vertex,
     uid_map: Mapping[Uid, Vertex],
@@ -523,6 +555,8 @@ def _vertex_to_blocks(
             return _callout_vertex_to_blocks(vertex, uid_map, image_files, inline_map, depth)
         case CodeBlockVertex():
             return _code_block_vertex_to_blocks(vertex)
+        case BlockQuoteVertex():
+            return _block_quote_vertex_to_blocks(vertex, uid_map, image_files, inline_map, depth)
 
 
 @validate_call
@@ -579,6 +613,8 @@ def vertex_tree_to_pandoc(
             case ImageVertex(alt_text=t) if t is not None:
                 texts.append(t)
             case CalloutVertex(title=t) if t:
+                texts.append(t)
+            case BlockQuoteVertex(text=t):
                 texts.append(t)
             case _:
                 pass

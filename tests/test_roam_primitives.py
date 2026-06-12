@@ -171,12 +171,12 @@ class TestCallout:
         assert result is not None
         assert result.callout_type is CalloutType.WARNING
 
-    @pytest.mark.parametrize("ct", list(CalloutType))
-    def test_all_twelve_callout_types(self, ct: CalloutType) -> None:
+    @pytest.mark.parametrize("callout_type", list(CalloutType))
+    def test_all_twelve_callout_types(self, callout_type: CalloutType) -> None:
         """All twelve callout type keywords are parsed to the correct CalloutType member."""
-        result = parse_callout(f"[[>]] [[!{ct}]]")
+        result = parse_callout(f"[[>]] [[!{callout_type}]]")
         assert result is not None
-        assert result.callout_type is CalloutType(ct)
+        assert result.callout_type is CalloutType(callout_type)
 
     def test_title_with_text(self) -> None:
         """Title captures the text on the first line after the marker."""

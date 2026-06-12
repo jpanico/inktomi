@@ -87,6 +87,9 @@ class VertexType(StrEnum):
             ``:block/string`` starts with ``[[>]] [[!<TYPE>]]`` — a Roam callout marker.
         GUFFIN_CODE_BLOCK: Normalized form of a Roam *Block* node whose
             ``:block/string`` is a CommonMark fenced code block.
+        GUFFIN_BLOCK_QUOTE: Normalized form of a Roam *Block* node whose
+            ``:block/string`` is a standard Markdown block quote (``> text``) or a
+            Roam-specific block quote (``[[>]] text``).
     """
 
     GUFFIN_PAGE = "guffin/page"
@@ -95,14 +98,15 @@ class VertexType(StrEnum):
     GUFFIN_IMAGE = "guffin/image"
     GUFFIN_CALLOUT = "guffin/callout"
     GUFFIN_CODE_BLOCK = "guffin/code-block"
+    GUFFIN_BLOCK_QUOTE = "guffin/block-quote"
 
 
 class _BaseVertex[VT: VertexType](BaseModel):
-    """Shared fields inherited by all six concrete vertex types.
+    """Shared fields inherited by all seven concrete vertex types.
 
     Not instantiated directly — use :class:`PageVertex`, :class:`HeadingVertex`,
-    :class:`TextContentVertex`, :class:`ImageVertex`, :class:`CalloutVertex`, or
-    :class:`CodeBlockVertex`.
+    :class:`TextContentVertex`, :class:`ImageVertex`, :class:`CalloutVertex`,
+    :class:`CodeBlockVertex`, or :class:`BlockQuoteVertex`.
 
     Type Parameters:
         VT: The :class:`VertexType` literal for the concrete subtype (e.g.
@@ -250,21 +254,21 @@ class ImageVertex(_BaseVertex[Literal[VertexType.GUFFIN_IMAGE]]):
 
     @field_validator("media_type")
     @classmethod
-    def media_type_must_be_image(cls, v: MediaType) -> MediaType:
+    def media_type_must_be_image(cls, val: MediaType) -> MediaType:
         """Reject any non-image MediaType.
 
         Args:
-            v: The candidate media type value.
+            val: The candidate media type value.
 
         Returns:
-            *v* unchanged when it is an image MIME type.
+            *val* unchanged when it is an image MIME type.
 
         Raises:
-            ValueError: If *v* is a non-image :class:`~guffin.common.media_type.MediaType`.
+            ValueError: If *val* is a non-image :class:`~guffin.common.media_type.MediaType`.
         """
-        if not is_image_type(v):
-            raise ValueError(f"media_type must be an image MIME type; got {v!r}")
-        return v
+        if not is_image_type(val):
+            raise ValueError(f"media_type must be an image MIME type; got {val!r}")
+        return val
 
 
 class CalloutVertex(_BaseVertex[Literal[VertexType.GUFFIN_CALLOUT]]):
@@ -337,8 +341,31 @@ class CodeBlockVertex(_BaseVertex[Literal[VertexType.GUFFIN_CODE_BLOCK]]):
     language: CodeLanguage = Field(..., description="Programming language of the fenced code block.")
 
 
-type Vertex = PageVertex | HeadingVertex | TextContentVertex | ImageVertex | CalloutVertex | CodeBlockVertex
-"""Union of all six concrete, normalized vertex types.
+class BlockQuoteVertex(_BaseVertex[Literal[VertexType.GUFFIN_BLOCK_QUOTE]]):
+    """Normalized (transcribed) form of a Roam block-quote node.
+
+    Produced when the source :class:`~guffin.roam.node.RoamNode` has a
+    ``:block/string`` that is a standard Markdown block quote (``> text``) or a
+    Roam-specific block quote (``[[>]] text``).
+
+    Attributes:
+        vertex_type: Always :attr:`~VertexType.GUFFIN_BLOCK_QUOTE`.
+            Serialized as ``'vertex-type'``.
+        text: Block string with the leading block-quote marker stripped.
+    """
+
+    vertex_type: Literal[VertexType.GUFFIN_BLOCK_QUOTE] = Field(
+        default=VertexType.GUFFIN_BLOCK_QUOTE,
+        serialization_alias="vertex-type",
+        description="Always VertexType.GUFFIN_BLOCK_QUOTE (serialized as 'vertex-type').",
+    )
+    text: str = Field(..., description="Block string with the leading block-quote marker stripped.")
+
+
+type Vertex = (
+    PageVertex | HeadingVertex | TextContentVertex | ImageVertex | CalloutVertex | CodeBlockVertex | BlockQuoteVertex
+)
+"""Union of all seven concrete, normalized vertex types.
 
 Use :data:`vertex_adapter` to validate a raw dict into the appropriate concrete
 subtype.  Use :class:`~guffin.vertex_tree.VertexTree` to hold a validated collection of vertices.
@@ -348,8 +375,8 @@ vertex_adapter: TypeAdapter[Vertex] = TypeAdapter(Annotated[Vertex, Field(discri
 """Pydantic :class:`~pydantic.TypeAdapter` for validating a raw dict into the correct :data:`Vertex` subtype.
 
 Uses ``vertex_type`` as the discriminator field to select among :class:`PageVertex`,
-:class:`HeadingVertex`, :class:`TextContentVertex`, :class:`ImageVertex`, :class:`CalloutVertex`, and
-:class:`CodeBlockVertex`.
+:class:`HeadingVertex`, :class:`TextContentVertex`, :class:`ImageVertex`, :class:`CalloutVertex`,
+:class:`CodeBlockVertex`, and :class:`BlockQuoteVertex`.
 
 Example::
 
