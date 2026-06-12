@@ -2,6 +2,7 @@
 
 Public symbols:
 
+- :data:`MD_BLOCK_QUOTE_PREFIX` — string prefix for a standard CommonMark blockquote line.
 - :func:`is_fenced_code_block` — whether a string is a single CommonMark fenced code block.
 - :class:`FencedCodeBlock` — the info string and code content extracted from a fenced code block.
 - :func:`parse_fenced_code_block` — extract the info string and code content from a fenced code block.
@@ -11,6 +12,13 @@ import re
 from typing import Final, NamedTuple
 
 from pydantic import validate_call
+
+MD_BLOCK_QUOTE_PREFIX: Final[str] = ">"
+"""String prefix that identifies a standard CommonMark blockquote line.
+
+A line beginning with ``>`` (optionally followed by a space) is a CommonMark
+block quote marker.
+"""
 
 # Opening code fence: up to three spaces of indentation, then a run of at least
 # three backticks or three tildes, then an optional info string (the remainder

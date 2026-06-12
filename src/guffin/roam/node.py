@@ -31,10 +31,8 @@ from pydantic import (
 
 from guffin.common.geometry import ImageSize
 from guffin.common.markdown import is_fenced_code_block
+from guffin.roam.markdown import CALLOUT_RE, IMAGE_LINK_RE, is_roam_block_quote
 from guffin.roam.primitives import (
-    CALLOUT_RE,
-    IMAGE_LINK_RE,
-    is_roam_block_quote,
     HeadingLevel,
     Id,
     IdObject,

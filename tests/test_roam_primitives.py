@@ -4,7 +4,7 @@ import pytest
 from typing import Final
 from pydantic import ValidationError
 
-from guffin.roam.primitives import CALLOUT_RE, CalloutType, RoamCallout, parse_callout
+from guffin.roam.markdown import CALLOUT_RE, CalloutType, RoamCallout, parse_callout
 
 _FIRESTORE_URL: Final[str] = (
     "https://firebasestorage.googleapis.com/v0/b/test.appspot.com" "/o/imgs%2Fphoto.jpeg?alt=media&token=abc123"

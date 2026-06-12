@@ -55,15 +55,8 @@ from guffin.common.code_language import CodeLanguage
 from guffin.common.geometry import ImageSize
 from guffin.common.markdown import FencedCodeBlock, parse_fenced_code_block
 from guffin.common.media_type import MediaType
-from guffin.roam.primitives import (
-    IMAGE_LINK_RE,
-    HeadingLevel,
-    Id,
-    RoamCallout,
-    Url,
-    parse_callout,
-    strip_block_quote_marker,
-)
+from guffin.roam.markdown import IMAGE_LINK_RE, RoamCallout, parse_callout, strip_block_quote_marker
+from guffin.roam.primitives import HeadingLevel, Id, Url
 
 logger = logging.getLogger(__name__)
 

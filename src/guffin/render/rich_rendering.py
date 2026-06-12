@@ -45,15 +45,8 @@ from guffin.vertex_tree import VertexTree, VertexTreeDFSIterator
 from guffin.roam.node import NodeType, RoamNode, effective_heading_level, node_type
 from guffin.roam.node_fetch_result import NodeFetchResult
 from guffin.roam.tree import NodeTree, NodeTreeDFSIterator
-from guffin.roam.primitives import (
-    Id,
-    IdObject,
-    IMAGE_LINK_RE,
-    Uid,
-    RoamCallout,
-    parse_callout,
-    strip_block_quote_marker,
-)
+from guffin.roam.markdown import IMAGE_LINK_RE, RoamCallout, parse_callout, strip_block_quote_marker
+from guffin.roam.primitives import Id, IdObject, Uid
 
 logger = logging.getLogger(__name__)
 
