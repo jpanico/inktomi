@@ -99,6 +99,8 @@ def _dump_typst_sources(
         f"--template={template_path}",
         f"--resource-path={bundled_dir}",
         f"--lua-filter={_TYPST_CALLOUT_FILTER}",
+        "-V",
+        "listings=true",
     ]
     if template_dir is not None:
         typst_full_extra.extend(["-V", f"user-config={template_dir / _USER_CFG_FILENAME}"])
@@ -176,6 +178,8 @@ def render(
         f"--template={template_path}",
         f"--resource-path={bundled_dir}",
         f"--lua-filter={_TYPST_CALLOUT_FILTER}",
+        "-V",
+        "listings=true",
     ]
 
     if template_dir is not None:
