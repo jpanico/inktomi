@@ -502,7 +502,7 @@ def to_table(table_tree: NodeTree) -> Table:
             )
             cell = next_cells[0] if next_cells else None
         rows.append(tuple(row))
-    return Table(rows=tuple(rows))
+    return Table(rows=tuple(rows), has_row_header=True)
 
 
 @validate_call

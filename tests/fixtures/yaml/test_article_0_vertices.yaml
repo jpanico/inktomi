@@ -133,7 +133,7 @@
     - - r2.c1
       - r2.c2
       - r2.c3
-    has_row_header: false
+    has_row_header: true
     has_col_header: false
   table_style:
     cell_styles: {}
