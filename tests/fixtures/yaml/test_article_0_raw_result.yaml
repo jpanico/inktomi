@@ -1,3 +1,20 @@
+- - string: '{{table}}'
+    children:
+    - id: 11226
+    - id: 11229
+    - id: 11232
+    user:
+      id: 3
+    id: 11225
+    uid: wjN-kVF3B
+    parents:
+    - id: 11137
+    - id: 11150
+    time: 1781362773659
+    order: 1
+    open: true
+    page:
+      id: 11137
 - - prevent-clean: 1773090962400
     children:
     - id: 4224
@@ -43,6 +60,20 @@
     - id: 11137
     time: 1780944791082
     order: 3
+    open: true
+    page:
+      id: 11137
+- - string: 'the next block is a basic Roam-native table: 3x3. No column/row/col resizing
+      of any kind'
+    user:
+      id: 3
+    id: 11199
+    uid: iXrVW8EGw
+    parents:
+    - id: 11137
+    - id: 11150
+    time: 1781362846319
+    order: 0
     open: true
     page:
       id: 11137
@@ -143,6 +174,22 @@
     open: true
     page:
       id: 11137
+- - string: Header 1
+    children:
+    - id: 11227
+    user:
+      id: 3
+    id: 11226
+    uid: 6NS-Qw4Mm
+    parents:
+    - id: 11137
+    - id: 11150
+    - id: 11225
+    time: 1781362855750
+    order: 0
+    open: true
+    page:
+      id: 11137
 - - string: '> This is a Markdown standard multi-line Block Quote
 
       this is the 2nd line
@@ -161,6 +208,9 @@
     page:
       id: 11137
 - - string: block 2
+    children:
+    - id: 11199
+    - id: 11225
     user:
       id: 3
     id: 11150
@@ -182,6 +232,23 @@
     - id: 11149
     time: 1781269244509
     order: 7
+    open: true
+    page:
+      id: 11137
+- - string: Header 2
+    children:
+    - id: 11228
+    user:
+      id: 3
+    id: 11227
+    uid: 4BL7hTjHS
+    parents:
+    - id: 11137
+    - id: 11150
+    - id: 11225
+    - id: 11226
+    time: 1781362858883
+    order: 0
     open: true
     page:
       id: 11137
@@ -207,6 +274,71 @@
     - id: 11149
     time: 1781221588685
     order: 4
+    open: true
+    page:
+      id: 11137
+- - string: r2.c1
+    children:
+    - id: 11233
+    user:
+      id: 3
+    id: 11232
+    uid: 0hoWxyjNR
+    parents:
+    - id: 11137
+    - id: 11150
+    - id: 11225
+    time: 1781362878627
+    order: 2
+    open: true
+    page:
+      id: 11137
+- - string: r1.c3
+    user:
+      id: 3
+    id: 11231
+    uid: 9XUHIOSY0
+    parents:
+    - id: 11137
+    - id: 11150
+    - id: 11225
+    - id: 11229
+    - id: 11230
+    time: 1781362875854
+    order: 0
+    open: true
+    page:
+      id: 11137
+- - string: r2.c3
+    user:
+      id: 3
+    id: 11234
+    uid: hD2qvZqjh
+    parents:
+    - id: 11137
+    - id: 11150
+    - id: 11225
+    - id: 11232
+    - id: 11233
+    time: 1781362883933
+    order: 0
+    open: true
+    page:
+      id: 11137
+- - string: r1.c2
+    children:
+    - id: 11231
+    user:
+      id: 3
+    id: 11230
+    uid: 5JwQ2Fea-
+    parents:
+    - id: 11137
+    - id: 11150
+    - id: 11225
+    - id: 11229
+    time: 1781362872567
+    order: 0
     open: true
     page:
       id: 11137
@@ -327,6 +459,22 @@
     open: true
     page:
       id: 11137
+- - string: Header 3
+    user:
+      id: 3
+    id: 11228
+    uid: iAxwSSBmi
+    parents:
+    - id: 11137
+    - id: 11150
+    - id: 11225
+    - id: 11226
+    - id: 11227
+    time: 1781362862876
+    order: 0
+    open: true
+    page:
+      id: 11137
 - - string: block 3.1
     children:
     - id: 11156
@@ -366,15 +514,48 @@
     sidebar: 18
     id: 11137
     uid: L7iQsWlWT
-    word-count: 221
+    word-count: 258
     edit-user:
       id: 3
     time: 1780943981609
     title: '[[Test Article]] 0'
-    edit-nonce: gRDiSl57W
-    edit-time: 1781283589466
+    edit-nonce: CmGIJPEyk
+    edit-time: 1781362883933
     refs:
     - id: 4223
+- - string: r1.c1
+    children:
+    - id: 11230
+    user:
+      id: 3
+    id: 11229
+    uid: bwUBoF2ee
+    parents:
+    - id: 11137
+    - id: 11150
+    - id: 11225
+    time: 1781362870121
+    order: 1
+    open: true
+    page:
+      id: 11137
+- - string: r2.c2
+    children:
+    - id: 11234
+    user:
+      id: 3
+    id: 11233
+    uid: jrIkVSHfA
+    parents:
+    - id: 11137
+    - id: 11150
+    - id: 11225
+    - id: 11232
+    time: 1781362881234
+    order: 0
+    open: true
+    page:
+      id: 11137
 - - string: block 1.1.1
     user:
       id: 3

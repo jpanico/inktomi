@@ -236,8 +236,8 @@ class TestNodeType:
         """Test that NodeType.ROAM_BLOCK_QUOTE has string value 'roam/block-quote'."""
         assert NodeType.ROAM_BLOCK_QUOTE == "roam/quote-block"
 
-    def test_exactly_eight_members(self) -> None:
-        """Test that NodeType has exactly eight members."""
+    def test_exactly_nine_members(self) -> None:
+        """Test that NodeType has exactly nine members."""
         assert set(NodeType) == {
             NodeType.ROAM_PAGE,
             NodeType.ROAM_PLAIN_BLOCK,
@@ -247,6 +247,7 @@ class TestNodeType:
             NodeType.ROAM_CALLOUT_BLOCK,
             NodeType.ROAM_CODE_BLOCK,
             NodeType.ROAM_BLOCK_QUOTE,
+            NodeType.ROAM_NATIVE_TABLE,
         }
 
 

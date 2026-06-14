@@ -73,6 +73,7 @@ import pypandoc  # type: ignore[import-untyped]
 from pydantic import ConfigDict, validate_call
 
 from guffin.common.geometry import ImageSize
+from guffin.common.table import HAlign
 from guffin.vertex import (
     BlockQuoteVertex,
     CalloutVertex,
@@ -80,6 +81,7 @@ from guffin.vertex import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
+    TableVertex,
     TextContentVertex,
     Vertex,
     VertexChildren,
@@ -521,6 +523,67 @@ def _block_quote_vertex_to_blocks(
     return [pf.BlockQuote(*inner_blocks)]
 
 
+def _halign_to_pandoc_str(align: HAlign) -> str:
+    """Return the Panflute/Pandoc alignment string for *align*."""
+    match align:
+        case HAlign.LEFT:
+            return "AlignLeft"
+        case HAlign.CENTER:
+            return "AlignCenter"
+        case HAlign.RIGHT:
+            return "AlignRight"
+
+
+def _table_vertex_to_blocks(
+    vertex: TableVertex,
+    inline_map: dict[str, list[pf.Inline]],
+) -> list[pf.Block]:
+    """Render *vertex* as a Panflute :class:`~panflute.Table`.
+
+    The first row becomes the :class:`~panflute.TableHead` when
+    :attr:`~guffin.common.table.Table.has_row_header` is ``True``; otherwise
+    the head is empty and all rows go into the :class:`~panflute.TableBody`.
+    When :attr:`~guffin.common.table.Table.has_col_header` is ``True``,
+    ``row_head_columns=1`` is set on the :class:`~panflute.TableBody` so Pandoc
+    treats the first column as a row-header column.
+
+    Cell alignment is resolved via
+    :meth:`~guffin.common.table.TableStyle.style_for` and mapped to Pandoc
+    alignment strings.  Column widths are left as ``'ColWidthDefault'``
+    (auto-sized by Pandoc).
+
+    Args:
+        vertex: The table vertex to render.
+        inline_map: Mapping from cell text to parsed panflute inline elements.
+
+    Returns:
+        A single-element list containing the :class:`~panflute.Table` block.
+    """
+    table = vertex.table
+    style = vertex.table_style
+    num_cols: Final[int] = table.num_cols
+    colspec: Final[list[tuple[str, str]]] = [("AlignDefault", "ColWidthDefault")] * num_cols
+    row_head_cols: Final[int] = 1 if table.has_col_header else 0
+
+    def make_cell(row_idx: int, col_idx: int) -> pf.TableCell:
+        cell_text = table.rows[row_idx][col_idx]
+        cell_style = style.style_for(row_idx, col_idx, table)
+        inlines = inline_map.get(cell_text, [pf.Str(cell_text)])
+        return pf.TableCell(pf.Plain(*inlines), alignment=_halign_to_pandoc_str(cell_style.align))
+
+    def make_row(row_idx: int) -> pf.TableRow:
+        return pf.TableRow(*[make_cell(row_idx, col) for col in range(num_cols)])
+
+    if table.has_row_header:
+        head = pf.TableHead(make_row(0))
+        body = pf.TableBody(*[make_row(row) for row in range(1, table.num_rows)], row_head_columns=row_head_cols)
+    else:
+        head = pf.TableHead()
+        body = pf.TableBody(*[make_row(row) for row in range(table.num_rows)], row_head_columns=row_head_cols)
+
+    return [pf.Table(body, head=head, foot=pf.TableFoot(), colspec=colspec)]
+
+
 def _vertex_to_blocks(
     vertex: Vertex,
     uid_map: Mapping[Uid, Vertex],
@@ -557,6 +620,8 @@ def _vertex_to_blocks(
             return _code_block_vertex_to_blocks(vertex)
         case BlockQuoteVertex():
             return _block_quote_vertex_to_blocks(vertex, uid_map, image_files, inline_map, depth)
+        case TableVertex():
+            return _table_vertex_to_blocks(vertex, inline_map)
 
 
 @validate_call
@@ -614,6 +679,9 @@ def vertex_tree_to_pandoc(
                 texts.append(t)
             case CalloutVertex(title=t) if t:
                 texts.append(t)
+            case TableVertex():
+                for row in vertex.table.rows:
+                    texts.extend(row)
             case _:
                 pass
     inline_map: Final[dict[str, list[pf.Inline]]] = parse_inline_md(texts)

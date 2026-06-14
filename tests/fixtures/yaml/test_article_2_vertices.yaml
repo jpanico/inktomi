@@ -10,9 +10,6 @@
   - d3T1YpYig
   - LfXmNr-tV
   title: Test Article 2
-- vertex_type: guffin/text
-  uid: aVVGVVPLE
-  text: '{{embed: ((drtANJYTg))}}'
 - vertex_type: guffin/callout
   uid: I1QOMCtdJ
   callout_type: info
@@ -34,34 +31,32 @@
 
     - this INFO `Callout box`, which contains Roam `page references`'
 - vertex_type: guffin/text
-  uid: dYYKZExzI
-  children:
-  - XkSI5xwe5
-  text: internal block embed (from *this Page*)
-- vertex_type: guffin/text
-  uid: l7f2Qf90W
-  children:
-  - vH2I8xRLZ
-  text: section 3.1
-- vertex_type: guffin/text
-  uid: LfXmNr-tV
-  children:
-  - l7f2Qf90W
-  text: Section 3
-- vertex_type: guffin/text
-  uid: XkSI5xwe5
-  refs:
-  - vH2I8xRLZ
-  text: '{{embed: ((vH2I8xRLZ))}}'
-- vertex_type: guffin/text
   uid: LfaVt18Iw
   children:
   - gxcUrCGPT
   - dYYKZExzI
   text: Section 1
 - vertex_type: guffin/text
-  uid: vH2I8xRLZ
-  text: section 3.1.1
+  uid: gxcUrCGPT
+  refs:
+  - LfXmNr-tV
+  text: 'internal block ref: ((LfXmNr-tV))'
+- vertex_type: guffin/text
+  uid: dYYKZExzI
+  children:
+  - XkSI5xwe5
+  text: internal block embed (from *this Page*)
+- vertex_type: guffin/text
+  uid: XkSI5xwe5
+  refs:
+  - vH2I8xRLZ
+  text: '{{embed: ((vH2I8xRLZ))}}'
+- vertex_type: guffin/text
+  uid: d3T1YpYig
+  children:
+  - aaz60uaRX
+  - 8jkmASa1c
+  text: Section 2
 - vertex_type: guffin/text
   uid: aaz60uaRX
   text: 'external block ref: '
@@ -71,13 +66,18 @@
   - aVVGVVPLE
   text: external block embed (from Test Article 1)
 - vertex_type: guffin/text
-  uid: gxcUrCGPT
-  refs:
-  - LfXmNr-tV
-  text: 'internal block ref: ((LfXmNr-tV))'
+  uid: aVVGVVPLE
+  text: '{{embed: ((drtANJYTg))}}'
 - vertex_type: guffin/text
-  uid: d3T1YpYig
+  uid: LfXmNr-tV
   children:
-  - aaz60uaRX
-  - 8jkmASa1c
-  text: Section 2
+  - l7f2Qf90W
+  text: Section 3
+- vertex_type: guffin/text
+  uid: l7f2Qf90W
+  children:
+  - vH2I8xRLZ
+  text: section 3.1
+- vertex_type: guffin/text
+  uid: vH2I8xRLZ
+  text: section 3.1.1

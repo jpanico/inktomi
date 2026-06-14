@@ -20,7 +20,11 @@ Public symbols:
   fenced code block node.
 - :func:`to_block_quote_vertex` — build a :class:`~guffin.vertex.BlockQuoteVertex` from a
   block-quote node.
-- :func:`transcribe_node` — transcribe a :class:`~guffin.roam.node.RoamNode` into
+- :func:`to_table` — build a :class:`~guffin.common.table.Table` from a
+  :class:`~guffin.roam.tree.NodeTree` rooted at a native table node.
+- :func:`to_table_vertex` — build a :class:`~guffin.vertex.TableVertex` from a native table node,
+  returning it together with the IDs of all consumed descendant nodes.
+- :func:`transcribe_standalone_node` — transcribe a :class:`~guffin.roam.node.RoamNode` into
   the appropriate :data:`~guffin.vertex.Vertex` subtype.
 - :func:`transcribe` — transcribe all nodes in a :class:`~guffin.roam.tree.NodeTree`
   into a :class:`~guffin.vertex_tree.VertexTree`.
@@ -40,6 +44,7 @@ from guffin.vertex import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
+    TableVertex,
     TextContentVertex,
     Vertex,
     VertexChildren,
@@ -55,6 +60,7 @@ from guffin.common.code_language import CodeLanguage
 from guffin.common.geometry import ImageSize
 from guffin.common.markdown import FencedCodeBlock, parse_fenced_code_block
 from guffin.common.media_type import MediaType
+from guffin.common.table import Table, TableStyle
 from guffin.roam.markdown import IMAGE_LINK_RE, RoamCallout, parse_callout, strip_block_quote_marker
 from guffin.roam.primitives import HeadingLevel, Id, Url
 
@@ -203,6 +209,8 @@ def vertex_type(node: RoamNode) -> VertexType:
             return VertexType.GUFFIN_BLOCK_QUOTE
         case NodeType.ROAM_EMBED_BLOCK:
             raise NotImplementedError(f"RoamNode uid={node.uid!r}: ROAM_EMBED_BLOCK transcription is not supported")
+        case NodeType.ROAM_NATIVE_TABLE:
+            return VertexType.GUFFIN_TABLE
 
 
 @validate_call
@@ -448,7 +456,101 @@ def to_block_quote_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> BlockQu
 
 
 @validate_call
-def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: int = 0) -> Vertex:
+def to_table(table_tree: NodeTree) -> Table:
+    """Build a :class:`~guffin.common.table.Table` from a :class:`~guffin.roam.tree.NodeTree` rooted at a native table.
+
+    node.
+
+    Reconstructs the 2-D cell grid from the Roam native table's chain structure.
+    The root's direct children are the first-column cells, sorted by
+    :attr:`~guffin.roam.node.RoamNode.order` to establish row sequence.  For each
+    first-column cell, the algorithm follows the single-child chain — each cell's
+    sole child is the next-column cell in the same row — collecting cell strings
+    until the chain ends.  Each cell's :attr:`~guffin.roam.node.RoamNode.string`
+    is passed through :func:`~guffin.roam_md_to_pandoc_md.to_pandoc_md` before
+    being stored.
+
+    Args:
+        table_tree: A :class:`~guffin.roam.tree.NodeTree` whose root is a
+            :attr:`~guffin.roam.node.NodeType.ROAM_NATIVE_TABLE` node.
+
+    Returns:
+        A :class:`~guffin.common.table.Table` with default header flags.
+
+    Raises:
+        ValidationError: If *table_tree* is ``None`` or invalid.
+        ValueError: If the root node has no children (empty table).
+    """
+    logger.debug("table_tree root uid=%r", table_tree.root_node.uid)
+    id_map: Final[dict[Id, RoamNode]] = {n.id: n for n in table_tree.tree_network}
+    root: Final[RoamNode] = table_tree.root_node
+    if not root.children:
+        raise ValueError(f"RoamNode uid={root.uid!r} has no children (empty table)")
+    col1_cells: Final[list[RoamNode]] = sorted(
+        [id_map[c.id] for c in root.children if c.id in id_map],
+        key=lambda n: n.order if n.order is not None else 0,
+    )
+    rows: Final[list[tuple[str, ...]]] = []
+    for col1_cell in col1_cells:
+        row: list[str] = []
+        cell: RoamNode | None = col1_cell
+        while cell is not None:
+            row.append(to_pandoc_md(cell.string) if cell.string is not None else "")
+            next_cells: list[RoamNode] = sorted(
+                [id_map[c.id] for c in (cell.children or []) if c.id in id_map],
+                key=lambda n: n.order if n.order is not None else 0,
+            )
+            cell = next_cells[0] if next_cells else None
+        rows.append(tuple(row))
+    return Table(rows=tuple(rows))
+
+
+@validate_call
+def to_table_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> tuple[TableVertex, frozenset[Id]]:
+    """Build a :class:`~guffin.vertex.TableVertex` from a native table *node*.
+
+    Delegates :class:`~guffin.common.table.Table` construction to :func:`to_table`.
+    All descendant nodes (rows and cells) are consumed into the returned
+    :class:`~guffin.vertex.TableVertex`; consequently
+    :attr:`~guffin.vertex.TableVertex.children` is always ``None`` — the descendants
+    do not appear as separate vertices in the :class:`~guffin.vertex_tree.VertexTree`.
+    The returned :class:`~python:frozenset` carries the :attr:`~guffin.roam.node.RoamNode.id`
+    of every consumed descendant so that callers can skip them during traversal.
+
+    Args:
+        node: A native-table node whose :attr:`~guffin.roam.node.RoamNode.string`
+            equals :data:`~guffin.roam.markdown.ROAM_NATIVE_TABLE_MARKER`.
+        id_map: Mapping from Datomic entity id to :class:`~guffin.roam.node.RoamNode`,
+            used to resolve row and cell stubs to their full node records.
+
+    Returns:
+        A ``(TableVertex, frozenset[Id])`` pair: the built vertex with an all-default
+        :class:`~guffin.common.table.TableStyle`, and the set of descendant node IDs
+        consumed by this vertex (row and cell node IDs).
+
+    Raises:
+        ValidationError: If *node* or *id_map* is ``None`` or invalid.
+        ValueError: If *node* has no children (empty table).
+    """
+    logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
+    if not node.children:
+        raise ValueError(f"RoamNode uid={node.uid!r} has no children (empty table)")
+    table_tree: Final[NodeTree] = NodeTree.build(node, list(id_map.values()))
+    consumed_ids: Final[frozenset[Id]] = frozenset(n.id for n in table_tree.tree_network)
+    return (
+        TableVertex(
+            uid=node.uid,
+            children=None,
+            refs=_resolve_refs(node, id_map),
+            table=to_table(table_tree),
+            table_style=TableStyle(),
+        ),
+        consumed_ids,
+    )
+
+
+@validate_call
+def transcribe_standalone_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: int = 0) -> Vertex:
     r"""Transcribe *node* into a normalized :class:`~guffin.vertex.Vertex`.
 
     Determines the :class:`~guffin.vertex.VertexType` via :func:`vertex_type`,
@@ -488,6 +590,8 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
             return to_code_block_vertex(node, id_map)
         case VertexType.GUFFIN_BLOCK_QUOTE:
             return to_block_quote_vertex(node, id_map)
+        case VertexType.GUFFIN_TABLE:
+            raise NotImplementedError(f"RoamNode uid={node.uid!r}: GUFFIN_TABLE is not a standalone NodeType")
         case _ as unreachable:
             assert_never(unreachable)
 
@@ -496,19 +600,24 @@ def transcribe_node(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset: 
 def transcribe(node_tree: NodeTree) -> VertexTree:
     """Transcribe every node in *node_tree* into a :class:`~guffin.vertex_tree.VertexTree`.
 
-    Builds an id-map from *node_tree.tree_network*, then applies :func:`transcribe_node`
-    to each node in insertion order.  When :data:`SHOULD_NORMALIZE_HEADING_LEVELS` is
-    ``True``, computes a *heading_offset* equal to ``1 − min effective heading level``
-    across all nodes in the tree, so that the shallowest heading maps to level 1; when
-    no heading nodes are present, or when :data:`SHOULD_NORMALIZE_HEADING_LEVELS` is
-    ``False``, *heading_offset* is 0.
+    Traverses *node_tree* in pre-order DFS order.  Most nodes are transcribed
+    one-to-one via :func:`transcribe_standalone_node`.  Exception: a
+    :attr:`~guffin.roam.node.NodeType.ROAM_NATIVE_TABLE` node and all of its
+    descendants are consumed together into a single
+    :class:`~guffin.vertex.TableVertex` via :func:`to_table_vertex`; those
+    descendants are skipped when the DFS iterator later yields them.
+
+    When :data:`SHOULD_NORMALIZE_HEADING_LEVELS` is ``True``, computes a
+    *heading_offset* equal to ``1 − min effective heading level`` across all
+    nodes in the tree, so that the shallowest heading maps to level 1; when no
+    heading nodes are present, or when :data:`SHOULD_NORMALIZE_HEADING_LEVELS`
+    is ``False``, *heading_offset* is 0.
 
     Args:
         node_tree: A validated tree of raw Roam nodes.
 
     Returns:
-        A :class:`~guffin.vertex_tree.VertexTree` containing one
-        :class:`~guffin.vertex.Vertex` per node in *node_tree.tree_network*.
+        A :class:`~guffin.vertex_tree.VertexTree` in document (DFS) order.
 
     Raises:
         ValueError: If any node has neither a ``title`` nor a ``string`` field set.
@@ -519,4 +628,15 @@ def transcribe(node_tree: NodeTree) -> VertexTree:
     )
     heading_offset: Final[int] = (1 - min_level) if min_level is not None else 0
     logger.debug("heading_offset=%d", heading_offset)
-    return VertexTree(vertices=[transcribe_node(n, id_map, heading_offset) for n in node_tree.tree_network])
+    consumed: Final[set[Id]] = set()
+    vertices: Final[list[Vertex]] = []
+    for node in node_tree.dfs():
+        if node.id in consumed:
+            continue
+        if node_type(node) == NodeType.ROAM_NATIVE_TABLE:
+            table_vertex, nodes_consumed = to_table_vertex(node, id_map)
+            consumed.update(nodes_consumed)
+            vertices.append(table_vertex)
+        else:
+            vertices.append(transcribe_standalone_node(node, id_map, heading_offset))
+    return VertexTree(vertices=vertices)

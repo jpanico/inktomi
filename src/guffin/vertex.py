@@ -16,7 +16,7 @@ Normalization (transcription) means:
 
 Normalization is performed by :func:`~guffin.roam_tree_to_vertex_tree.transcribe` (for a full
 :class:`~guffin.roam.tree.NodeTree`) or
-:func:`~guffin.roam_tree_to_vertex_tree.transcribe_node` (for a single
+:func:`~guffin.roam_tree_to_vertex_tree.transcribe_standalone_node` (for a single
 :class:`~guffin.roam.node.RoamNode`).
 
 Public symbols:
@@ -36,7 +36,9 @@ Public symbols:
 - :class:`CalloutVertex` — normalized (transcribed) form of a Roam callout block node.
 - :class:`CodeBlockVertex` — normalized (transcribed) form of a Roam fenced code block
   node.
-- :data:`Vertex` — union of all six concrete vertex types.
+- :class:`BlockQuoteVertex` — normalized (transcribed) form of a Roam block-quote block node.
+- :class:`TableVertex` — normalized (transcribed) form of a Roam native table node.
+- :data:`Vertex` — union of all eight concrete vertex types.
 - :data:`vertex_adapter` — Pydantic :class:`~pydantic.TypeAdapter` for validating a
   :data:`Vertex` from a raw dict.
 """
@@ -49,6 +51,7 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 from guffin.common.code_language import CodeLanguage
 from guffin.common.geometry import ImageSize
 from guffin.common.media_type import MediaType, is_image_type
+from guffin.common.table import Table, TableStyle
 from guffin.roam.primitives import HeadingLevel, Uid, Url
 
 type VertexChildren = list[Uid]
@@ -90,6 +93,9 @@ class VertexType(StrEnum):
         GUFFIN_BLOCK_QUOTE: Normalized form of a Roam *Block* node whose
             ``:block/string`` is a standard Markdown block quote (``> text``) or a
             Roam-specific block quote (``[[>]] text``).
+        GUFFIN_TABLE: Normalized form of a Roam native table node — a block whose
+            ``:block/string`` equals ``{{table}}``, with its child blocks forming the
+            rows and each child's children forming the cells.
     """
 
     GUFFIN_PAGE = "guffin/page"
@@ -99,6 +105,7 @@ class VertexType(StrEnum):
     GUFFIN_CALLOUT = "guffin/callout"
     GUFFIN_CODE_BLOCK = "guffin/code-block"
     GUFFIN_BLOCK_QUOTE = "guffin/block-quote"
+    GUFFIN_TABLE = "guffin/table"
 
 
 class _BaseVertex[VT: VertexType](BaseModel):
@@ -106,7 +113,7 @@ class _BaseVertex[VT: VertexType](BaseModel):
 
     Not instantiated directly — use :class:`PageVertex`, :class:`HeadingVertex`,
     :class:`TextContentVertex`, :class:`ImageVertex`, :class:`CalloutVertex`,
-    :class:`CodeBlockVertex`, or :class:`BlockQuoteVertex`.
+    :class:`CodeBlockVertex`, :class:`BlockQuoteVertex`, or :class:`TableVertex`.
 
     Type Parameters:
         VT: The :class:`VertexType` literal for the concrete subtype (e.g.
@@ -362,10 +369,40 @@ class BlockQuoteVertex(_BaseVertex[Literal[VertexType.GUFFIN_BLOCK_QUOTE]]):
     text: str = Field(..., description="Block string with the leading block-quote marker stripped.")
 
 
+class TableVertex(_BaseVertex[Literal[VertexType.GUFFIN_TABLE]]):
+    """Normalized (transcribed) form of a Roam native table node.
+
+    Produced when the source :class:`~guffin.roam.node.RoamNode` has a
+    ``:block/string`` equal to ``{{table}}``, with its child blocks forming the
+    rows and each child's children forming the cells.
+
+    Attributes:
+        vertex_type: Always :attr:`~VertexType.GUFFIN_TABLE`.
+            Serialized as ``'vertex-type'``.
+        table: Data model for the table grid, row/column header flags, and cell content.
+        table_style: View/styling overlay for the table.
+    """
+
+    vertex_type: Literal[VertexType.GUFFIN_TABLE] = Field(
+        default=VertexType.GUFFIN_TABLE,
+        serialization_alias="vertex-type",
+        description="Always VertexType.GUFFIN_TABLE (serialized as 'vertex-type').",
+    )
+    table: Table = Field(..., description="Data model for the table grid and cell content.")
+    table_style: TableStyle = Field(..., description="View/styling overlay for the table.")
+
+
 type Vertex = (
-    PageVertex | HeadingVertex | TextContentVertex | ImageVertex | CalloutVertex | CodeBlockVertex | BlockQuoteVertex
+    PageVertex
+    | HeadingVertex
+    | TextContentVertex
+    | ImageVertex
+    | CalloutVertex
+    | CodeBlockVertex
+    | BlockQuoteVertex
+    | TableVertex
 )
-"""Union of all seven concrete, normalized vertex types.
+"""Union of all eight concrete, normalized vertex types.
 
 Use :data:`vertex_adapter` to validate a raw dict into the appropriate concrete
 subtype.  Use :class:`~guffin.vertex_tree.VertexTree` to hold a validated collection of vertices.
@@ -376,7 +413,7 @@ vertex_adapter: TypeAdapter[Vertex] = TypeAdapter(Annotated[Vertex, Field(discri
 
 Uses ``vertex_type`` as the discriminator field to select among :class:`PageVertex`,
 :class:`HeadingVertex`, :class:`TextContentVertex`, :class:`ImageVertex`, :class:`CalloutVertex`,
-:class:`CodeBlockVertex`, and :class:`BlockQuoteVertex`.
+:class:`CodeBlockVertex`, :class:`BlockQuoteVertex`, and :class:`TableVertex`.
 
 Example::
 

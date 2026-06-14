@@ -1,3 +1,29 @@
+wjN-kVF3B:
+  uid: wjN-kVF3B
+  id: 11225
+  time: 1781362773659
+  user:
+    id: 3
+  string: '{{table}}'
+  order: 1
+  heading: null
+  children:
+  - id: 11226
+  - id: 11229
+  - id: 11232
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
 LBFKibPIj:
   uid: LBFKibPIj
   id: 4223
@@ -65,6 +91,30 @@ jVQvHi40O:
   open: true
   parents:
   - id: 11137
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+iXrVW8EGw:
+  uid: iXrVW8EGw
+  id: 11199
+  time: 1781362846319
+  user:
+    id: 3
+  string: 'the next block is a basic Roam-native table: 3x3. No column/row/col resizing
+    of any kind'
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
   props: null
   title: null
   sidebar: null
@@ -216,6 +266,31 @@ WtrddPBAt:
   attrs: null
   lookup: null
   seen_by: null
+6NS-Qw4Mm:
+  uid: 6NS-Qw4Mm
+  id: 11226
+  time: 1781362855750
+  user:
+    id: 3
+  string: Header 1
+  order: 0
+  heading: null
+  children:
+  - id: 11227
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
+  - id: 11225
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
 6bcyfVpL2:
   uid: 6bcyfVpL2
   id: 11187
@@ -252,7 +327,9 @@ Odbqghm-D:
   string: block 2
   order: 2
   heading: null
-  children: null
+  children:
+  - id: 11199
+  - id: 11225
   refs: null
   page:
     id: 11137
@@ -282,6 +359,32 @@ Yz0pqYfBh:
   parents:
   - id: 11137
   - id: 11149
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+4BL7hTjHS:
+  uid: 4BL7hTjHS
+  id: 11227
+  time: 1781362858883
+  user:
+    id: 3
+  string: Header 2
+  order: 0
+  heading: null
+  children:
+  - id: 11228
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
+  - id: 11225
+  - id: 11226
   props: null
   title: null
   sidebar: null
@@ -325,6 +428,109 @@ ETesnk4Zi:
   parents:
   - id: 11137
   - id: 11149
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+0hoWxyjNR:
+  uid: 0hoWxyjNR
+  id: 11232
+  time: 1781362878627
+  user:
+    id: 3
+  string: r2.c1
+  order: 2
+  heading: null
+  children:
+  - id: 11233
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
+  - id: 11225
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+9XUHIOSY0:
+  uid: 9XUHIOSY0
+  id: 11231
+  time: 1781362875854
+  user:
+    id: 3
+  string: r1.c3
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
+  - id: 11225
+  - id: 11229
+  - id: 11230
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+hD2qvZqjh:
+  uid: hD2qvZqjh
+  id: 11234
+  time: 1781362883933
+  user:
+    id: 3
+  string: r2.c3
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
+  - id: 11225
+  - id: 11232
+  - id: 11233
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+5JwQ2Fea-:
+  uid: 5JwQ2Fea-
+  id: 11230
+  time: 1781362872567
+  user:
+    id: 3
+  string: r1.c2
+  order: 0
+  heading: null
+  children:
+  - id: 11231
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
+  - id: 11225
+  - id: 11229
   props: null
   title: null
   sidebar: null
@@ -523,6 +729,32 @@ C6xVTMnsh:
   attrs: null
   lookup: null
   seen_by: null
+iAxwSSBmi:
+  uid: iAxwSSBmi
+  id: 11228
+  time: 1781362862876
+  user:
+    id: 3
+  string: Header 3
+  order: 0
+  heading: null
+  children: null
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
+  - id: 11225
+  - id: 11226
+  - id: 11227
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
 d6b4AGFrG:
   uid: d6b4AGFrG
   id: 11154
@@ -592,6 +824,57 @@ L7iQsWlWT:
   props: null
   title: '[[Test Article]] 0'
   sidebar: 18
+  attrs: null
+  lookup: null
+  seen_by: null
+bwUBoF2ee:
+  uid: bwUBoF2ee
+  id: 11229
+  time: 1781362870121
+  user:
+    id: 3
+  string: r1.c1
+  order: 1
+  heading: null
+  children:
+  - id: 11230
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
+  - id: 11225
+  props: null
+  title: null
+  sidebar: null
+  attrs: null
+  lookup: null
+  seen_by: null
+jrIkVSHfA:
+  uid: jrIkVSHfA
+  id: 11233
+  time: 1781362881234
+  user:
+    id: 3
+  string: r2.c2
+  order: 0
+  heading: null
+  children:
+  - id: 11234
+  refs: null
+  page:
+    id: 11137
+  open: true
+  parents:
+  - id: 11137
+  - id: 11150
+  - id: 11225
+  - id: 11232
+  props: null
+  title: null
+  sidebar: null
   attrs: null
   lookup: null
   seen_by: null

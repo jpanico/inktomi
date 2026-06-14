@@ -13,6 +13,7 @@ from guffin.vertex import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
+    TableVertex,
     TextContentVertex,
     Vertex,
     VertexType,
@@ -28,11 +29,15 @@ from guffin.roam_tree_to_vertex_tree import (
     to_heading_vertex,
     to_image_vertex,
     to_page_vertex,
+    to_table,
+    to_table_vertex,
     to_text_content_vertex,
     transcribe,
-    transcribe_node,
+    transcribe_standalone_node,
     vertex_type,
 )
+from guffin.roam.markdown import ROAM_NATIVE_TABLE_MARKER
+from guffin.roam.tree import NodeTree
 from guffin.roam.primitives import Id, IdObject
 
 # A real Firestore URL whose path yields a predictable file_name and media_type:
@@ -731,12 +736,12 @@ class TestToBlockQuoteVertex:
 
 
 class TestTranscribeNode:
-    """Integration tests for transcribe_node — verifies correct dispatch to each vertex builder."""
+    """Integration tests for transcribe_standalone_node — verifies correct dispatch to each vertex builder."""
 
     def test_transcribes_page_node(self) -> None:
         """Test that a page node is transcribed to a GUFFIN_PAGE vertex with correct fields."""
         node = _make_page(title="My Page")
-        v = transcribe_node(node, _id_map(node))
+        v = transcribe_standalone_node(node, _id_map(node))
         assert isinstance(v, PageVertex)
         assert v.vertex_type is VertexType.GUFFIN_PAGE
         assert v.title == "My Page"
@@ -744,7 +749,7 @@ class TestTranscribeNode:
     def test_transcribes_image_node(self) -> None:
         """Test that an image block node is transcribed to a GUFFIN_IMAGE vertex with correct fields."""
         node = _make_image()
-        v = transcribe_node(node, _id_map(node))
+        v = transcribe_standalone_node(node, _id_map(node))
         assert isinstance(v, ImageVertex)
         assert v.vertex_type is VertexType.GUFFIN_IMAGE
         assert v.file_name == "photo.jpeg"
@@ -753,7 +758,7 @@ class TestTranscribeNode:
     def test_transcribes_heading_node(self) -> None:
         """Test that a heading block node is transcribed to a GUFFIN_HEADING vertex with correct fields."""
         node = _make_heading(string="Intro", heading=1)
-        v = transcribe_node(node, _id_map(node))
+        v = transcribe_standalone_node(node, _id_map(node))
         assert isinstance(v, HeadingVertex)
         assert v.vertex_type is VertexType.GUFFIN_HEADING
         assert v.text == "Intro"
@@ -762,7 +767,7 @@ class TestTranscribeNode:
     def test_transcribes_text_content_node(self) -> None:
         """Test that a plain text block node is transcribed to a GUFFIN_TEXT vertex."""
         node = _make_text(string="Body text")
-        v = transcribe_node(node, _id_map(node))
+        v = transcribe_standalone_node(node, _id_map(node))
         assert isinstance(v, TextContentVertex)
         assert v.vertex_type is VertexType.GUFFIN_TEXT
         assert v.text == "Body text"
@@ -770,13 +775,13 @@ class TestTranscribeNode:
     def test_transcribes_block_quote_node(self) -> None:
         """Test that a block-quote node is transcribed to a GUFFIN_BLOCK_QUOTE vertex."""
         node = _make_block_quote(string="> Quoted content")
-        v = transcribe_node(node, _id_map(node))
+        v = transcribe_standalone_node(node, _id_map(node))
         assert isinstance(v, BlockQuoteVertex)
         assert v.vertex_type is VertexType.GUFFIN_BLOCK_QUOTE
         assert v.text == "Quoted content"
 
     def test_children_resolved_via_id_map(self) -> None:
-        """Test that transcribe_node resolves children through the id_map."""
+        """Test that transcribe_standalone_node resolves children through the id_map."""
         child = RoamNode(
             uid="child0001",
             id=201,
@@ -795,7 +800,7 @@ class TestTranscribeNode:
             title="Page",
             children=[IdObject(id=201)],
         )
-        v = transcribe_node(page, _id_map(page, child))
+        v = transcribe_standalone_node(page, _id_map(page, child))
         assert isinstance(v, PageVertex)
         assert v.children == ["child0001"]
 
@@ -807,13 +812,13 @@ class TestTranscribeNode:
     def test_null_node_raises_validation_error(self) -> None:
         """Test that passing None as node raises a ValidationError."""
         with pytest.raises(ValidationError):
-            transcribe_node(None, _id_map())  # type: ignore[arg-type]
+            transcribe_standalone_node(None, _id_map())  # type: ignore[arg-type]
 
     def test_transcribes_image_node_from_fixture(self) -> None:
         """Test transcription of a real-world image node loaded from the JSON fixture."""
         raw = json.loads((FIXTURES_JSON_DIR / "image_node.json").read_text())[0]
         node = RoamNode.model_validate(raw)
-        v = transcribe_node(node, _id_map(node))
+        v = transcribe_standalone_node(node, _id_map(node))
         assert isinstance(v, ImageVertex)
         assert v.vertex_type is VertexType.GUFFIN_IMAGE
         assert v.uid == "mPCzedeKx"
@@ -838,7 +843,7 @@ class TestTranscribeArticleFixture:
         min_level = min_effective_heading_level(node_tree.tree_network)
         heading_offset: int = (1 - min_level) if min_level is not None else 0
 
-        actual_vertices: list[Vertex] = [transcribe_node(n, id_map, heading_offset) for n in nodes]
+        actual_vertices: list[Vertex] = [transcribe_standalone_node(n, id_map, heading_offset) for n in nodes]
 
         raw_vertices: list[dict[str, object]] = yaml.safe_load(
             (FIXTURES_YAML_DIR / "test_article_1_vertices.yaml").read_text()
@@ -870,3 +875,191 @@ class TestTranscribeArticleFixture:
             return vtx.model_dump(mode="json", exclude_none=True)
 
         assert [_serialise(vtx) for vtx in vertex_tree.vertices] == [_serialise(vtx) for vtx in expected]
+
+
+# ---------------------------------------------------------------------------
+# TestToTable helpers
+# ---------------------------------------------------------------------------
+
+
+def _make_table_root(
+    uid: str,
+    node_id: int,
+    row_ids: list[int],
+) -> RoamNode:
+    """Return a ROAM_NATIVE_TABLE root RoamNode."""
+    return RoamNode(
+        uid=uid,
+        id=node_id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=ROAM_NATIVE_TABLE_MARKER,
+        parents=[IdObject(id=1)],
+        page=IdObject(id=1),
+        children=[IdObject(id=rid) for rid in row_ids],
+    )
+
+
+def _make_cell_node(
+    uid: str,
+    node_id: int,
+    parent_id: int,
+    string: str,
+    order: int = 0,
+    child_id: int | None = None,
+) -> RoamNode:
+    """Return a table-cell RoamNode.
+
+    In Roam's native table structure every cell's sole child (when present) is the
+    next-column cell in the same row; supply *child_id* to wire that link.
+    """
+    return RoamNode(
+        uid=uid,
+        id=node_id,
+        time=STUB_TIME,
+        user=STUB_USER,
+        string=string,
+        order=order,
+        parents=[IdObject(id=parent_id)],
+        page=IdObject(id=1),
+        children=[IdObject(id=child_id)] if child_id is not None else None,
+    )
+
+
+def _build_2x2_tree() -> NodeTree:
+    """Return a NodeTree for a 2×2 table: row 1 = (A, B), row 2 = (C, D).
+
+    Structure: root's children are the col-1 cells; each col-1 cell's sole child
+    is the col-2 cell in the same row.
+    """
+    root = _make_table_root("tabluid01", 10, [11, 12])
+    col1_row1 = _make_cell_node("cel11uid1", 11, 10, "A", order=0, child_id=13)
+    col1_row2 = _make_cell_node("cel12uid1", 12, 10, "C", order=1, child_id=14)
+    col2_row1 = _make_cell_node("cel21uid1", 13, 11, "B", order=0)
+    col2_row2 = _make_cell_node("cel22uid1", 14, 12, "D", order=0)
+    return NodeTree.build(root, [root, col1_row1, col1_row2, col2_row1, col2_row2])
+
+
+# ---------------------------------------------------------------------------
+# TestToTable
+# ---------------------------------------------------------------------------
+
+
+class TestToTable:
+    """Tests for to_table."""
+
+    def test_2x2_table_dimensions(self) -> None:
+        """A 2-row 2-column table yields num_rows=2 and num_cols=2."""
+        table = to_table(_build_2x2_tree())
+        assert table.num_rows == 2
+        assert table.num_cols == 2
+
+    def test_2x2_table_cell_content(self) -> None:
+        """Cell content is preserved in row-major order."""
+        table = to_table(_build_2x2_tree())
+        assert table.rows[0] == ("A", "B")
+        assert table.rows[1] == ("C", "D")
+
+    def test_rows_sorted_by_order(self) -> None:
+        """Col-1 cells are sorted ascending by order, determining row sequence."""
+        root = _make_table_root("tabluid01", 10, [11, 12])
+        col1_row1 = _make_cell_node("cel11uid1", 11, 10, "second", order=1)
+        col1_row2 = _make_cell_node("cel12uid1", 12, 10, "first", order=0)
+        tree = NodeTree.build(root, [root, col1_row1, col1_row2])
+        table = to_table(tree)
+        assert table.rows[0] == ("first",)
+        assert table.rows[1] == ("second",)
+
+    def test_3_column_chain_traversal(self) -> None:
+        """A 3-column row is built by following the col1→col2→col3 child chain."""
+        root = _make_table_root("tabluid01", 10, [11])
+        col1 = _make_cell_node("col1uid01", 11, 10, "X", order=0, child_id=12)
+        col2 = _make_cell_node("col2uid01", 12, 11, "Y", order=0, child_id=13)
+        col3 = _make_cell_node("col3uid01", 13, 12, "Z", order=0)
+        tree = NodeTree.build(root, [root, col1, col2, col3])
+        table = to_table(tree)
+        assert table.rows[0] == ("X", "Y", "Z")
+
+    def test_empty_table_raises(self) -> None:
+        """A table root with no children raises ValueError."""
+        root = RoamNode(
+            uid="tabluid01",
+            id=10,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string=ROAM_NATIVE_TABLE_MARKER,
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        tree = NodeTree.build(root, [root])
+        with pytest.raises(ValueError, match="no children"):
+            to_table(tree)
+
+
+# ---------------------------------------------------------------------------
+# TestToTableVertex
+# ---------------------------------------------------------------------------
+
+
+class TestToTableVertex:
+    """Tests for to_table_vertex."""
+
+    def _make_2x2_inputs(self) -> tuple[RoamNode, dict[Id, RoamNode]]:
+        """Return (root, id_map) for a 2×2 table: row 1 = (A, B), row 2 = (C, D)."""
+        root = _make_table_root("tabluid01", 10, [11, 12])
+        col1_row1 = _make_cell_node("cel11uid1", 11, 10, "A", order=0, child_id=13)
+        col1_row2 = _make_cell_node("cel12uid1", 12, 10, "C", order=1, child_id=14)
+        col2_row1 = _make_cell_node("cel21uid1", 13, 11, "B", order=0)
+        col2_row2 = _make_cell_node("cel22uid1", 14, 12, "D", order=0)
+        return root, _id_map(root, col1_row1, col1_row2, col2_row1, col2_row2)
+
+    def test_returns_table_vertex(self) -> None:
+        """to_table_vertex returns a TableVertex as the first element of the pair."""
+        root, imap = self._make_2x2_inputs()
+        vertex, _ = to_table_vertex(root, imap)
+        assert isinstance(vertex, TableVertex)
+
+    def test_vertex_type_is_guffin_table(self) -> None:
+        """The returned vertex has vertex_type GUFFIN_TABLE."""
+        root, imap = self._make_2x2_inputs()
+        vertex, _ = to_table_vertex(root, imap)
+        assert vertex.vertex_type is VertexType.GUFFIN_TABLE
+
+    def test_uid_preserved(self) -> None:
+        """The vertex uid matches the source node uid."""
+        root, imap = self._make_2x2_inputs()
+        vertex, _ = to_table_vertex(root, imap)
+        assert vertex.uid == "tabluid01"
+
+    def test_children_is_none(self) -> None:
+        """Children is always None — descendants are consumed into the Table, not emitted as separate vertices."""
+        root, imap = self._make_2x2_inputs()
+        vertex, _ = to_table_vertex(root, imap)
+        assert vertex.children is None
+
+    def test_table_cell_content(self) -> None:
+        """The embedded Table carries the correct 2-D cell grid."""
+        root, imap = self._make_2x2_inputs()
+        vertex, _ = to_table_vertex(root, imap)
+        assert vertex.table.rows[0] == ("A", "B")
+        assert vertex.table.rows[1] == ("C", "D")
+
+    def test_consumed_ids_exact_set(self) -> None:
+        """The frozenset equals the IDs of the root and all descendant cell nodes."""
+        root, imap = self._make_2x2_inputs()
+        _, consumed = to_table_vertex(root, imap)
+        assert consumed == frozenset({10, 11, 12, 13, 14})
+
+    def test_empty_table_raises_value_error(self) -> None:
+        """A table root with no children raises ValueError."""
+        root = RoamNode(
+            uid="tabluid01",
+            id=10,
+            time=STUB_TIME,
+            user=STUB_USER,
+            string=ROAM_NATIVE_TABLE_MARKER,
+            parents=[IdObject(id=1)],
+            page=IdObject(id=1),
+        )
+        with pytest.raises(ValueError, match="no children"):
+            to_table_vertex(root, _id_map(root))

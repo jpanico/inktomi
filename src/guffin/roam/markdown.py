@@ -13,6 +13,8 @@ Public symbols:
   Roam or standard Markdown block quote.
 - **Block-quote marker stripper**: :func:`strip_block_quote_marker` — strip the leading block-quote
   marker from a block-quote string and return the remaining content.
+- **Table marker**: :data:`ROAM_NATIVE_TABLE_MARKER` — the block string that identifies a Roam
+  native table block.
 """
 
 import enum
@@ -180,6 +182,14 @@ def strip_block_quote_marker(block_string: str) -> str:
     )
     return block_string[len(prefix) :].lstrip()
 
+
+ROAM_NATIVE_TABLE_MARKER: Final[str] = "{{table}}"
+"""Block string that identifies a Roam native table block.
+
+A block whose :attr:`~guffin.roam.node.RoamNode.string` (after stripping surrounding
+whitespace) equals this marker is a Roam native table container; its child blocks
+form the rows, and each child's children are the cells.
+"""
 
 IMAGE_LINK_RE: Final[re.Pattern[str]] = re.compile(
     r"!\[(?P<alt>(?:[^\]]|\n)*?)\]\((?P<url>https://firebasestorage\.googleapis\.com/[^\)]+)\)"

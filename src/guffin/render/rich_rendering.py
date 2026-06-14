@@ -32,11 +32,13 @@ from rich.text import Text
 from rich.tree import Tree as RichTree
 
 from guffin.common.geometry import ImageSize
+from guffin.common.table import Table as GuffinTable, TableStyle
 from guffin.vertex import (
     BlockQuoteVertex,
     CalloutVertex,
     ImageVertex,
     PageVertex,
+    TableVertex,
     TextContentVertex,
     Vertex,
     VertexType,
@@ -188,9 +190,12 @@ def build_node_panel(node: RoamNode, props: list[str] = DEFAULT_NODE_PANEL_PROPS
         case NodeType.ROAM_BLOCK_QUOTE:
             assert node.string is not None
             title_text = _trunc(strip_block_quote_marker(node.string))
+        case NodeType.ROAM_NATIVE_TABLE:
+            assert node.string is not None
+            title_text = _trunc(node.string)
         case _ as unreachable:
             assert_never(unreachable)
-    title: Final[str] = f"[bold #00aa00]<{nt.value}> {title_text} ({node.id})[/bold #00aa00]"
+    title: Final[str] = f"[#00aa00]<{nt.value}> [bold reverse]{title_text}[/bold reverse] ({node.id})[/#00aa00]"
     content: Final[str] = "  ".join(_format_node_prop(node, p) for p in props)
     return Panel(Text(content), title=title, expand=False)
 
@@ -264,7 +269,47 @@ def build_rich_refs_box(tree: NodeTree, props: list[str] = DEFAULT_NODE_PANEL_PR
     return Panel(Group(*ref_rows), title="refs")
 
 
-def _format_vertex_prop(vertex: Vertex, prop: str) -> Text:
+def _format_vertex_table_style_prop(vertex: TableVertex) -> Text:
+    """Format *vertex*'s :class:`~guffin.common.table.TableStyle` as a ``name=value`` :class:`~rich.text.Text`.
+
+    Args:
+        vertex: The table vertex whose :attr:`~guffin.vertex.TableVertex.table_style` is rendered.
+
+    Returns:
+        A :class:`~rich.text.Text` summarising the key style fields.
+    """
+    sty: Final[TableStyle] = vertex.table_style
+    return Text(
+        f"table_style=(row_hdr={sty.header_row_style}, col_hdr={sty.header_col_style}, "
+        f"default={sty.default_cell_style}, n_overrides={len(sty.cell_styles)}, "
+        f"widths={sty.column_widths})"
+    )
+
+
+def _format_vertex_table_prop(vertex: TableVertex) -> Table:
+    """Build a Rich :class:`~rich.table.Table` from *vertex*'s embedded table data.
+
+    Args:
+        vertex: The table vertex whose :attr:`~guffin.vertex.TableVertex.table` is rendered.
+
+    Returns:
+        A :class:`~rich.table.Table` populated with the cell grid.
+    """
+    guffin_tbl: Final[GuffinTable] = vertex.table
+    rich_tbl: Final[Table] = Table(show_lines=True, show_header=guffin_tbl.has_row_header)
+    data_start: Final[int] = 1 if guffin_tbl.has_row_header else 0
+    if guffin_tbl.has_row_header:
+        for header_cell in guffin_tbl.rows[0]:
+            rich_tbl.add_column(header_cell, style="bold")
+    else:
+        for col_idx in range(guffin_tbl.num_cols):
+            rich_tbl.add_column(f"col {col_idx + 1}")
+    for row in guffin_tbl.rows[data_start:]:
+        rich_tbl.add_row(*row)
+    return rich_tbl
+
+
+def _format_vertex_prop(vertex: Vertex, prop: str) -> Text | Table:
     """Return a styled ``name=value`` :class:`~rich.text.Text` for *prop* on *vertex*.
 
     Args:
@@ -318,6 +363,14 @@ def _format_vertex_prop(vertex: Vertex, prop: str) -> Text:
         case "refs":
             val = f"[{', '.join(vertex.refs)}]" if vertex.refs else "None"
             return Text(f"refs={val}")
+        case "table":
+            if not isinstance(vertex, TableVertex):
+                return Text("table=N/A")
+            return _format_vertex_table_prop(vertex)
+        case "table_style":
+            if not isinstance(vertex, TableVertex):
+                return Text("table_style=N/A")
+            return _format_vertex_table_style_prop(vertex)
         case _:
             return Text(f"{prop}=?")
 
@@ -377,10 +430,22 @@ def build_vertex_panel(vertex: Vertex, props: list[str] = DEFAULT_VERTEX_PANEL_P
                 f"[bold orange1]{markup_escape('QUOTE:')}[/bold orange1]"
                 f" [bold #00aa00]{markup_escape(_trunc(vertex.text))}[/bold #00aa00]"
             )
+        case VertexType.GUFFIN_TABLE:
+            title_content = (
+                f"[bold orange1]{markup_escape('TABLE')}[/bold orange1]"
+                f" [bold #00aa00]{markup_escape(f'({vertex.table.num_rows}×{vertex.table.num_cols})')}[/bold #00aa00]"
+            )
         case _ as unreachable:
             assert_never(unreachable)
     title: Final[str] = f"{title_content} [dim]({vertex.uid})[/dim]"
-    content: Final[Text] = Text("  ").join(_format_vertex_prop(vertex, p) for p in props)
+    effective_props: Final[list[str]] = (
+        [*props, "table"] if isinstance(vertex, TableVertex) and "table" not in props else props
+    )
+    prop_renderings: Final[list[Text | Table]] = [_format_vertex_prop(vertex, p) for p in effective_props]
+    text_props: Final[list[Text]] = [ren for ren in prop_renderings if isinstance(ren, Text)]
+    table_props: Final[list[Table]] = [ren for ren in prop_renderings if isinstance(ren, Table)]
+    meta_line: Final[Text] = Text("  ").join(text_props) if text_props else Text("")
+    content: Final[Text | Group] = Group(meta_line, *table_props) if table_props else meta_line
     return Panel(content, title=title, expand=False)
 
 

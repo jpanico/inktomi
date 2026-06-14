@@ -12,11 +12,11 @@ _URL_B = "https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/imgs%2F
 
 _ARTICLE_IMAGE_URL_0 = (
     "https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com"
-    "/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a"
+    "/o/imgs%2Fapp%2FSCFH%2F_otAwc2B9g.jpeg.enc?alt=media&token=25c3ac2a-f62e-462e-99b4-99b337a476c0"
 )
 _ARTICLE_IMAGE_URL_1 = (
     "https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com"
-    "/o/imgs%2Fapp%2FSCFH%2F_otAwc2B9g.jpeg.enc?alt=media&token=25c3ac2a-f62e-462e-99b4-99b337a476c0"
+    "/o/imgs%2Fapp%2FSCFH%2FaOC1FnrcwK.jpeg.enc?alt=media&token=c6e7a3c2-c682-4ae9-a3ee-8e6c388cd05a"
 )
 
 

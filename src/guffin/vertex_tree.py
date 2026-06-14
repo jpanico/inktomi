@@ -43,7 +43,7 @@ class VertexTree(BaseModel):
     """Normalized (transcribed) form of a :class:`~guffin.roam.tree.NodeTree`.
 
     Produced by :func:`~guffin.roam_tree_to_vertex_tree.transcribe`, which applies
-    :func:`~guffin.roam_tree_to_vertex_tree.transcribe_node` to every node in the source
+    :func:`~guffin.roam_tree_to_vertex_tree.transcribe_standalone_node` to every node in the source
     :class:`~guffin.roam.tree.NodeTree` and collects the results here in the
     same insertion order.  The resulting collection is guaranteed to have exactly
     one :data:`~guffin.vertex.Vertex` per source :class:`~guffin.roam.node.RoamNode` and
