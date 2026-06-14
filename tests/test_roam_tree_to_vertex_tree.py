@@ -14,7 +14,7 @@ from guffin.vertex import (
     ImageVertex,
     PageVertex,
     TableVertex,
-    TextContentVertex,
+    TextVertex,
     Vertex,
     VertexType,
     vertex_adapter,
@@ -31,7 +31,7 @@ from guffin.roam_tree_to_vertex_tree import (
     to_page_vertex,
     to_table,
     to_table_vertex,
-    to_text_content_vertex,
+    to_text_vertex,
     transcribe,
     transcribe_standalone_node,
     vertex_type,
@@ -479,48 +479,48 @@ class TestToHeadingVertex:
 
 
 # ---------------------------------------------------------------------------
-# TestToTextContentVertex
+# TestToTextVertex
 # ---------------------------------------------------------------------------
 
 
-class TestToTextContentVertex:
-    """Tests for to_text_content_vertex."""
+class TestToTextVertex:
+    """Tests for to_text_vertex."""
 
     def test_returns_roam_text_content_vertex_type(self) -> None:
-        """Test that to_text_content_vertex produces a vertex with type GUFFIN_TEXT."""
+        """Test that to_text_vertex produces a vertex with type GUFFIN_TEXT."""
         node = _make_text()
-        assert to_text_content_vertex(node, _id_map(node)).vertex_type is VertexType.GUFFIN_TEXT
+        assert to_text_vertex(node, _id_map(node)).vertex_type is VertexType.GUFFIN_TEXT
 
     def test_uid_preserved(self) -> None:
         """Test that the vertex uid matches the source node uid."""
         node = _make_text(uid="textuid01")
-        assert to_text_content_vertex(node, _id_map(node)).uid == "textuid01"
+        assert to_text_vertex(node, _id_map(node)).uid == "textuid01"
 
     def test_text_equals_string(self) -> None:
         """Test that the vertex text equals the node's block string."""
         node = _make_text(string="Hello, world!")
-        assert to_text_content_vertex(node, _id_map(node)).text == "Hello, world!"
+        assert to_text_vertex(node, _id_map(node)).text == "Hello, world!"
 
     def test_children_none_when_no_children(self) -> None:
         """Test that children is None when the node has no children."""
         node = _make_text()
-        assert to_text_content_vertex(node, _id_map(node)).children is None
+        assert to_text_vertex(node, _id_map(node)).children is None
 
     def test_refs_none_when_no_refs(self) -> None:
         """Test that refs is None when the node has no refs."""
         node = _make_text()
-        assert to_text_content_vertex(node, _id_map(node)).refs is None
+        assert to_text_vertex(node, _id_map(node)).refs is None
 
     def test_missing_string_raises_value_error(self) -> None:
         """Test that a node without a string raises ValueError."""
         node = _make_page()
         with pytest.raises(ValueError, match="no 'string'"):
-            to_text_content_vertex(node, _id_map(node))
+            to_text_vertex(node, _id_map(node))
 
     def test_null_node_raises_validation_error(self) -> None:
         """Test that passing None as node raises a ValidationError."""
         with pytest.raises(ValidationError):
-            to_text_content_vertex(None, _id_map())  # type: ignore[arg-type]
+            to_text_vertex(None, _id_map())  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
@@ -768,7 +768,7 @@ class TestTranscribeNode:
         """Test that a plain text block node is transcribed to a GUFFIN_TEXT vertex."""
         node = _make_text(string="Body text")
         v = transcribe_standalone_node(node, _id_map(node))
-        assert isinstance(v, TextContentVertex)
+        assert isinstance(v, TextVertex)
         assert v.vertex_type is VertexType.GUFFIN_TEXT
         assert v.text == "Body text"
 

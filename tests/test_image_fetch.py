@@ -11,7 +11,7 @@ from pydantic import HttpUrl
 
 from guffin.common.geometry import ImageSize
 from guffin.common.media_type import MediaType
-from guffin.vertex import ImageVertex, PageVertex, TextContentVertex
+from guffin.vertex import ImageVertex, PageVertex, TextVertex
 from guffin.vertex_tree import VertexTree
 from guffin.render.image_fetch import ImageRef, fetch_and_enrich_images, fetch_images
 from guffin.roam.asset import RoamAsset, RoamImageAsset
@@ -120,7 +120,7 @@ class TestFetchImages:
         monkeypatch.setattr("guffin.render.image_fetch.fetch_and_cache_asset", _fake)
 
         page: Final[PageVertex] = PageVertex(uid="page00001", title="P", children=["img00001a"])
-        text: Final[TextContentVertex] = TextContentVertex(uid="txt00001a", text="hello")
+        text: Final[TextVertex] = TextVertex(uid="txt00001a", text="hello")
         tree: Final[VertexTree] = VertexTree(vertices=[page, text, _image_vertex("img00001a")])
         result: Final[dict[Uid, ImageRef]] = fetch_images(tree, _ENDPOINT, tmp_path)
 

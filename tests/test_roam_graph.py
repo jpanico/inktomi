@@ -5,7 +5,7 @@ import pytest
 from guffin.vertex import (
     HeadingVertex,
     PageVertex,
-    TextContentVertex,
+    TextVertex,
     Vertex,
 )
 from guffin.vertex_tree import VertexTree, VertexTreeDFSIterator
@@ -34,7 +34,7 @@ class TestVertexTreeDFSIterator:
     def test_two_vertex_tree_yields_root_then_child(self) -> None:
         """Test that a root→child tree yields root first, then child."""
         root = PageVertex(uid="root00001", title="My Page", children=["chld00001"])
-        child = TextContentVertex(uid="chld00001", text="Hello")
+        child = TextVertex(uid="chld00001", text="Hello")
         tree = VertexTree(vertices=[root, child])
         assert [v.uid for v in VertexTreeDFSIterator(tree)] == ["root00001", "chld00001"]
 
@@ -49,8 +49,8 @@ class TestVertexTreeDFSIterator:
         the order the vertices appear in VertexTree.vertices.
         """
         root = PageVertex(uid="root00001", title="Root", children=["chld00002", "chld00001"])
-        child_first = TextContentVertex(uid="chld00002", text="first")
-        child_second = TextContentVertex(uid="chld00001", text="second")
+        child_first = TextVertex(uid="chld00002", text="first")
+        child_second = TextVertex(uid="chld00001", text="second")
         tree = VertexTree(vertices=[root, child_first, child_second])
         assert [v.uid for v in VertexTreeDFSIterator(tree)] == ["root00001", "chld00002", "chld00001"]
 
@@ -62,8 +62,8 @@ class TestVertexTreeDFSIterator:
         """Test that a child's full subtree is visited before the next sibling (pre-order)."""
         root = PageVertex(uid="root00001", title="Root", children=["nodeA0001", "nodeB0001"])
         node_a = HeadingVertex(uid="nodeA0001", text="A", heading_level=2, children=["nodeA1001"])
-        node_a1 = TextContentVertex(uid="nodeA1001", text="A1")
-        node_b = TextContentVertex(uid="nodeB0001", text="B")
+        node_a1 = TextVertex(uid="nodeA1001", text="A1")
+        node_b = TextVertex(uid="nodeB0001", text="B")
         tree = VertexTree(vertices=[root, node_a, node_a1, node_b])
         assert [v.uid for v in VertexTreeDFSIterator(tree)] == [
             "root00001",
@@ -79,8 +79,8 @@ class TestVertexTreeDFSIterator:
     def test_all_vertices_yielded_exactly_once(self) -> None:
         """Test that every vertex in the tree is yielded exactly once with no duplicates."""
         root = PageVertex(uid="root00001", title="Root", children=["chld00001", "chld00002"])
-        child_a = TextContentVertex(uid="chld00001", text="a")
-        child_b = TextContentVertex(uid="chld00002", text="b")
+        child_a = TextVertex(uid="chld00001", text="a")
+        child_b = TextVertex(uid="chld00002", text="b")
         tree = VertexTree(vertices=[root, child_a, child_b])
         yielded: list[Vertex] = list(VertexTreeDFSIterator(tree))
         assert len(yielded) == 3

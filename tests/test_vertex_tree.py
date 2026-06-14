@@ -8,14 +8,14 @@ from pydantic import HttpUrl
 
 from guffin.common.geometry import ImageSize
 from guffin.common.media_type import MediaType
-from guffin.vertex import ImageVertex, TextContentVertex, Vertex
+from guffin.vertex import ImageVertex, TextVertex, Vertex
 from guffin.vertex_tree import VertexTree, enrich_image_original_sizes, map_vertices
 
 logger = logging.getLogger(__name__)
 
 
 def _make_text_tree(uid_text_pairs: list[tuple[str, str]]) -> VertexTree:
-    return VertexTree(vertices=[TextContentVertex(uid=uid, text=text) for uid, text in uid_text_pairs])
+    return VertexTree(vertices=[TextVertex(uid=uid, text=text) for uid, text in uid_text_pairs])
 
 
 _IMAGE_SOURCE: Final[HttpUrl] = HttpUrl("https://example.com/img.jpg")
@@ -56,12 +56,12 @@ class TestMapVertices:
         tree: Final[VertexTree] = _make_text_tree([("aaaaaaaaa", "hello"), ("bbbbbbbbb", "world")])
 
         def _upcase(vtx: Vertex) -> Vertex:
-            if isinstance(vtx, TextContentVertex):
+            if isinstance(vtx, TextVertex):
                 return vtx.model_copy(update={"text": vtx.text.upper()})
             return vtx
 
         result: Final[VertexTree] = map_vertices(tree, _upcase)
-        texts: Final[list[str]] = [vtx.text for vtx in result.vertices if isinstance(vtx, TextContentVertex)]
+        texts: Final[list[str]] = [vtx.text for vtx in result.vertices if isinstance(vtx, TextVertex)]
         assert texts == ["HELLO", "WORLD"]
 
     def test_unmatched_vertices_pass_through_unchanged(self) -> None:
@@ -69,12 +69,12 @@ class TestMapVertices:
         tree: Final[VertexTree] = _make_text_tree([("aaaaaaaaa", "hello"), ("bbbbbbbbb", "world")])
 
         def _transform_first_only(vtx: Vertex) -> Vertex:
-            if isinstance(vtx, TextContentVertex) and vtx.uid == "aaaaaaaaa":
+            if isinstance(vtx, TextVertex) and vtx.uid == "aaaaaaaaa":
                 return vtx.model_copy(update={"text": "changed"})
             return vtx
 
         result: Final[VertexTree] = map_vertices(tree, _transform_first_only)
-        texts: Final[list[str]] = [vtx.text for vtx in result.vertices if isinstance(vtx, TextContentVertex)]
+        texts: Final[list[str]] = [vtx.text for vtx in result.vertices if isinstance(vtx, TextVertex)]
         assert texts == ["changed", "world"]
 
 
@@ -101,17 +101,17 @@ class TestEnrichImageOriginalSizes:
         assert any("absent from sizes map" in r.message for r in caplog.records)
 
     def test_non_image_vertices_pass_through(self) -> None:
-        """TextContentVertex is returned unchanged regardless of the sizes map."""
+        """TextVertex is returned unchanged regardless of the sizes map."""
         tree: Final[VertexTree] = _make_text_tree([("aaaaaaaaa", "hello")])
         result: Final[VertexTree] = enrich_image_original_sizes(tree, {})
-        texts: Final[list[str]] = [v.text for v in result.vertices if isinstance(v, TextContentVertex)]
+        texts: Final[list[str]] = [v.text for v in result.vertices if isinstance(v, TextVertex)]
         assert texts == ["hello"]
 
     def test_mixed_tree_partial_match(self) -> None:
         """Matched image gets size; unmatched image stays None; text vertex passes through unchanged."""
         img_matched: Final[ImageVertex] = _make_image_vertex("img000003")
         img_unmatched: Final[ImageVertex] = _make_image_vertex("img000004")
-        text: Final[TextContentVertex] = TextContentVertex(uid="aaaaaaaaa", text="hello")
+        text: Final[TextVertex] = TextVertex(uid="aaaaaaaaa", text="hello")
         tree: Final[VertexTree] = VertexTree(vertices=[img_matched, img_unmatched, text])
         size: Final[ImageSize] = ImageSize(width=800, height=600)
         result: Final[VertexTree] = enrich_image_original_sizes(tree, {"img000003": size})
@@ -122,4 +122,4 @@ class TestEnrichImageOriginalSizes:
         assert isinstance(unmatched_result, ImageVertex)
         assert matched_result.original_image_size == size
         assert unmatched_result.original_image_size is None
-        assert isinstance(result_by_uid["aaaaaaaaa"], TextContentVertex)
+        assert isinstance(result_by_uid["aaaaaaaaa"], TextVertex)

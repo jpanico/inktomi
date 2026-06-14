@@ -10,7 +10,7 @@ Public symbols:
   :class:`VertexTree`.
 - :func:`page_vertices` — return all :class:`~guffin.vertex.PageVertex` instances in a :class:`VertexTree`.
 - :func:`heading_vertices` — return all :class:`~guffin.vertex.HeadingVertex` instances in a :class:`VertexTree`.
-- :func:`text_content_vertices` — return all :class:`~guffin.vertex.TextContentVertex` instances in a
+- :func:`text_vertices` — return all :class:`~guffin.vertex.TextVertex` instances in a
   :class:`VertexTree`.
 - :func:`image_vertices` — return all :class:`~guffin.vertex.ImageVertex` instances in a :class:`VertexTree`.
 - :func:`image_urls` — return all Cloud Firestore image URLs from a :class:`VertexTree`.
@@ -34,7 +34,7 @@ from guffin.vertex import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
-    TextContentVertex,
+    TextVertex,
     Vertex,
 )
 
@@ -136,9 +136,9 @@ def heading_vertices(tree: VertexTree) -> list[HeadingVertex]:
 
 
 @validate_call
-def text_content_vertices(tree: VertexTree) -> list[TextContentVertex]:
-    """Return all :class:`~guffin.vertex.TextContentVertex` instances in *tree*, in insertion order."""
-    return [v for v in tree.vertices if isinstance(v, TextContentVertex)]
+def text_vertices(tree: VertexTree) -> list[TextVertex]:
+    """Return all :class:`~guffin.vertex.TextVertex` instances in *tree*, in insertion order."""
+    return [v for v in tree.vertices if isinstance(v, TextVertex)]
 
 
 @validate_call

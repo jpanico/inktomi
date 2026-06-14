@@ -39,7 +39,7 @@ from guffin.vertex import (
     ImageVertex,
     PageVertex,
     TableVertex,
-    TextContentVertex,
+    TextVertex,
     Vertex,
     VertexType,
 )
@@ -331,9 +331,7 @@ def _format_vertex_prop(vertex: Vertex, prop: str) -> Text | Table:
         case "title":
             return Text(f"title={vertex.title}" if isinstance(vertex, PageVertex) else "title=N/A")
         case "text":
-            return Text(
-                f"text={vertex.text}" if isinstance(vertex, TextContentVertex | BlockQuoteVertex) else "text=N/A"
-            )
+            return Text(f"text={vertex.text}" if isinstance(vertex, TextVertex | BlockQuoteVertex) else "text=N/A")
         case "file_name":
             return Text(f"file_name={vertex.file_name}" if isinstance(vertex, ImageVertex) else "file_name=N/A")
         case "media_type":
@@ -384,7 +382,7 @@ def build_vertex_panel(vertex: Vertex, props: list[str] = DEFAULT_VERTEX_PANEL_P
 
     - :class:`~guffin.vertex.PageVertex` — page title.
     - :class:`~guffin.vertex.HeadingVertex` — ``H{n}: <text>``.
-    - :class:`~guffin.vertex.TextContentVertex` — block text as-is.
+    - :class:`~guffin.vertex.TextVertex` — block text as-is.
     - :class:`~guffin.vertex.ImageVertex` — ``IMAGE [<alt>](<firestore_url>)``.
     - :class:`~guffin.vertex.CalloutVertex` — ``CALLOUT [<type>]: <title>``.
 

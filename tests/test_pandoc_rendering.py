@@ -15,7 +15,7 @@ from guffin.vertex import (
     HeadingVertex,
     ImageVertex,
     PageVertex,
-    TextContentVertex,
+    TextVertex,
 )
 from guffin.vertex_tree import VertexTree
 from guffin.render.pandoc_rendering import (
@@ -218,17 +218,17 @@ class TestVertexTreeToPandocHeadingVertex:
 
 
 # ---------------------------------------------------------------------------
-# TestVertexTreeToPandocTextContentVertex
+# TestVertexTreeToPandocText
 # ---------------------------------------------------------------------------
 
 
-class TestVertexTreeToPandocTextContentVertex:
-    """Tests for vertex_tree_to_pandoc() — TextContentVertex rendering."""
+class TestVertexTreeToPandocText:
+    """Tests for vertex_tree_to_pandoc() — TextVertex rendering."""
 
     def test_depth_1_is_para(self) -> None:
-        """A TextContentVertex that is a direct child of the page renders as a Para."""
+        """A TextVertex that is a direct child of the page renders as a Para."""
         page = PageVertex(uid="page00001", title="P", children=["txt00001a"])
-        block = TextContentVertex(uid="txt00001a", text="Hello world")
+        block = TextVertex(uid="txt00001a", text="Hello world")
         tree = VertexTree(vertices=[page, block])
         blocks = list(vertex_tree_to_pandoc(tree, {}).content)
         assert len(blocks) == 1
@@ -236,10 +236,10 @@ class TestVertexTreeToPandocTextContentVertex:
         assert _collect_text(blocks[0]) == "Hello world"
 
     def test_depth_2_text_under_heading_is_bullet(self) -> None:
-        """A TextContentVertex under a HeadingVertex (depth 2) renders as a BulletList."""
+        """A TextVertex under a HeadingVertex (depth 2) renders as a BulletList."""
         page = PageVertex(uid="page00001", title="P", children=["head0001a"])
         heading = HeadingVertex(uid="head0001a", text="Section", heading_level=2, children=["txt00001a"])
-        block = TextContentVertex(uid="txt00001a", text="Body text")
+        block = TextVertex(uid="txt00001a", text="Body text")
         tree = VertexTree(vertices=[page, heading, block])
         blocks = list(vertex_tree_to_pandoc(tree, {}).content)
         assert len(blocks) == 2
@@ -252,11 +252,11 @@ class TestVertexTreeToPandocTextContentVertex:
         assert _collect_text(item_blocks[0]) == "Body text"
 
     def test_nested_text_produces_nested_bullet_list(self) -> None:
-        """A TextContentVertex child of another TextContentVertex renders as a nested BulletList."""
+        """A TextVertex child of another TextVertex renders as a nested BulletList."""
         page = PageVertex(uid="page00001", title="P", children=["head0001a"])
         heading = HeadingVertex(uid="head0001a", text="S", heading_level=2, children=["txt00001a"])
-        parent = TextContentVertex(uid="txt00001a", text="Parent", children=["txt00001b"])
-        child = TextContentVertex(uid="txt00001b", text="Child")
+        parent = TextVertex(uid="txt00001a", text="Parent", children=["txt00001b"])
+        child = TextVertex(uid="txt00001b", text="Child")
         tree = VertexTree(vertices=[page, heading, parent, child])
         blocks = list(vertex_tree_to_pandoc(tree, {}).content)
         bullet_list = blocks[1]
@@ -357,12 +357,12 @@ class TestVertexTreeToPandocImageVertex:
 
 
 class TestBuildBlocksCoalescing:
-    """Tests for build_child_blocks() — sibling TextContentVertex coalescing."""
+    """Tests for build_child_blocks() — sibling TextVertex coalescing."""
 
     def test_consecutive_text_siblings_coalesced_into_one_bullet_list(self) -> None:
-        """Two consecutive TextContentVertex siblings at depth 2 produce a single BulletList."""
-        t1 = TextContentVertex(uid="txt000001", text="Item 1")
-        t2 = TextContentVertex(uid="txt000002", text="Item 2")
+        """Two consecutive TextVertex siblings at depth 2 produce a single BulletList."""
+        t1 = TextVertex(uid="txt000001", text="Item 1")
+        t2 = TextVertex(uid="txt000002", text="Item 2")
         uid_map = {"txt000001": t1, "txt000002": t2}
         blocks = build_child_blocks(["txt000001", "txt000002"], uid_map, {}, {}, depth=2)
         assert len(blocks) == 1
@@ -371,9 +371,9 @@ class TestBuildBlocksCoalescing:
 
     def test_heading_between_text_siblings_splits_bullet_lists(self) -> None:
         """A HeadingVertex between two TextContentVertices produces two separate BulletLists."""
-        t1 = TextContentVertex(uid="txt000001", text="Before")
+        t1 = TextVertex(uid="txt000001", text="Before")
         h = HeadingVertex(uid="head00001", text="Break", heading_level=3)
-        t2 = TextContentVertex(uid="txt000002", text="After")
+        t2 = TextVertex(uid="txt000002", text="After")
         uid_map = {"txt000001": t1, "head00001": h, "txt000002": t2}
         blocks = build_child_blocks(["txt000001", "head00001", "txt000002"], uid_map, {}, {}, depth=2)
         assert len(blocks) == 3
@@ -383,8 +383,8 @@ class TestBuildBlocksCoalescing:
 
     def test_text_at_depth_1_is_not_coalesced_into_bullet_list(self) -> None:
         """TextContentVertices at depth 1 render as Paras, not BulletList items."""
-        t1 = TextContentVertex(uid="txt000001", text="Para 1")
-        t2 = TextContentVertex(uid="txt000002", text="Para 2")
+        t1 = TextVertex(uid="txt000001", text="Para 1")
+        t2 = TextVertex(uid="txt000002", text="Para 2")
         uid_map = {"txt000001": t1, "txt000002": t2}
         blocks = build_child_blocks(["txt000001", "txt000002"], uid_map, {}, {}, depth=1)
         assert len(blocks) == 2
@@ -392,7 +392,7 @@ class TestBuildBlocksCoalescing:
 
     def test_unknown_uid_is_skipped(self) -> None:
         """A UID not in uid_map is silently skipped."""
-        t1 = TextContentVertex(uid="txt000001", text="Present")
+        t1 = TextVertex(uid="txt000001", text="Present")
         uid_map = {"txt000001": t1}
         blocks = build_child_blocks(["missingXY", "txt000001"], uid_map, {}, {}, depth=1)
         assert len(blocks) == 1
@@ -436,7 +436,7 @@ class TestVertexTreeToPandocArticleFixture:
         assert image_para is not None
 
     def test_text_content_vertex_renders_as_bullet_list(self) -> None:
-        """Each TextContentVertex renders as a top-level BulletList."""
+        """Each TextVertex renders as a top-level BulletList."""
         doc = vertex_tree_to_pandoc(article1_vertex_tree(), {})
         blocks = list(doc.content)
         bullet_lists = [b for b in blocks if isinstance(b, pf.BulletList)]

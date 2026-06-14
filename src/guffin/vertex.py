@@ -29,7 +29,7 @@ Public symbols:
   :class:`~guffin.roam.node.RoamNode`.
 - :class:`PageVertex` — normalized (transcribed) form of a Roam Page node.
 - :class:`HeadingVertex` — normalized (transcribed) form of a Roam Heading block node.
-- :class:`TextContentVertex` — normalized (transcribed) form of a plain-text Roam Block
+- :class:`TextVertex` — normalized (transcribed) form of a plain-text Roam Block
   node.
 - :class:`ImageVertex` — normalized (transcribed) form of a Roam Firestore image block
   node.
@@ -112,7 +112,7 @@ class _BaseVertex[VT: VertexType](BaseModel):
     """Shared fields inherited by all seven concrete vertex types.
 
     Not instantiated directly — use :class:`PageVertex`, :class:`HeadingVertex`,
-    :class:`TextContentVertex`, :class:`ImageVertex`, :class:`CalloutVertex`,
+    :class:`TextVertex`, :class:`ImageVertex`, :class:`CalloutVertex`,
     :class:`CodeBlockVertex`, :class:`BlockQuoteVertex`, or :class:`TableVertex`.
 
     Type Parameters:
@@ -185,7 +185,7 @@ class HeadingVertex(_BaseVertex[Literal[VertexType.GUFFIN_HEADING]]):
     heading_level: HeadingLevel = Field(..., description="Effective heading level (1–6).")
 
 
-class TextContentVertex(_BaseVertex[Literal[VertexType.GUFFIN_TEXT]]):
+class TextVertex(_BaseVertex[Literal[VertexType.GUFFIN_TEXT]]):
     """Normalized (transcribed) form of a plain-text Roam Block node.
 
     Produced when the source :class:`~guffin.roam.node.RoamNode` has
@@ -395,7 +395,7 @@ class TableVertex(_BaseVertex[Literal[VertexType.GUFFIN_TABLE]]):
 type Vertex = (
     PageVertex
     | HeadingVertex
-    | TextContentVertex
+    | TextVertex
     | ImageVertex
     | CalloutVertex
     | CodeBlockVertex
@@ -412,7 +412,7 @@ vertex_adapter: TypeAdapter[Vertex] = TypeAdapter(Annotated[Vertex, Field(discri
 """Pydantic :class:`~pydantic.TypeAdapter` for validating a raw dict into the correct :data:`Vertex` subtype.
 
 Uses ``vertex_type`` as the discriminator field to select among :class:`PageVertex`,
-:class:`HeadingVertex`, :class:`TextContentVertex`, :class:`ImageVertex`, :class:`CalloutVertex`,
+:class:`HeadingVertex`, :class:`TextVertex`, :class:`ImageVertex`, :class:`CalloutVertex`,
 :class:`CodeBlockVertex`, :class:`BlockQuoteVertex`, and :class:`TableVertex`.
 
 Example::

@@ -12,7 +12,7 @@ caller.
 Inline parsing:
 
 Text fields on :class:`~guffin.vertex.HeadingVertex` and
-:class:`~guffin.vertex.TextContentVertex` contain normalized Pandoc Markdown
+:class:`~guffin.vertex.TextVertex` contain normalized Pandoc Markdown
 (e.g. ``**bold**``, ``*italic*``, `` `code` ``, ``[text]{.mark}``).
 :func:`parse_inline_md` batches all unique text strings into a single
 Pandoc parse call, returning a mapping from text string to the corresponding
@@ -27,7 +27,7 @@ Rendering rules:
   Children rendered at depth 1 in both cases.
 - :class:`~guffin.vertex.HeadingVertex` — rendered as a
   :class:`~panflute.Header` at the vertex's recorded heading level.
-- :class:`~guffin.vertex.TextContentVertex` — direct children of the page
+- :class:`~guffin.vertex.TextVertex` — direct children of the page
   (depth 1) become :class:`~panflute.Para` blocks; deeper vertices are
   coalesced into :class:`~panflute.BulletList` items, with their own
   children rendered as nested :class:`~panflute.BulletList` blocks.  Text
@@ -82,7 +82,7 @@ from guffin.vertex import (
     ImageVertex,
     PageVertex,
     TableVertex,
-    TextContentVertex,
+    TextVertex,
     Vertex,
     VertexChildren,
 )
@@ -185,13 +185,13 @@ def parse_block_md(text: str) -> list[pf.Block]:
 
 
 def _build_list_item(
-    vertex: TextContentVertex,
+    vertex: TextVertex,
     uid_map: Mapping[Uid, Vertex],
     image_files: dict[Uid, Path],
     inline_map: dict[str, list[pf.Inline]],
     depth: int,
 ) -> pf.ListItem:
-    """Build a Pandoc :class:`~panflute.ListItem` from a :class:`~guffin.vertex.TextContentVertex`.
+    """Build a Pandoc :class:`~panflute.ListItem` from a :class:`~guffin.vertex.TextVertex`.
 
     The item body is a :class:`~panflute.Plain` inline block, or — when the
     vertex text contains a fenced code block — the block elements produced by a
@@ -232,7 +232,7 @@ def build_child_blocks(
 ) -> list[pf.Block]:
     """Build a list of Pandoc block elements from an ordered list of child UIDs.
 
-    Consecutive :class:`~guffin.vertex.TextContentVertex` siblings at
+    Consecutive :class:`~guffin.vertex.TextVertex` siblings at
     *depth* > 1 are coalesced into a single :class:`~panflute.BulletList`.
     Any non-text vertex (or text vertex at depth 1) flushes the pending list
     and is rendered via :func:`_vertex_to_blocks`.
@@ -260,7 +260,7 @@ def build_child_blocks(
             logger.warning("child uid=%r not found in uid_map; skipping", uid)
             continue
         vertex: Vertex = uid_map[uid]
-        if isinstance(vertex, TextContentVertex) and depth > 1:
+        if isinstance(vertex, TextVertex) and depth > 1:
             pending_items.append(_build_list_item(vertex, uid_map, image_files, inline_map, depth))
         else:
             if pending_items:
@@ -330,13 +330,13 @@ def _heading_vertex_to_blocks(
 
 
 def _text_content_vertex_to_blocks(
-    vertex: TextContentVertex,
+    vertex: TextVertex,
     uid_map: Mapping[Uid, Vertex],
     image_files: dict[Uid, Path],
     inline_map: dict[str, list[pf.Inline]],
     depth: int,
 ) -> list[pf.Block]:
-    """Render a :class:`~guffin.vertex.TextContentVertex` to Pandoc block elements.
+    """Render a :class:`~guffin.vertex.TextVertex` to Pandoc block elements.
 
     At depth 1: one :class:`~panflute.Para` followed by the recursively rendered
     children; when the vertex text contains a fenced code block, the block
@@ -610,7 +610,7 @@ def _vertex_to_blocks(
             return _page_vertex_to_blocks(vertex, uid_map, image_files, inline_map)
         case HeadingVertex():
             return _heading_vertex_to_blocks(vertex, uid_map, image_files, inline_map, depth)
-        case TextContentVertex():
+        case TextVertex():
             return _text_content_vertex_to_blocks(vertex, uid_map, image_files, inline_map, depth)
         case ImageVertex():
             return _image_vertex_to_blocks(vertex, image_files, inline_map)
@@ -673,7 +673,7 @@ def vertex_tree_to_pandoc(
                 texts.append(t)
             case HeadingVertex(text=t):
                 texts.append(t)
-            case TextContentVertex(text=t):
+            case TextVertex(text=t):
                 texts.append(t)
             case ImageVertex(alt_text=t) if t is not None:
                 texts.append(t)

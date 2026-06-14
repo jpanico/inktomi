@@ -2,7 +2,7 @@
 
 from guffin.common.geometry import ImageSize
 from guffin.common.media_type import MediaType
-from guffin.vertex import ImageVertex, PageVertex, TextContentVertex
+from guffin.vertex import ImageVertex, PageVertex, TextVertex
 from guffin.vertex_tree import VertexTree, image_urls, image_vertices, root_vertex
 
 from conftest import article1_vertex_tree
@@ -28,8 +28,8 @@ def _image(uid: str = "imguid001", url: str = _URL_A) -> ImageVertex:
     return ImageVertex(uid=uid, source=url, media_type=MediaType.JPEG, scaled_image_size=ImageSize())  # type: ignore[arg-type]
 
 
-def _text(uid: str = "textuid01") -> TextContentVertex:
-    return TextContentVertex(uid=uid, text="hello")
+def _text(uid: str = "textuid01") -> TextVertex:
+    return TextVertex(uid=uid, text="hello")
 
 
 # ---------------------------------------------------------------------------

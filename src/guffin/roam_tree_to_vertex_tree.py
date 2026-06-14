@@ -12,8 +12,8 @@ Public symbols:
   Firestore image block node.
 - :func:`to_heading_vertex` — build a :class:`~guffin.vertex.HeadingVertex` from
   a heading block node.
-- :func:`to_text_content_vertex` — build a
-  :class:`~guffin.vertex.TextContentVertex` from a plain text block node.
+- :func:`to_text_vertex` — build a
+  :class:`~guffin.vertex.TextVertex` from a plain text block node.
 - :func:`to_callout_vertex` — build a :class:`~guffin.vertex.CalloutVertex` from a
   callout block node.
 - :func:`to_code_block_vertex` — build a :class:`~guffin.vertex.CodeBlockVertex` from a
@@ -45,7 +45,7 @@ from guffin.vertex import (
     ImageVertex,
     PageVertex,
     TableVertex,
-    TextContentVertex,
+    TextVertex,
     Vertex,
     VertexChildren,
     VertexRefs,
@@ -322,8 +322,8 @@ def to_heading_vertex(node: RoamNode, id_map: dict[Id, RoamNode], heading_offset
 
 
 @validate_call
-def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextContentVertex:
-    """Build a :class:`~guffin.vertex.TextContentVertex` from *node*.
+def to_text_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextVertex:
+    """Build a :class:`~guffin.vertex.TextVertex` from *node*.
 
     Args:
         node: A plain text block node with ``node.string`` set.
@@ -331,7 +331,7 @@ def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextCo
             used to resolve child and ref stubs to UIDs.
 
     Returns:
-        A :class:`~guffin.vertex.TextContentVertex`.
+        A :class:`~guffin.vertex.TextVertex`.
 
     Raises:
         ValidationError: If *node* or *id_map* is ``None`` or invalid.
@@ -340,7 +340,7 @@ def to_text_content_vertex(node: RoamNode, id_map: dict[Id, RoamNode]) -> TextCo
     logger.debug("node=%r, id_map keys=%r", node, list(id_map.keys()))
     if node.string is None:
         raise ValueError(f"RoamNode uid={node.uid!r} has no 'string'")
-    return TextContentVertex(
+    return TextVertex(
         uid=node.uid,
         text=to_pandoc_md(node.string),
         children=_resolve_children(node, id_map),
@@ -583,7 +583,7 @@ def transcribe_standalone_node(node: RoamNode, id_map: dict[Id, RoamNode], headi
         case VertexType.GUFFIN_HEADING:
             return to_heading_vertex(node, id_map, heading_offset)
         case VertexType.GUFFIN_TEXT:
-            return to_text_content_vertex(node, id_map)
+            return to_text_vertex(node, id_map)
         case VertexType.GUFFIN_CALLOUT:
             return to_callout_vertex(node, id_map)
         case VertexType.GUFFIN_CODE_BLOCK:
