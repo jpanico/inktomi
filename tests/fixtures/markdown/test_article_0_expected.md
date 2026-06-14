@@ -9,8 +9,18 @@
 >
 > - 3 top-level blocks
 > - nested blocks
-> - italics text
-> - bold text
+> - *italics* text
+> - **bold** text
+> - ~~strikethrough~~
+> - <mark>highlight</mark>
+> - `inline-code`
+> - fenced code mixed with text, block
+> - isolated fenced code block
+> - Markdown single line block quote
+> - Markdown multi-line block quote
+> - Roam-native single line block quote
+> - Roam-native multi-line block quote
+> - Roam-native table (3x3)
 > - this INFO `Callout box`, which contains Roam `page references`
 
 block 1

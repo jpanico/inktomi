@@ -37,8 +37,18 @@ Three live Roam pages serve as the primary test sources: `[[Test Article]] 0`,
 
 - 3 top-level blocks
 - nested blocks
-- italics text
-- bold text
+- __italics__ text
+- **bold** text
+- ~~strikethrough~~
+- ^^highlight^^
+- `inline-code`
+- fenced code mixed with text, block
+- isolated fenced code block
+- Markdown single line block quote
+- Markdown multi-line block quote
+- Roam-native single line block quote
+- Roam-native multi-line block quote
+- Roam-native table (3x3)
 - this INFO `Callout box`, which contains Roam `page references`
 
 #### `[[Test Article]] 1`

@@ -12,7 +12,7 @@
     - id: 11150
     time: 1781362773659
     order: 1
-    open: true
+    open: false
     page:
       id: 11137
 - - prevent-clean: 1773090962400
@@ -129,9 +129,29 @@
 
       - nested blocks
 
-      - italics text
+      - __italics__ text
 
-      - bold text
+      - **bold** text
+
+      - ~~strikethrough~~
+
+      - ^^highlight^^
+
+      - `inline-code`
+
+      - fenced code mixed with text, block
+
+      - isolated fenced code block
+
+      - Markdown single line block quote
+
+      - Markdown multi-line block quote
+
+      - Roam-native single line block quote
+
+      - Roam-native multi-line block quote
+
+      - Roam-native table (3x3)
 
       - this INFO `Callout box`, which contains Roam `page references`'
     user:
@@ -140,7 +160,7 @@
     uid: qnCiceZgk
     parents:
     - id: 11137
-    time: 1781088375207
+    time: 1781438134448
     order: 0
     open: true
     page:
@@ -514,13 +534,13 @@
     sidebar: 18
     id: 11137
     uid: L7iQsWlWT
-    word-count: 258
+    word-count: 298
     edit-user:
       id: 3
     time: 1780943981609
     title: '[[Test Article]] 0'
-    edit-nonce: CmGIJPEyk
-    edit-time: 1781362883933
+    edit-nonce: 8SFUeTH-W
+    edit-time: 1781438134448
     refs:
     - id: 4223
 - - string: r1.c1
